@@ -84,6 +84,8 @@ export type ModelCapability =
   | 'SPEECH_TO_TEXT'
   | 'IMAGE_GENERATION';
 
+export type ModelTaskType = 'text-generation' | 'image-generation' | 'vision' | 'multimodal';
+
 export interface ModelVariant {
   id: string;
   name: string;
@@ -107,6 +109,7 @@ export interface Model {
   description: string;
   parameterCount: string; // e.g. "135M", "3B", "7B"
   capabilities: ModelCapability[];
+  taskType?: ModelTaskType;
   variants: ModelVariant[];
   defaultVariantId: string;
   tags: string[];
@@ -126,6 +129,101 @@ export interface ModelInstallation {
   quantization: ModelQuantization;
   contextLength: number;
   mmprojPath?: string;
+  taskType?: ModelTaskType;
+}
+
+export interface ImageResolution {
+  width: number;
+  height: number;
+  label: string;
+  aspectRatio: string;
+}
+
+export interface ImageGenerationParams {
+  prompt: string;
+  negativePrompt?: string;
+  width: number;
+  height: number;
+  steps: number;
+  guidanceScale: number;
+  seed?: number;
+  batchSize?: number;
+  scheduler?: string;
+}
+
+export interface GeneratedImage {
+  id: string;
+  jobId: string;
+  localPath: string;
+  base64Data?: string;
+  width: number;
+  height: number;
+  seed: number;
+  prompt: string;
+  negativePrompt?: string;
+  steps: number;
+  guidanceScale: number;
+  modelId: string;
+  modelName: string;
+  createdAt: number;
+  durationMs: number;
+  fileSizeBytes: number;
+  device?: string;
+}
+
+export interface ImageGenerationProgress {
+  step: number;
+  totalSteps: number;
+  percentage: number;
+  elapsedSeconds: number;
+  etaSeconds?: number;
+  statusMessage?: string;
+}
+
+export interface ImageGenerationJob {
+  id: string;
+  modelId: string;
+  modelName: string;
+  status: 'PENDING' | 'LOADING' | 'GENERATING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  params: ImageGenerationParams;
+  progress: ImageGenerationProgress;
+  images: GeneratedImage[];
+  error?: string;
+  startedAt: number;
+  completedAt?: number;
+  device?: string;
+}
+
+export interface ModelCapabilityProfile {
+  modelId: string;
+  name: string;
+  taskType: ModelTaskType;
+  architecture: string;
+  supportedRuntimes: ('llama-cpp' | 'diffusers' | 'stable-diffusion-cpp' | 'mlx')[];
+  fileFormats: ('gguf' | 'safetensors' | 'onnx' | 'diffusers')[];
+  supportedPlatforms: ('darwin' | 'win32' | 'linux')[];
+  accelerationOptions: ('mps' | 'cuda' | 'vulkan' | 'cpu')[];
+  minMemoryBytes: number;
+  recommendedMemoryBytes: number;
+  minVramBytes?: number;
+  recommendedVramBytes?: number;
+  imageParameters?: {
+    supportedResolutions: ImageResolution[];
+    supportsNegativePrompt: boolean;
+    supportsGuidanceScale: boolean;
+    supportsSteps: boolean;
+    supportsSeed: boolean;
+    supportsBatchCount: boolean;
+    defaultWidth: number;
+    defaultHeight: number;
+    defaultSteps: number;
+    minSteps: number;
+    maxSteps: number;
+    defaultGuidanceScale: number;
+    minGuidanceScale: number;
+    maxGuidanceScale: number;
+  };
+  knownLimitations: string[];
 }
 
 export type DownloadStatus = 'pending' | 'downloading' | 'paused' | 'completed' | 'failed' | 'cancelled';
@@ -383,3 +481,251 @@ export interface BenchmarkResult {
   totalDurationMs: number;
   peakMemoryBytes: number;
 }
+
+// ==================== FORGE FINE-TUNING STUDIO TYPES ====================
+
+export type ForgeModelStatus = 'READY' | 'REQUIRES_CHECKPOINT' | 'UNSUPPORTED' | 'MISSING_DEPENDENCIES';
+
+export interface ForgeModelInspection {
+  modelId: string;
+  variantId: string;
+  name: string;
+  architecture?: string;
+  parameterCount?: string;
+  format: ModelFormat;
+  quantization: ModelQuantization;
+  sizeBytes: number;
+  localPath: string;
+  status: ForgeModelStatus;
+  statusReason?: string;
+  recommendedResolution?: string;
+  checkpointPath?: string;
+  hfRepoId?: string;
+  tokenizerPath?: string;
+  supportedBackends: TrainingBackend[];
+}
+
+export type DatasetFormat = 'instruction' | 'conversational' | 'prompt_completion' | 'csv' | 'unknown';
+
+export interface DatasetColumnMapping {
+  promptColumn?: string;
+  completionColumn?: string;
+  responseColumn?: string;
+  instructionColumn?: string;
+  inputColumn?: string;
+  outputColumn?: string;
+  systemColumn?: string;
+}
+
+export interface DatasetAnalysis {
+  filePath: string;
+  fileName: string;
+  fileSizeBytes: number;
+  totalRecords: number;
+  validRecords: number;
+  invalidRecords: number;
+  duplicateRecords: number;
+  detectedFormat: DatasetFormat;
+  columns?: string[];
+  columnMapping?: DatasetColumnMapping;
+  exampleRecords: any[];
+  invalidSampleErrors: string[];
+  tokenLengthDistribution: {
+    min: number;
+    max: number;
+    mean: number;
+    p50: number;
+    p95: number;
+  };
+}
+
+export type TrainingObjective = 'instruction' | 'conversational' | 'completion';
+export type TrainingBackend = 'peft' | 'mlx';
+export type FineTuningMethod = 'lora' | 'full';
+
+export interface TrainingConfig {
+  jobId: string;
+  jobName: string;
+  modelId: string;
+  modelName: string;
+  checkpointPath: string;
+  datasetPath: string;
+  datasetName: string;
+  objective: TrainingObjective;
+  method: FineTuningMethod;
+  backend: TrainingBackend;
+  learningRate: number;
+  loraRank: number;
+  loraAlpha: number;
+  loraDropout: number;
+  targetModules: string[];
+  batchSize: number;
+  gradientAccumulationSteps: number;
+  maxSeqLength: number;
+  epochs: number;
+  optimizer: string;
+  precision: 'float32' | 'float16' | 'bfloat16';
+  warmupRatio: number;
+  weightDecay: number;
+  saveSteps: number;
+  trainValSplit: number;
+  outputDir: string;
+  resumeFromCheckpoint?: string;
+  columnMapping?: DatasetColumnMapping;
+}
+
+export interface HardwareConstraintEstimates {
+  estimatedMemoryBytes: number;
+  availableMemoryBytes: number;
+  estimatedDiskBytes: number;
+  availableDiskBytes: number;
+  estimatedDurationSeconds?: number;
+  isFeasible: boolean;
+  warnings: string[];
+  acceleration: 'mps' | 'cuda' | 'cpu';
+}
+
+export interface PreflightCheck {
+  id: string;
+  name: string;
+  category: 'model' | 'dataset' | 'hardware' | 'environment' | 'storage';
+  status: 'passed' | 'warning' | 'failed';
+  message: string;
+  detail?: string;
+  remediation?: string;
+}
+
+export interface PreflightReport {
+  checks: PreflightCheck[];
+  canProceed: boolean;
+}
+
+export type TrainingJobStatus =
+  | 'QUEUED'
+  | 'INITIALIZING'
+  | 'TRAINING'
+  | 'PAUSED'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export interface TrainingMetricSample {
+  step: number;
+  totalSteps: number;
+  epoch: number;
+  totalEpochs: number;
+  loss: number;
+  evalLoss?: number;
+  learningRate?: number;
+  gradNorm?: number;
+  tokenAccuracy?: number;
+  tokensPerSec?: number;
+  elapsedSeconds: number;
+  estimatedRemainingSeconds?: number;
+  cpuPercent?: number;
+  memoryBytes?: number;
+  gpuMemoryBytes?: number;
+  timestamp: number;
+}
+
+export interface TrainingCheckpoint {
+  step: number;
+  path: string;
+  loss?: number;
+  sizeBytes?: number;
+  createdAt: number;
+  recoverable?: boolean;
+}
+
+export interface TrainingJob {
+  id: string;
+  name: string;
+  modelId: string;
+  modelName: string;
+  checkpointPath: string;
+  datasetPath: string;
+  datasetRecords: number;
+  status: TrainingJobStatus;
+  config: TrainingConfig;
+  estimates: HardwareConstraintEstimates;
+  currentStep: number;
+  totalSteps: number;
+  currentEpoch: number;
+  totalEpochs: number;
+  currentLoss?: number;
+  metricsHistory: TrainingMetricSample[];
+  recentLogs: string[];
+  checkpoints: TrainingCheckpoint[];
+  outputDir: string;
+  artifactPath?: string;
+  artifactType?: 'lora_adapter' | 'merged_model';
+  artifactSizeBytes?: number;
+  error?: string;
+  createdAt: number;
+  startedAt?: number;
+  completedAt?: number;
+  updatedAt: number;
+}
+
+export interface FineTunedModelArtifact {
+  id: string;
+  jobId: string;
+  name: string;
+  baseModelId: string;
+  baseModelName: string;
+  type: 'lora' | 'merged' | 'standalone';
+  artifactPath: string;
+  sizeBytes: number;
+  format: string;
+  compatibilityStatus: 'ready' | 'base_required' | 'incompatible';
+  statusReason?: string;
+  finalLoss?: number;
+  trainingDurationSeconds: number;
+  createdAt: number;
+}
+
+export interface ModelComparisonRequest {
+  baseModelPath: string;
+  adapterPath?: string;
+  prompt: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface ModelComparisonResult {
+  prompt: string;
+  baseResponse: string;
+  fineTunedResponse: string;
+  baseDurationMs: number;
+  fineTunedDurationMs: number;
+}
+
+export interface DatasetEvaluationSample {
+  prompt: string;
+  expected: string;
+  baseOutput: string;
+  ftOutput: string;
+  latencyBaseMs: number;
+  latencyFtMs: number;
+  scoreMatch?: number;
+}
+
+export interface DatasetEvaluationReport {
+  jobId: string;
+  samples: DatasetEvaluationSample[];
+  metrics: {
+    valLoss?: number;
+    tokenF1Score?: number;
+    accuracyScore?: number;
+  };
+  durationSeconds: number;
+}
+
+export type LiveStudioTab =
+  | 'overview'
+  | 'charts'
+  | 'playground'
+  | 'logs'
+  | 'checkpoints'
+  | 'evaluation';
+

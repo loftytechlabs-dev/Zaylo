@@ -372,10 +372,60 @@ function initializeSchema(raw: { exec: (sql: string) => void }): void {
       created_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS training_jobs (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      model_id TEXT NOT NULL,
+      model_name TEXT NOT NULL,
+      checkpoint_path TEXT NOT NULL,
+      dataset_path TEXT NOT NULL,
+      dataset_records INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'INITIALIZING',
+      config TEXT NOT NULL,
+      estimates TEXT NOT NULL,
+      current_step INTEGER NOT NULL DEFAULT 0,
+      total_steps INTEGER NOT NULL DEFAULT 0,
+      current_epoch INTEGER NOT NULL DEFAULT 0,
+      total_epochs INTEGER NOT NULL DEFAULT 0,
+      current_loss REAL,
+      metrics_history TEXT NOT NULL DEFAULT '[]',
+      recent_logs TEXT NOT NULL DEFAULT '[]',
+      checkpoints TEXT NOT NULL DEFAULT '[]',
+      output_dir TEXT NOT NULL,
+      artifact_path TEXT,
+      artifact_type TEXT,
+      artifact_size_bytes INTEGER,
+      error TEXT,
+      created_at INTEGER NOT NULL,
+      started_at INTEGER,
+      completed_at INTEGER,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS fine_tuned_models (
+      id TEXT PRIMARY KEY,
+      job_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      base_model_id TEXT NOT NULL,
+      base_model_name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      artifact_path TEXT NOT NULL,
+      size_bytes INTEGER NOT NULL DEFAULT 0,
+      format TEXT NOT NULL DEFAULT 'safetensors',
+      compatibility_status TEXT NOT NULL DEFAULT 'ready',
+      status_reason TEXT,
+      final_loss REAL,
+      training_duration_seconds INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_requests_timestamp ON requests(timestamp);
     CREATE INDEX IF NOT EXISTS idx_samples_timestamp ON performance_samples(timestamp);
     CREATE INDEX IF NOT EXISTS idx_events_timestamp ON server_events(timestamp);
     CREATE INDEX IF NOT EXISTS idx_document_chunks_doc ON document_chunks(document_id);
+    CREATE INDEX IF NOT EXISTS idx_training_jobs_status ON training_jobs(status);
+    CREATE INDEX IF NOT EXISTS idx_training_jobs_updated ON training_jobs(updated_at);
+    CREATE INDEX IF NOT EXISTS idx_fine_tuned_models_job ON fine_tuned_models(job_id);
   `);
 
   // Automatic schema migrations for existing databases

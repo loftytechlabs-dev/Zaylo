@@ -18,6 +18,25 @@ import type {
   DocumentInfo,
   DocumentType,
   RagSearchResult,
+  ForgeModelInspection,
+  DatasetColumnMapping,
+  DatasetAnalysis,
+  TrainingObjective,
+  TrainingConfig,
+  HardwareConstraintEstimates,
+  PreflightReport,
+  TrainingJob,
+  TrainingJobStatus,
+  TrainingMetricSample,
+  FineTunedModelArtifact,
+  ModelComparisonRequest,
+  ModelComparisonResult,
+  DatasetEvaluationReport,
+  ImageGenerationParams,
+  GeneratedImage,
+  ImageGenerationJob,
+  ImageGenerationProgress,
+  ModelCapabilityProfile,
 } from '@local-ai/shared';
 
 export interface IPCChannels {
@@ -85,6 +104,53 @@ export interface IPCChannels {
   'benchmark:run': { request: { modelId?: string; variantId?: string; promptTokens?: number; genTokens?: number }; response: BenchmarkResult };
   'benchmark:get-history': { request: void; response: BenchmarkResult[] };
 
+  // Forge Fine-Tuning Studio
+  'forge:list-models': { request: void; response: ForgeModelInspection[] };
+  'forge:inspect-model': { request: { modelId: string }; response: ForgeModelInspection };
+  'forge:fetch-checkpoint': { request: { modelId: string; hfRepoId?: string }; response: { success: boolean; checkpointPath?: string; error?: string } };
+  'forge:parse-dataset': { request: { filePath: string; columnMapping?: DatasetColumnMapping; maxPreview?: number }; response: DatasetAnalysis };
+  'forge:select-dataset-file': { request: void; response: string | null };
+  'forge:load-sample-dataset': { request: { type: 'instruction' | 'conversational' }; response: { filePath: string; analysis: DatasetAnalysis } };
+  'forge:auto-configure': { request: { modelId: string; datasetPath: string; objective?: TrainingObjective; columnMapping?: DatasetColumnMapping }; response: { config: TrainingConfig; estimates: HardwareConstraintEstimates } };
+  'forge:validate-config': { request: { config: TrainingConfig }; response: { valid: boolean; estimates: HardwareConstraintEstimates; errors: string[] } };
+  'forge:run-preflight': { request: { config: TrainingConfig }; response: PreflightReport };
+  'forge:start-training': { request: { config: TrainingConfig }; response: { jobId: string; started: boolean } };
+  'forge:pause-training': { request: { jobId: string }; response: boolean };
+  'forge:resume-training': { request: { jobId: string }; response: boolean };
+  'forge:cancel-training': { request: { jobId: string }; response: boolean };
+  'forge:get-job': { request: { jobId: string }; response: TrainingJob | null };
+  'forge:list-jobs': { request: void; response: TrainingJob[] };
+  'forge:list-fine-tuned-models': { request: void; response: FineTunedModelArtifact[] };
+  'forge:compare-models': { request: ModelComparisonRequest; response: ModelComparisonResult };
+  'forge:merge-adapter': { request: { artifactId: string }; response: { success: boolean; outputPath?: string; error?: string } };
+  'forge:export-artifact': { request: { artifactId: string; destinationDir: string }; response: { success: boolean; exportPath?: string; error?: string } };
+  'forge:delete-artifact': { request: { artifactId: string }; response: boolean };
+  'forge:resume-from-checkpoint': { request: { jobId: string; checkpointStep: number }; response: { success: boolean; error?: string } };
+  'forge:evaluate-dataset': { request: { jobId: string; numExamples?: number }; response: DatasetEvaluationReport };
+
+  // Image Generation
+  'image:generate': {
+    request: {
+      modelId: string;
+      modelName?: string;
+      modelPath?: string;
+      params: Partial<ImageGenerationParams>;
+      outputDir?: string;
+      device?: 'auto' | 'mps' | 'cuda' | 'cpu';
+    };
+    response: { jobId: string };
+  };
+  'image:cancel': { request: { jobId: string }; response: boolean };
+  'image:get-job': { request: { jobId: string }; response: ImageGenerationJob | null };
+  'image:list-history': { request: void; response: GeneratedImage[] };
+  'image:delete': { request: { imageId: string }; response: boolean };
+  'image:save-as': { request: { imagePath: string; defaultName?: string }; response: string | null };
+  'image:open-folder': { request: { imagePath: string }; response: void };
+
+  // Model Capabilities
+  'capabilities:get-model-profile': { request: { modelId: string }; response: ModelCapabilityProfile | null };
+  'capabilities:list-profiles': { request: void; response: ModelCapabilityProfile[] };
+
   // App & System
   'app:get-version': { request: void; response: string };
   'app:select-directory': { request: { defaultPath?: string }; response: string | null };
@@ -97,4 +163,12 @@ export interface IPCEvents {
   'server:state-changed': { state: ServerState; instance?: RuntimeInstance };
   'download:progress': DownloadProgress;
   'inference:chunk': { requestId: string; chunk: ChatCompletionResponse };
+  'forge:training-metric': { jobId: string; sample: TrainingMetricSample };
+  'forge:training-log': { jobId: string; log: string };
+  'forge:training-status': { jobId: string; status: TrainingJobStatus; error?: string };
+  'image:status': { jobId: string; status: string; message?: string };
+  'image:progress': { jobId: string; progress: ImageGenerationProgress };
+  'image:completed': { jobId: string; images: GeneratedImage[] };
+  'image:error': { jobId: string; error: string };
+  'models:updated': void;
 }

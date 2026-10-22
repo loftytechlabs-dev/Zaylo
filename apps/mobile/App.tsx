@@ -11,72 +11,23 @@ import {
 } from 'react-native';
 import { darkTheme, lightTheme, Theme } from './src/theme/theme';
 import type {
-  HybridMode,
   ChatMessage,
-  DesktopHost,
   OnDeviceModel,
   MemoryPagingConfig,
   DeviceMemoryProfile,
 } from './src/types';
-import { DeviceProfiler, MOBILE_MODELS } from './src/engine/deviceProfiler';
+import { DeviceProfiler } from './src/engine/deviceProfiler';
 import { MobileMemoryPagingEngine } from './src/engine/memoryPaging';
-import { HybridRouter } from './src/engine/hybridRouter';
-import { DesktopClient } from './src/engine/desktopClient';
-import { getDefaultHostUrl } from './src/utils/networkHost';
-import { HomeView } from './src/components/HomeView';
+import { ZAYLO_MODELS } from './src/engine/modelsCatalog';
+import { ModelStorage } from './src/engine/modelStorage';
+import { OnDeviceEngine } from './src/engine/onDeviceEngine';
 import { ModelsView } from './src/components/ModelsView';
 import { ChatHeader } from './src/components/ChatHeader';
 import { ChatView } from './src/components/ChatView';
 import { MessageInput } from './src/components/MessageInput';
-import { MemoryGaugeModal } from './src/components/MemoryGaugeModal';
-import { PairingModal } from './src/components/PairingModal';
-import { ModelSelectorModal } from './src/components/ModelSelectorModal';
 import { Icon } from './src/components/common/Icon';
 
-type ActiveScreen = 'home' | 'models' | 'chat';
-
-const AnimatedNavTab: React.FC<{
-  label?: string;
-  icon: string;
-  isActive: boolean;
-  onPress: () => void;
-  theme: Theme;
-}> = ({ label, icon, isActive, onPress, theme }) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        style={[
-          styles.floatingTab,
-          isActive && [styles.floatingTabActive, { backgroundColor: theme.floatingNavActive }],
-        ]}
-        onPressIn={() =>
-          Animated.spring(scaleAnim, { toValue: 0.92, useNativeDriver: true }).start()
-        }
-        onPressOut={() =>
-          Animated.spring(scaleAnim, {
-            toValue: 1,
-            friction: 6,
-            tension: 70,
-            useNativeDriver: true,
-          }).start()
-        }
-        onPress={onPress}
-        activeOpacity={0.85}
-      >
-        <Icon
-          name={icon}
-          size={18}
-          color={isActive ? '#ffffff' : theme.floatingNavText}
-        />
-        {isActive && label && (
-          <Text style={styles.floatingTabActiveText}>{label}</Text>
-        )}
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
+type ActiveScreen = 'chat' | 'models';
 
 export default function App() {
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
@@ -88,105 +39,84 @@ export default function App() {
     setThemeMode((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('home');
+  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('chat');
   const screenFadeAnim = useRef(new Animated.Value(1)).current;
-  const screenSlideAnim = useRef(new Animated.Value(0)).current;
-  const screenScaleAnim = useRef(new Animated.Value(1)).current;
 
   const navigateToScreen = (screen: ActiveScreen) => {
     if (screen === activeScreen) return;
-    Animated.parallel([
-      Animated.timing(screenFadeAnim, {
-        toValue: 0.15,
-        duration: 90,
-        useNativeDriver: true,
-      }),
-      Animated.timing(screenSlideAnim, {
-        toValue: 6,
-        duration: 90,
-        useNativeDriver: true,
-      }),
-      Animated.timing(screenScaleAnim, {
-        toValue: 0.985,
-        duration: 90,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+    Animated.timing(screenFadeAnim, {
+      toValue: 0.2,
+      duration: 80,
+      useNativeDriver: true,
+    }).start(() => {
       setActiveScreen(screen);
-      screenSlideAnim.setValue(-6);
-      Animated.parallel([
-        Animated.timing(screenFadeAnim, {
-          toValue: 1,
-          duration: 160,
-          useNativeDriver: true,
-        }),
-        Animated.spring(screenSlideAnim, {
-          toValue: 0,
-          friction: 8,
-          tension: 70,
-          useNativeDriver: true,
-        }),
-        Animated.spring(screenScaleAnim, {
-          toValue: 1,
-          friction: 8,
-          tension: 70,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      Animated.timing(screenFadeAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
     });
   };
 
   const initialProfile = useMemo(() => DeviceProfiler.profileDevice(), []);
   const [profile] = useState<DeviceMemoryProfile>(initialProfile);
-
-  const [mode, setMode] = useState<HybridMode>('on_device');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-
-  const [desktopHost, setDesktopHost] = useState<DesktopHost>({
-    url: getDefaultHostUrl(),
-    name: 'Zaylo Local Host',
-    isConnected: false,
-    activeModelName: 'Qwen 2.5 Coder 1.5B',
-  });
-
-  // Automatically probe and connect to host on the local Wi-Fi network
-  useEffect(() => {
-    let isMounted = true;
-    DesktopClient.ping(desktopHost.url).then((res) => {
-      if (isMounted && res.ok) {
-        setDesktopHost((prev) => ({
-          ...prev,
-          isConnected: true,
-          activeModelName: res.activeModel || prev.activeModelName,
-        }));
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [desktopHost.url]);
-
-  const [activeLocalModel, setActiveLocalModel] = useState<OnDeviceModel | null>(null);
-
   const [pagingConfig, setPagingConfig] = useState<MemoryPagingConfig>(
     initialProfile.pagingConfig
   );
 
-  const [memoryModalVisible, setMemoryModalVisible] = useState(false);
-  const [pairingModalVisible, setPairingModalVisible] = useState(false);
-  const [modelModalVisible, setModelModalVisible] = useState(false);
-
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [activeLocalModel, setActiveLocalModel] = useState<OnDeviceModel | null>(null);
   const cancelStreamRef = useRef<(() => void) | null>(null);
 
-  const router = useMemo(() => {
-    return new HybridRouter(
-      () => mode,
-      () => desktopHost,
-      () => activeLocalModel,
-      () => pagingConfig
-    );
-  }, [mode, desktopHost, activeLocalModel, pagingConfig]);
+  // Auto-detect downloaded models on phone storage and load the best one
+  useEffect(() => {
+    const unsub = ModelStorage.subscribeToInstalled((installedIds) => {
+      if (installedIds.length > 0) {
+        setActiveLocalModel((prev) => {
+          if (prev) return prev;
+          const found = ZAYLO_MODELS.find((m) => installedIds.includes(m.id));
+          if (found) {
+            const converted: OnDeviceModel = {
+              id: found.id,
+              name: found.name,
+              tagline: found.description,
+              parameters: found.parameterCount,
+              sizeMb: found.sizeMb,
+              requiredRamMb: Math.round(found.sizeMb * 1.3),
+              minTier: found.sizeMb > 1500 ? 'tier_3_flagship' : 'tier_2_balanced',
+              quantization: found.quantization,
+              downloadUrl: found.downloadUrl,
+              isDownloaded: true,
+            };
+            const optimized = MobileMemoryPagingEngine.optimizePagingConfig(
+              converted,
+              profile.availableRamMb
+            );
+            setPagingConfig(optimized);
+            OnDeviceEngine.loadModel(converted, optimized).catch(() => {});
+            return converted;
+          }
+          return null;
+        });
+      }
+    });
+    return unsub;
+  }, [profile.availableRamMb]);
+
+  const handleSelectModel = (model: OnDeviceModel | null) => {
+    setActiveLocalModel(model);
+    if (model) {
+      const optimized = MobileMemoryPagingEngine.optimizePagingConfig(
+        model,
+        profile.availableRamMb
+      );
+      setPagingConfig(optimized);
+      OnDeviceEngine.loadModel(model, optimized).catch(() => {});
+    } else {
+      OnDeviceEngine.unloadModel().catch(() => {});
+    }
+  };
 
   const handleSendMessage = async (text: string) => {
     if (activeScreen !== 'chat') {
@@ -218,9 +148,30 @@ export default function App() {
     setMessages([...newHistory, initialAssistantMessage]);
     setIsStreaming(true);
 
+    // If no model is downloaded or loaded
+    if (!activeLocalModel) {
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  content:
+                    '⚠️ **No local model loaded.**\n\nPlease download a lightweight model like **SmolLM2 (135MB)** or **Qwen 2.5 (491MB)** from the Models tab below to chat completely offline on your phone!',
+                  isStreaming: false,
+                }
+              : m
+          )
+        );
+        setIsStreaming(false);
+      }, 300);
+      return;
+    }
+
     try {
-      const cancelFn = await router.dispatchPrompt(
+      const cancelFn = await OnDeviceEngine.generateCompletion(
         newHistory,
+        pagingConfig,
         (chunk: string) => {
           setMessages((prev) =>
             prev.map((m) =>
@@ -233,34 +184,26 @@ export default function App() {
           cancelStreamRef.current = null;
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, isStreaming: false, metrics }
-                : m
-            )
-          );
-        },
-        (err) => {
-          setIsStreaming(false);
-          cancelStreamRef.current = null;
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? {
-                    ...m,
-                    content:
-                      m.content +
-                      `\n\n[Error: ${err.message || 'Inference connection failed. Please check host or switch to on-device engine.'}]`,
-                    isStreaming: false,
-                  }
-                : m
+              m.id === assistantId ? { ...m, isStreaming: false, metrics } : m
             )
           );
         }
       );
 
       cancelStreamRef.current = cancelFn;
-    } catch {
+    } catch (err: any) {
       setIsStreaming(false);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                content: `\n\n[Inference Error: ${err?.message || String(err)}]`,
+                isStreaming: false,
+              }
+            : m
+        )
+      );
     }
   };
 
@@ -273,28 +216,6 @@ export default function App() {
     setMessages((prev) =>
       prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m))
     );
-  };
-
-  const handleSelectModel = (model: OnDeviceModel | null) => {
-    setActiveLocalModel(model);
-    if (model) {
-      const optimized = MobileMemoryPagingEngine.optimizePagingConfig(
-        model,
-        profile.availableRamMb
-      );
-      setPagingConfig(optimized);
-    }
-  };
-
-  const handleUpdatePagingConfig = (partial: Partial<MemoryPagingConfig>) => {
-    setPagingConfig((prev) => ({ ...prev, ...partial }));
-  };
-
-  const handleOpenChatWithPrompt = (initialPrompt?: string) => {
-    navigateToScreen('chat');
-    if (initialPrompt) {
-      setTimeout(() => handleSendMessage(initialPrompt), 80);
-    }
   };
 
   const handleClearChat = () => {
@@ -313,34 +234,37 @@ export default function App() {
         backgroundColor={theme.background}
       />
 
-      {/* Screen Container with animated transition */}
-      <Animated.View
-        style={[
-          styles.screenContainer,
-          {
-            opacity: screenFadeAnim,
-            transform: [
-              { translateY: screenSlideAnim },
-              { scale: screenScaleAnim },
-            ],
-          },
-        ]}
-      >
-        {activeScreen === 'home' && (
-          <HomeView
-            theme={theme}
-            mode={mode}
-            onToggleMode={setMode}
-            desktopHost={desktopHost}
-            activeLocalModel={activeLocalModel}
-            pagingConfig={pagingConfig}
-            profile={profile}
-            onOpenChat={handleOpenChatWithPrompt}
-            onOpenModelModal={() => navigateToScreen('models')}
-            onOpenPairingModal={() => setPairingModalVisible(true)}
-            onOpenMemoryModal={() => setMemoryModalVisible(true)}
-            onToggleTheme={toggleTheme}
-          />
+      <Animated.View style={[styles.screenContainer, { opacity: screenFadeAnim }]}>
+        {activeScreen === 'chat' && (
+          <View style={styles.chatScreenContainer}>
+            <ChatHeader
+              theme={theme}
+              activeLocalModel={activeLocalModel}
+              onOpenModels={() => navigateToScreen('models')}
+              onClearChat={handleClearChat}
+              onToggleTheme={toggleTheme}
+            />
+
+            <ChatView
+              theme={theme}
+              messages={messages}
+              isStreaming={isStreaming}
+              activeLocalModel={activeLocalModel}
+              onSelectPromptSuggestion={handleSendMessage}
+              onOpenModelModal={() => navigateToScreen('models')}
+              onSelectModel={handleSelectModel}
+            />
+
+            <MessageInput
+              theme={theme}
+              onSendMessage={handleSendMessage}
+              onStopGeneration={handleStopGeneration}
+              isStreaming={isStreaming}
+              onAttachMedia={() => {
+                handleSendMessage('[Attached image from camera: diagram.png] Please analyze this image.');
+              }}
+            />
+          </View>
         )}
 
         {activeScreen === 'models' && (
@@ -350,125 +274,78 @@ export default function App() {
             profile={profile}
             pagingConfig={pagingConfig}
             onSelectModel={handleSelectModel}
-            onBackToHome={() => navigateToScreen('home')}
+            onBackToHome={() => navigateToScreen('chat')}
             onOpenChat={() => navigateToScreen('chat')}
           />
         )}
-
-        {activeScreen === 'chat' && (
-          <View style={styles.chatScreenContainer}>
-            <ChatHeader
-              theme={theme}
-              mode={mode}
-              desktopHost={desktopHost}
-              activeLocalModel={activeLocalModel}
-              onBackToHome={() => navigateToScreen('home')}
-              onOpenModelModal={() => navigateToScreen('models')}
-              onClearChat={handleClearChat}
-              onToggleTheme={toggleTheme}
-            />
-
-            <ChatView
-              theme={theme}
-              messages={messages}
-              isStreaming={isStreaming}
-              activeMode={mode}
-              activeLocalModel={activeLocalModel}
-              onSelectPromptSuggestion={handleSendMessage}
-              onOpenModelModal={() => navigateToScreen('models')}
-            />
-
-            <MessageInput
-              theme={theme}
-              onSendMessage={handleSendMessage}
-              onStopGeneration={handleStopGeneration}
-              isStreaming={isStreaming}
-              activeMode={mode}
-              onAttachMedia={() => {
-                handleSendMessage('[Attached image from camera: diagram.png] Please analyze this image.');
-              }}
-            />
-          </View>
-        )}
       </Animated.View>
 
-      {/* 5. Floating Island Bottom Navigation Bar (Hidden during Chat for full screen spaciousness) */}
-      {activeScreen !== 'chat' && (
-        <View
+      {/* Clean Dual-Tab Floating Navigation (Chat & Models) */}
+      <View
+        style={[
+          styles.floatingNavBar,
+          { backgroundColor: theme.floatingNav },
+          theme.shadows.floating,
+        ]}
+      >
+        <TouchableOpacity
           style={[
-            styles.floatingNavBar,
-            { backgroundColor: theme.floatingNav },
-            theme.shadows.floating,
+            styles.navTab,
+            activeScreen === 'chat' && [
+              styles.navTabActive,
+              { backgroundColor: theme.floatingNavActive },
+            ],
           ]}
+          onPress={() => navigateToScreen('chat')}
+          activeOpacity={0.8}
         >
-          <AnimatedNavTab
-            label="Home"
-            icon="home"
-            isActive={activeScreen === 'home'}
-            onPress={() => navigateToScreen('home')}
-            theme={theme}
+          <Icon
+            name="message-square"
+            size={18}
+            color={activeScreen === 'chat' ? '#ffffff' : theme.floatingNavText}
           />
+          <Text
+            style={[
+              styles.navTabText,
+              {
+                color:
+                  activeScreen === 'chat' ? '#ffffff' : theme.floatingNavText,
+              },
+            ]}
+          >
+            Chat
+          </Text>
+        </TouchableOpacity>
 
-          <AnimatedNavTab
-            label="Models"
-            icon="cpu"
-            isActive={activeScreen === 'models'}
-            onPress={() => navigateToScreen('models')}
-            theme={theme}
+        <TouchableOpacity
+          style={[
+            styles.navTab,
+            activeScreen === 'models' && [
+              styles.navTabActive,
+              { backgroundColor: theme.floatingNavActive },
+            ],
+          ]}
+          onPress={() => navigateToScreen('models')}
+          activeOpacity={0.8}
+        >
+          <Icon
+            name="cpu"
+            size={18}
+            color={activeScreen === 'models' ? '#ffffff' : theme.floatingNavText}
           />
-
-          <AnimatedNavTab
-            icon="message-square"
-            isActive={false}
-            onPress={() => navigateToScreen('chat')}
-            theme={theme}
-          />
-
-          <AnimatedNavTab
-            icon="monitor"
-            isActive={false}
-            onPress={() => setPairingModalVisible(true)}
-            theme={theme}
-          />
-
-          <AnimatedNavTab
-            icon="activity"
-            isActive={false}
-            onPress={() => setMemoryModalVisible(true)}
-            theme={theme}
-          />
-        </View>
-      )}
-
-      {/* Modals with Theme Support */}
-      <MemoryGaugeModal
-        visible={memoryModalVisible}
-        onClose={() => setMemoryModalVisible(false)}
-        profile={profile}
-        pagingConfig={pagingConfig}
-        onUpdatePagingConfig={handleUpdatePagingConfig}
-        theme={theme}
-      />
-
-      <PairingModal
-        visible={pairingModalVisible}
-        onClose={() => setPairingModalVisible(false)}
-        host={desktopHost}
-        onConnectHost={(newHost) => {
-          setDesktopHost(newHost);
-          setMode('desktop');
-        }}
-        theme={theme}
-      />
-
-      <ModelSelectorModal
-        visible={modelModalVisible}
-        onClose={() => setModelModalVisible(false)}
-        activeModel={activeLocalModel}
-        profile={profile}
-        onSelectModel={handleSelectModel}
-        theme={theme}
-      />
+          <Text
+            style={[
+              styles.navTabText,
+              {
+                color:
+                  activeScreen === 'models' ? '#ffffff' : theme.floatingNavText,
+              },
+            ]}
+          >
+            Models
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -482,36 +359,35 @@ const styles = StyleSheet.create({
   },
   chatScreenContainer: {
     flex: 1,
+    paddingBottom: 68,
   },
   floatingNavBar: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
-    left: 20,
-    right: 20,
+    bottom: Platform.OS === 'ios' ? 24 : 14,
+    left: 40,
+    right: 40,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    borderRadius: 36,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    borderRadius: 32,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     zIndex: 999,
   },
-  floatingTab: {
+  navTab: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 22,
     borderRadius: 24,
-    gap: 6,
+    gap: 8,
   },
-  floatingTabActive: {
+  navTabActive: {
     backgroundColor: '#1e293b',
-    paddingHorizontal: 16,
   },
-  floatingTabActiveText: {
-    color: '#ffffff',
-    fontSize: 12,
+  navTabText: {
+    fontSize: 13,
     fontWeight: '700',
     letterSpacing: -0.2,
   },

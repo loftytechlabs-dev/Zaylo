@@ -96,11 +96,22 @@ export class HardwareScanner {
     if (platform === 'darwin') {
       try {
         const vmStat = execSync('vm_stat', { encoding: 'utf-8', timeout: 2000 });
-        const pageSize = 4096;
-        const freePages = parseInt(vmStat.match(/Pages free:\s+(\d+)/)?.[1] || '0', 10);
-        const inactivePages = parseInt(vmStat.match(/Pages inactive:\s+(\d+)/)?.[1] || '0', 10);
-        const speculativePages = parseInt(vmStat.match(/Pages speculative:\s+(\d+)/)?.[1] || '0', 10);
-        availableBytes = (freePages + inactivePages + speculativePages) * pageSize;
+        const pageSizeMatch = vmStat.match(/page size of (\d+) bytes/);
+        const pageSize = pageSizeMatch ? parseInt(pageSizeMatch[1], 10) : 4096;
+
+        const activePages = parseInt(vmStat.match(/Pages active:\s+(\d+)/)?.[1] || '0', 10);
+        const wiredPages = parseInt(vmStat.match(/Pages wired down:\s+(\d+)/)?.[1] || '0', 10);
+        const compressorPages = parseInt(vmStat.match(/Pages occupied by compressor:\s+(\d+)/)?.[1] || '0', 10);
+
+        // Standard macOS Activity Monitor memory usage: App Memory + Wired Memory + Compressed Memory
+        const usedBytes = Math.min(totalBytes, Math.max(0, (activePages + wiredPages + compressorPages) * pageSize));
+        const availableBytes = Math.min(totalBytes, Math.max(0, totalBytes - usedBytes));
+
+        return {
+          totalBytes,
+          availableBytes,
+          usedBytes,
+        };
       } catch {
         availableBytes = os.freemem();
       }

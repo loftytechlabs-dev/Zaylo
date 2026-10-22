@@ -34,3 +34,11 @@ export function getDefaultRuntimeDir(): string {
 export function getDefaultDatabasePath(): string {
   return path.join(getDefaultAppDataDir(), 'local-ai.sqlite');
 }
+
+export function getDefaultForgeDir(): string {
+  return path.join(getDefaultAppDataDir(), 'forge');
+}
+
+export function getDefaultForgeCheckpointsDir(): string {
+  return path.join(getDefaultAppDataDir(), 'forge-checkpoints');
+}

@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import cors from '@fastify/cors';
 import {
@@ -28,6 +31,11 @@ export interface ApiServerOptions {
   pairingManager: DevicePairingManager;
   logsRepo?: LogsRepository;
   documentRepo?: DocumentRepository;
+  imageEngine?: {
+    startGeneration: (params: any) => Promise<{ jobId: string }>;
+    getJob: (jobId: string) => any;
+    getHistory: () => any[];
+  };
 }
 
 export class ApiServer {
@@ -39,6 +47,11 @@ export class ApiServer {
   private deviceRepo: DeviceRepository;
   private pairingManager: DevicePairingManager;
   private documentRepo?: DocumentRepository;
+  private imageEngine?: {
+    startGeneration: (params: any) => Promise<{ jobId: string }>;
+    getJob: (jobId: string) => any;
+    getHistory: () => any[];
+  };
   private isRunning = false;
 
   constructor(options: ApiServerOptions) {
@@ -49,6 +62,7 @@ export class ApiServer {
     this.deviceRepo = options.deviceRepo;
     this.pairingManager = options.pairingManager;
     this.documentRepo = options.documentRepo;
+    this.imageEngine = options.imageEngine;
 
     this.fastify = Fastify({
       logger: false,
@@ -92,9 +106,11 @@ export class ApiServer {
         url === '/' ||
         url === '/chat' ||
         url === '/health' ||
+        url === '/v1/health' ||
         url === '/models' ||
         url === '/v1/models' ||
         url === '/heartbeat' ||
+        url === '/v1/heartbeat' ||
         url === '/pair'
       ) {
         return;
@@ -159,8 +175,8 @@ export class ApiServer {
       reply.type('text/html; charset=utf-8').send(getWebChatHtml());
     });
 
-    // 1. Health Check & Heartbeat
-    this.fastify.get('/health', async () => {
+    // 1. Health Check & Heartbeat (Both root and /v1 aliases)
+    const healthHandler = async () => {
       const runtime = this.inferenceService.getRuntime();
       const health = runtime ? await runtime.health() : { isHealthy: false, state: 'STOPPED', modelLoaded: false };
       return {
@@ -170,13 +186,19 @@ export class ApiServer {
         activeModel: this.inferenceService.getModelName() || null,
         uptime: process.uptime(),
       };
-    });
+    };
 
-    this.fastify.get('/heartbeat', async (req) => {
+    this.fastify.get('/health', healthHandler);
+    this.fastify.get('/v1/health', healthHandler);
+
+    const heartbeatHandler = async (req: any) => {
       const clientIp = req.ip || req.socket.remoteAddress || '127.0.0.1';
       this.deviceRepo.recordActivity(clientIp, req.headers['user-agent'], `Client (${clientIp})`);
       return { status: 'ok', active: true, timestamp: Date.now() };
-    });
+    };
+
+    this.fastify.get('/heartbeat', heartbeatHandler);
+    this.fastify.get('/v1/heartbeat', heartbeatHandler);
 
     // System Information
     this.fastify.get('/system', async () => {
@@ -254,6 +276,116 @@ export class ApiServer {
     this.fastify.post('/v1/embeddings', async (req: FastifyRequest) => {
       const body = req.body as EmbeddingRequest;
       return this.inferenceService.embeddings(body);
+    });
+
+    // Static serve for generated images: /v1/images/file/:filename
+    this.fastify.get('/v1/images/file/:filename', async (req: FastifyRequest, reply: FastifyReply) => {
+      const { filename } = req.params as { filename: string };
+      const safeFilename = path.basename(filename);
+      const filePath = path.join(os.homedir(), 'Pictures', 'Zaylo', 'Generated', safeFilename);
+      if (!fs.existsSync(filePath)) {
+        reply.code(404).send({ error: { message: 'Image not found', type: 'not_found' } });
+        return;
+      }
+      const stream = fs.createReadStream(filePath);
+      reply.type('image/png').send(stream);
+    });
+
+    // OpenAI Image Generations
+    this.fastify.post('/v1/images/generations', async (req: FastifyRequest) => {
+      const body = req.body as {
+        prompt: string;
+        model?: string;
+        n?: number;
+        size?: string;
+        response_format?: 'url' | 'b64_json';
+        seed?: number;
+        steps?: number;
+        guidance_scale?: number;
+        negative_prompt?: string;
+      };
+
+      if (!body?.prompt || typeof body.prompt !== 'string') {
+        throw new ValidationError('prompt string is required');
+      }
+
+      if (this.imageEngine) {
+        let width = 512;
+        let height = 512;
+        if (body.size) {
+          const parts = body.size.toLowerCase().split('x');
+          if (parts.length === 2) {
+            width = parseInt(parts[0], 10) || 512;
+            height = parseInt(parts[1], 10) || 512;
+          }
+        }
+
+        const modelId = body.model || 'tiny-sd';
+        const installed = this.modelManager.getInstalledModels();
+        const matchedModel = installed.find(
+          (m) =>
+            m.modelId === modelId ||
+            m.id === modelId ||
+            m.name.toLowerCase() === modelId.toLowerCase()
+        );
+
+        const { jobId } = await this.imageEngine.startGeneration({
+          modelId,
+          modelName: matchedModel?.name || modelId,
+          modelPath: matchedModel?.localPath,
+          generationParams: {
+            prompt: body.prompt,
+            negativePrompt: body.negative_prompt,
+            width,
+            height,
+            steps: body.steps || 20,
+            guidanceScale: body.guidance_scale || 7.5,
+            seed: body.seed,
+            batchSize: Math.min(4, Math.max(1, body.n || 1)),
+          },
+        });
+
+        // Await generation completion (up to 120s timeout)
+        const pollStart = Date.now();
+        while (Date.now() - pollStart < 120000) {
+          await new Promise((r) => setTimeout(r, 400));
+          const job = this.imageEngine.getJob(jobId);
+          if (job?.status === 'COMPLETED' && job.images && job.images.length > 0) {
+            const host = this.config.lanEnabled && req.headers.host ? req.headers.host.split(':')[0] : '127.0.0.1';
+            const port = this.config.port || 8080;
+            const data = job.images.map((img: any) => {
+              if (body.response_format === 'b64_json' && img.base64Data) {
+                const b64 = img.base64Data.replace(/^data:image\/\w+;base64,/, '');
+                return { b64_json: b64, revised_prompt: body.prompt };
+              }
+              const filename = path.basename(img.localPath);
+              return {
+                url: `http://${host}:${port}/v1/images/file/${filename}`,
+                revised_prompt: body.prompt,
+              };
+            });
+            return {
+              created: Math.floor(job.completedAt ? job.completedAt / 1000 : Date.now() / 1000),
+              data,
+            };
+          }
+          if (job?.status === 'FAILED') {
+            throw new AppError(job.error || 'Image generation failed', 'IMAGE_GENERATION_FAILED');
+          }
+        }
+        throw new AppError('Image generation timed out after 120 seconds', 'TIMEOUT');
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      return {
+        created: now,
+        data: [
+          {
+            revised_prompt: body.prompt,
+            url: `http://${this.config.host || '127.0.0.1'}:${this.config.port}/v1/images/output.png`,
+          },
+        ],
+      };
     });
 
     // QR Device Pairing Endpoint

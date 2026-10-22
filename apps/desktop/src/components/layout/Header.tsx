@@ -5,6 +5,7 @@ import { useAppStore } from '../../stores/useAppStore';
 export const Header: React.FC = () => {
   const {
     activeTab,
+    selectedModel,
     theme,
     toggleTheme,
     serverState,
@@ -57,12 +58,50 @@ export const Header: React.FC = () => {
     <header className="h-16 border-b border-[#202227] bg-[#0c0d0f] px-8 flex items-center justify-between select-none">
       {/* Title & Active Model */}
       <div className="flex items-center gap-4">
-        <h1 className="text-sm font-semibold capitalize tracking-wide text-zinc-100">{activeTab}</h1>
-        {serverInstance?.modelName && (
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded bg-[#17191e] border border-[#262930] text-xs font-mono text-zinc-300">
-            <span className="text-zinc-500">Loaded:</span>
-            <span className="text-blue-400 font-medium">{serverInstance.modelName}</span>
+        {activeTab === 'overview' ? (
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-sm font-semibold tracking-tight text-zinc-100">Overview</h1>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono border ${
+                  serverState === 'RUNNING'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    : serverState === 'STARTING'
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    : 'bg-zinc-800/50 text-zinc-400 border-zinc-700/50'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    serverState === 'RUNNING'
+                      ? 'bg-emerald-400'
+                      : serverState === 'STARTING'
+                      ? 'bg-amber-400 animate-pulse'
+                      : 'bg-zinc-500'
+                  }`}
+                />
+                {serverState === 'RUNNING' ? 'Running' : serverState === 'STARTING' ? 'Starting' : 'Stopped'}
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 font-normal leading-none mt-1">
+              Your local AI environment at a glance.
+            </p>
           </div>
+        ) : (
+          <>
+            <h1 className="text-sm font-semibold capitalize tracking-wide text-zinc-100">{activeTab}</h1>
+            {activeTab === 'playground' && selectedModel ? (
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded bg-[#17191e] border border-[#262930] text-xs font-mono text-zinc-300">
+                <span className="text-zinc-500">Active:</span>
+                <span className="text-blue-400 font-medium">{selectedModel}</span>
+              </div>
+            ) : serverInstance?.modelName ? (
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded bg-[#17191e] border border-[#262930] text-xs font-mono text-zinc-300">
+                <span className="text-zinc-500">Loaded:</span>
+                <span className="text-blue-400 font-medium">{serverInstance.modelName}</span>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
 

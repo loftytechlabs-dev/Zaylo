@@ -45,10 +45,16 @@ export class ModelDownloader {
     const startedAt = Date.now();
     let lastSampleTime = startedAt;
     let lastSampleBytes = downloadedBytes;
+    let lastNotifyTime = 0;
     let bytesPerSecond = 0;
 
-    const notifyProgress = (status: DownloadProgress['status'], error?: string) => {
+    const notifyProgress = (status: DownloadProgress['status'], error?: string, force = false) => {
       const now = Date.now();
+      if (!force && status === 'downloading' && now - lastNotifyTime < 200) {
+        return;
+      }
+      lastNotifyTime = now;
+
       const timeDelta = (now - lastSampleTime) / 1000;
       if (timeDelta >= 0.5) {
         const bytesDelta = downloadedBytes - lastSampleBytes;
@@ -78,7 +84,7 @@ export class ModelDownloader {
       onProgress?.(progress);
     };
 
-    notifyProgress('downloading');
+    notifyProgress('downloading', undefined, true);
 
     try {
       const headers: Record<string, string> = {
@@ -146,7 +152,7 @@ export class ModelDownloader {
       }
       fs.renameSync(tempPath, destPath);
 
-      notifyProgress('completed');
+      notifyProgress('completed', undefined, true);
       this.activeTasks.delete(id);
       return destPath;
     } catch (err: any) {
@@ -157,12 +163,12 @@ export class ModelDownloader {
             fs.unlinkSync(tempPath);
           } catch {}
         }
-        notifyProgress('cancelled');
+        notifyProgress('cancelled', undefined, true);
         throw new AppError('Download was cancelled by user', 'DOWNLOAD_CANCELLED');
       }
 
       const errorMessage = err?.message || 'Download failed';
-      notifyProgress('failed', errorMessage);
+      notifyProgress('failed', errorMessage, true);
       throw err;
     }
   }

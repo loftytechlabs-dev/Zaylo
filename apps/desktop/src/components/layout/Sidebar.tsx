@@ -2,6 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard,
   Boxes,
+  Flame,
   MessageSquare,
   Server,
   Smartphone,
@@ -26,6 +27,7 @@ export const Sidebar: React.FC = () => {
   const navItems: NavItem[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'models', label: 'Models', icon: Boxes, badge: installedModels.length },
+    { id: 'forge', label: 'Forge', icon: Flame },
     { id: 'playground', label: 'Playground', icon: MessageSquare },
     { id: 'server', label: 'Server & API', icon: Server },
     { id: 'devices', label: 'Devices', icon: Smartphone, badge: devices.length > 0 ? devices.length : undefined },
@@ -43,12 +45,28 @@ export const Sidebar: React.FC = () => {
 
         {/* Brand */}
         <div className="px-5 pb-3.5 pt-0.5 flex items-center gap-3 border-b border-[#202227]">
-          <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
-            <img src={logoUrl} alt="Zaylo Logo" className="w-full h-full object-contain" />
+          <div className="relative group cursor-default">
+            {/* Ambient Back Glow (Pure blue/cyan, zero purple) */}
+            <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-blue-600/20 to-sky-500/20 blur-md opacity-40 group-hover:opacity-75 transition-opacity duration-500" />
+            
+            {/* Theme-Adaptive Seamless Brand Tile */}
+            <div className="brand-logo-tile relative w-9 h-9 rounded-xl bg-gradient-to-b from-[#181c26] to-[#0f121a] border border-[#232938] shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center p-1.5 shrink-0 transition-transform duration-300 group-hover:scale-105">
+              <img
+                src={logoUrl}
+                alt="Zaylo"
+                className="w-full h-full object-contain"
+              />
+            </div>
           </div>
-          <div>
-            <div className="font-semibold text-sm tracking-wide text-zinc-100">Zaylo</div>
-            <div className="text-[11px] text-zinc-500 font-mono">v2.0 • AI Engine</div>
+
+          <div className="flex flex-col justify-center min-w-0">
+            <span className="font-bold text-sm tracking-wide text-zinc-100 leading-tight">
+              Zaylo
+            </span>
+            <div className="text-[11px] text-zinc-500 font-mono flex items-center gap-1.5 mt-0.5 leading-tight">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span className="truncate">Local AI Engine</span>
+            </div>
           </div>
         </div>
 

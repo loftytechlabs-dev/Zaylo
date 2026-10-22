@@ -1,47 +1,29 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Theme } from '../theme/theme';
-import type { HybridMode, DesktopHost, OnDeviceModel } from '../types';
+import type { OnDeviceModel } from '../types';
 import { Icon } from './common/Icon';
 
 interface ChatHeaderProps {
   theme: Theme;
-  mode: HybridMode;
-  desktopHost: DesktopHost;
   activeLocalModel: OnDeviceModel | null;
-  onBackToHome: () => void;
-  onOpenModelModal: () => void;
+  onOpenModels: () => void;
   onClearChat: () => void;
   onToggleTheme: () => void;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   theme,
-  mode,
-  desktopHost,
   activeLocalModel,
-  onBackToHome,
-  onOpenModelModal,
+  onOpenModels,
   onClearChat,
   onToggleTheme,
 }) => {
-  const isDesktop = mode === 'desktop';
-
-  const modelLabel = isDesktop
-    ? desktopHost.isConnected
-      ? desktopHost.activeModelName || 'Desktop Model'
-      : 'Desktop Host (Offline)'
-    : activeLocalModel
+  const modelLabel = activeLocalModel
     ? activeLocalModel.name
-    : 'No Model Selected';
+    : 'Select Model to Chat';
 
-  const dotColor = isDesktop
-    ? desktopHost.isConnected
-      ? theme.success
-      : theme.danger
-    : activeLocalModel
-    ? theme.success
-    : theme.warning;
+  const dotColor = activeLocalModel ? theme.success : theme.warning;
 
   return (
     <View
@@ -53,45 +35,41 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         },
       ]}
     >
-      {/* Back button */}
-      <TouchableOpacity
-        style={[
-          styles.backButton,
-          { backgroundColor: theme.card, borderColor: theme.cardBorder },
-          theme.shadows.sm,
-        ]}
-        onPress={onBackToHome}
-        activeOpacity={0.7}
-      >
-        <Icon name="arrow-left" size={18} color={theme.textPrimary} />
-      </TouchableOpacity>
+      {/* Brand logo & Title */}
+      <View style={styles.brandRow}>
+        <View style={[styles.brandIcon, { backgroundColor: theme.accent }]}>
+          <Icon name="cpu" size={16} color="#ffffff" />
+        </View>
+        <Text style={[styles.appTitle, { color: theme.textPrimary }]}>Local AI</Text>
+      </View>
 
-      {/* Model chip in center */}
+      {/* Model Selector Chip */}
       <TouchableOpacity
         style={[
           styles.modelChip,
           {
             backgroundColor: theme.card,
-            borderColor: theme.cardBorder,
+            borderColor: activeLocalModel ? theme.cardBorder : theme.accent,
           },
           theme.shadows.sm,
         ]}
-        onPress={onOpenModelModal}
+        onPress={onOpenModels}
         activeOpacity={0.7}
       >
-        <View
+        <View style={[styles.statusDot, { backgroundColor: dotColor }]} />
+        <Text
           style={[
-            styles.statusDot,
-            { backgroundColor: dotColor },
+            styles.modelName,
+            { color: activeLocalModel ? theme.textPrimary : theme.accent },
           ]}
-        />
-        <Text style={[styles.modelName, { color: theme.textPrimary }]} numberOfLines={1}>
+          numberOfLines={1}
+        >
           {modelLabel}
         </Text>
         <Icon name="chevron-down" size={14} color={theme.textMuted} />
       </TouchableOpacity>
 
-      {/* Right actions: Clear chat & Theme switcher */}
+      {/* Right actions */}
       <View style={styles.rightActions}>
         <TouchableOpacity
           style={[
@@ -130,31 +108,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  brandIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  appTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   modelChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 22,
+    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
     borderWidth: 1,
-    maxWidth: '58%',
+    maxWidth: '46%',
   },
   statusDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
   },
   modelName: {
@@ -167,9 +154,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

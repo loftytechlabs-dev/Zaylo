@@ -5,7 +5,7 @@ import { CURATED_MODELS } from './curated.js';
 import { ModelDownloader } from './downloader.js';
 import { HuggingFaceProvider } from './provider.js';
 import { ModelRepository } from '@local-ai/database';
-import { CapabilityEngine } from '@local-ai/capabilities';
+import { CapabilityEngine, ModelCapabilityRegistry } from '@local-ai/capabilities';
 import type { CapabilityProfile } from '@local-ai/shared';
 import { NotFoundError, AppError } from '@local-ai/shared';
 
@@ -23,6 +23,7 @@ export class ModelManager {
     }
     // Seed curated models into database
     this.seedCuratedModels();
+    this.scanLocalDirectory();
   }
 
   private seedCuratedModels(): void {
@@ -31,12 +32,72 @@ export class ModelManager {
     }
   }
 
+  public scanLocalDirectory(): void {
+    if (!fs.existsSync(this.modelsDir)) return;
+    try {
+      const entries = fs.readdirSync(this.modelsDir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(this.modelsDir, entry.name);
+        if (entry.name.endsWith('.downloading')) continue;
+
+        if (entry.isFile() && (entry.name.endsWith('.gguf') || entry.name.endsWith('.safetensors') || entry.name.endsWith('.ckpt'))) {
+          const existing = this.modelRepo.getAllInstallations().find((i) => i.localPath === fullPath);
+          if (!existing) {
+            const stats = fs.statSync(fullPath);
+            const isImage = entry.name.endsWith('.safetensors') || entry.name.endsWith('.ckpt');
+            const variantId = entry.name.replace(/\.[^/.]+$/, '');
+            const modelId = variantId;
+            this.modelRepo.upsertInstallation({
+              id: `inst_${variantId}`,
+              modelId,
+              variantId,
+              name: entry.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+              localPath: fullPath,
+              sizeBytes: stats.size,
+              installedAt: stats.mtimeMs || Date.now(),
+              isLoaded: false,
+              format: isImage ? 'safetensors' : 'gguf',
+              quantization: isImage ? 'F16' : 'Q4_K_M',
+              contextLength: isImage ? 77 : 4096,
+            });
+          }
+        } else if (entry.isDirectory() || entry.isSymbolicLink()) {
+          const existing = this.modelRepo.getAllInstallations().find((i) => i.localPath === fullPath);
+          if (!existing) {
+            const modelIndex = path.join(fullPath, 'model_index.json');
+            if (fs.existsSync(modelIndex)) {
+              this.modelRepo.upsertInstallation({
+                id: `inst_${entry.name}`,
+                modelId: entry.name,
+                variantId: `${entry.name}-diffusers`,
+                name: entry.name.replace(/[-_]/g, ' ').toUpperCase(),
+                localPath: fullPath,
+                sizeBytes: 850_000_000,
+                installedAt: Date.now(),
+                isLoaded: false,
+                format: 'safetensors',
+                quantization: 'F16',
+                contextLength: 77,
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to scan local models directory:', err);
+    }
+  }
+
   public getAvailableModels(): Model[] {
     return this.modelRepo.getAllModels();
   }
 
   public getInstalledModels(): ModelInstallation[] {
-    return this.modelRepo.getAllInstallations();
+    this.scanLocalDirectory();
+    return this.modelRepo.getAllInstallations().map((inst) => ({
+      ...inst,
+      taskType: inst.taskType || ModelCapabilityRegistry.resolveTaskType(inst),
+    }));
   }
 
   public getModel(id: string): Model | null {
@@ -110,7 +171,11 @@ export class ModelManager {
     }
 
     const onProgress = (p: DownloadProgress) => {
-      this.activeDownloads.set(downloadId, p);
+      if (p.status === 'completed' || p.status === 'cancelled' || p.status === 'failed') {
+        this.activeDownloads.delete(downloadId);
+      } else {
+        this.activeDownloads.set(downloadId, p);
+      }
       params.onProgress?.(p);
     };
 

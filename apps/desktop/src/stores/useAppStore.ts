@@ -16,11 +16,17 @@ import type {
   ChatMessage,
   DocumentInfo,
   DocumentType,
+  FineTunedModelArtifact,
+  GeneratedImage,
+  ImageGenerationJob,
+  ImageGenerationParams,
+  ImageGenerationProgress,
 } from '@local-ai/shared';
 
 export type NavTab =
   | 'overview'
   | 'models'
+  | 'forge'
   | 'playground'
   | 'server'
   | 'devices'
@@ -61,11 +67,15 @@ interface AppStore {
   // Models
   availableModels: Model[];
   installedModels: ModelInstallation[];
+  fineTunedModels: FineTunedModelArtifact[];
   downloads: Record<string, DownloadProgress>;
   fetchModels: () => Promise<void>;
   downloadModel: (modelId: string, variantId: string, downloadUrl?: string, name?: string) => Promise<string>;
   cancelDownload: (downloadId: string) => Promise<void>;
+  setDownloadProgress: (progress: DownloadProgress) => void;
+  removeDownload: (downloadId: string) => void;
   deleteModel: (installationId: string) => Promise<void>;
+  deleteFineTunedModel: (artifactId: string) => Promise<void>;
   importLocalModel: (filePath?: string, name?: string) => Promise<ModelInstallation | null>;
 
   // Metrics & Telemetry
@@ -100,6 +110,27 @@ interface AppStore {
   // Multimodal Vision
   pendingImage?: { dataUrl: string; name: string };
   setPendingImage: (img?: { dataUrl: string; name: string }) => void;
+
+  // Image Generation
+  imageHistory: GeneratedImage[];
+  activeImageJob: ImageGenerationJob | null;
+  isGeneratingImage: boolean;
+  imageProgress?: ImageGenerationProgress;
+  fetchImageHistory: () => Promise<void>;
+  generateImage: (params: {
+    modelId: string;
+    modelName?: string;
+    modelPath?: string;
+    params: Partial<ImageGenerationParams>;
+    device?: 'auto' | 'mps' | 'cuda' | 'cpu';
+  }) => Promise<string>;
+  cancelImageGeneration: (jobId: string) => Promise<boolean>;
+  deleteGeneratedImage: (imageId: string) => Promise<void>;
+  saveImageAs: (imagePath: string, defaultName?: string) => Promise<string | null>;
+  openImageFolder: (imagePath: string) => Promise<void>;
+  setImageProgress: (progress?: ImageGenerationProgress) => void;
+  setActiveImageJob: (job: ImageGenerationJob | null) => void;
+  setIsGeneratingImage: (isGenerating: boolean) => void;
 
   // Playground Chat State
   playgroundMessages: ChatMessage[];
@@ -163,6 +194,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   serverConfig: undefined,
   availableModels: [],
   installedModels: [],
+  fineTunedModels: [],
   downloads: {},
   metricHistory: [],
   logs: [],
@@ -209,6 +241,64 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await api.invoke('rag:delete-document', { id });
     await get().fetchRagDocuments();
   },
+
+  // Image Generation State & Actions
+  imageHistory: [],
+  activeImageJob: null,
+  isGeneratingImage: false,
+  imageProgress: undefined,
+
+  fetchImageHistory: async () => {
+    try {
+      const history = await api.invoke('image:list-history', undefined);
+      set({ imageHistory: history || [] });
+    } catch (err) {
+      console.error('Failed to fetch image generation history:', err);
+    }
+  },
+
+  generateImage: async (params) => {
+    set({
+      isGeneratingImage: true,
+      imageProgress: {
+        step: 0,
+        totalSteps: params.params.steps || 20,
+        percentage: 0,
+        elapsedSeconds: 0,
+        statusMessage: 'Starting generation...',
+      },
+    });
+    try {
+      const res = await api.invoke('image:generate', params);
+      return res.jobId;
+    } catch (err) {
+      set({ isGeneratingImage: false, imageProgress: undefined });
+      throw err;
+    }
+  },
+
+  cancelImageGeneration: async (jobId) => {
+    const ok = await api.invoke('image:cancel', { jobId });
+    set({ isGeneratingImage: false, imageProgress: undefined });
+    return ok;
+  },
+
+  deleteGeneratedImage: async (imageId) => {
+    await api.invoke('image:delete', { imageId });
+    await get().fetchImageHistory();
+  },
+
+  saveImageAs: async (imagePath, defaultName) => {
+    return api.invoke('image:save-as', { imagePath, defaultName });
+  },
+
+  openImageFolder: async (imagePath) => {
+    return api.invoke('image:open-folder', { imagePath });
+  },
+
+  setImageProgress: (progress) => set({ imageProgress: progress }),
+  setActiveImageJob: (job) => set({ activeImageJob: job }),
+  setIsGeneratingImage: (isGenerating) => set({ isGeneratingImage: isGenerating }),
 
   fetchHardware: async () => {
     try {
@@ -290,16 +380,22 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   fetchModels: async () => {
     try {
-      const [available, installed, downloadsList] = await Promise.all([
+      const [available, installed, downloadsList, fineTuned] = await Promise.all([
         api.invoke('models:list-available', undefined),
         api.invoke('models:list-installed', undefined),
         api.invoke('models:get-downloads', undefined),
+        api.invoke('forge:list-fine-tuned-models', undefined).catch(() => []),
       ]);
       const dlMap: Record<string, DownloadProgress> = {};
       for (const d of downloadsList || []) {
         dlMap[d.id] = d;
       }
-      set({ availableModels: available || [], installedModels: installed || [], downloads: dlMap });
+      set({
+        availableModels: available || [],
+        installedModels: installed || [],
+        fineTunedModels: fineTuned || [],
+        downloads: dlMap,
+      });
     } catch (err) {
       console.error('Failed to fetch models:', err);
     }
@@ -310,15 +406,44 @@ export const useAppStore = create<AppStore>((set, get) => ({
     return res.downloadId;
   },
 
+  setDownloadProgress: (progress) => {
+    set((state) => ({
+      downloads: {
+        ...state.downloads,
+        [progress.id]: progress,
+      },
+    }));
+  },
+
+  removeDownload: (downloadId) => {
+    set((state) => {
+      const next = { ...state.downloads };
+      delete next[downloadId];
+      return { downloads: next };
+    });
+  },
+
   cancelDownload: async (downloadId) => {
-    await api.invoke('models:cancel-download', { downloadId });
-    const next = { ...get().downloads };
-    delete next[downloadId];
-    set({ downloads: next });
+    // Immediately remove from UI state
+    set((state) => {
+      const next = { ...state.downloads };
+      delete next[downloadId];
+      return { downloads: next };
+    });
+    try {
+      await api.invoke('models:cancel-download', { downloadId });
+    } catch (err) {
+      console.warn('Failed to cancel download:', err);
+    }
   },
 
   deleteModel: async (installationId) => {
     await api.invoke('models:delete', { installationId });
+    await get().fetchModels();
+  },
+
+  deleteFineTunedModel: async (artifactId) => {
+    await api.invoke('forge:delete-artifact', { artifactId });
     await get().fetchModels();
   },
 

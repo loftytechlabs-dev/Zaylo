@@ -1,6 +1,6 @@
 {
   "name": "zaylo",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Zaylo High-Performance Local AI Inference Engine and Server",
   "author": "Lofty Tech Labs <contact@loftytechlabs.com>",
   "homepage": "https://github.com/akhileshg1124/Zaylo",
@@ -21,6 +21,8 @@
     "dist:mac": "turbo run build && pnpm --filter @local-ai/desktop dist:mac",
     "dist:win": "turbo run build && pnpm --filter @local-ai/desktop dist:win",
     "dist:linux": "turbo run build && pnpm --filter @local-ai/desktop dist:linux",
+    "build:vscode": "pnpm --filter zaylo-vscode build",
+    "watch:vscode": "pnpm --filter zaylo-vscode watch",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

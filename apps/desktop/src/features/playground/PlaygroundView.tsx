@@ -1,631 +1,901 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  Send,
-  Square,
-  Trash2,
-  Settings2,
-  Bot,
-  User,
-  Zap,
-  Clock,
-  Check,
-  Copy,
-  AlertCircle,
-  Image as ImageIcon,
-  X,
-  BookOpen,
-  UploadCloud,
-  FileText,
-  Loader2,
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppStore } from '../../stores/useAppStore';
-import type { ChatMessageContentPart } from '@local-ai/shared';
+import { api } from '../../api/client';
+import type {
+  ChatMessage,
+  FineTunedModelArtifact,
+  ChatCompletionResponse,
+  GeneratedImage,
+  ImageGenerationParams,
+} from '@local-ai/shared';
+import { ModelCapabilityRegistry } from '@local-ai/capabilities';
+import type {
+  PlaygroundConversation,
+  GenerationSettings,
+  UnifiedModelOption,
+  InferenceGenerationStats,
+  CompareRunResult,
+} from './types';
+import { PlaygroundToolbar } from './components/PlaygroundToolbar';
+import { ConversationArea } from './components/ConversationArea';
+import { MessageComposer } from './components/MessageComposer';
+import { PerformancePanel } from './components/PerformancePanel';
+import { SettingsDrawer } from './components/SettingsDrawer';
+import { HistoryDrawer } from './components/HistoryDrawer';
+import { CompareView } from './components/CompareView';
+import { RagSelectorModal } from './components/RagSelectorModal';
+import { ImagePlaygroundArea } from './components/ImagePlaygroundArea';
+import { ImagePromptComposer } from './components/ImagePromptComposer';
+import { ImageLightboxModal } from './components/ImageLightboxModal';
 
-function getMessageText(content: string | ChatMessageContentPart[]): string {
-  if (typeof content === 'string') return content;
-  if (Array.isArray(content)) {
-    return content
-      .map((part) => (part.type === 'text' ? part.text || '' : ''))
-      .filter(Boolean)
-      .join('\n');
-  }
-  return '';
-}
+const DEFAULT_SETTINGS: GenerationSettings = {
+  systemPrompt: 'You are a helpful, fast, and accurate local AI assistant.',
+  temperature: 0.7,
+  topP: 0.9,
+  maxTokens: 1024,
+  frequencyPenalty: 0.0,
+  presencePenalty: 0.0,
+  stopSequences: [],
+};
 
-function renderMessageContent(content: string | ChatMessageContentPart[]) {
-  if (typeof content === 'string') {
-    return <div className="whitespace-pre-wrap select-text">{content}</div>;
-  }
-
-  if (Array.isArray(content)) {
-    return (
-      <div className="space-y-2 select-text">
-        {content.map((part, idx) => {
-          if (part.type === 'image_url') {
-            return (
-              <div key={idx} className="rounded-lg overflow-hidden border border-zinc-700/60 max-w-xs my-1 bg-black/40">
-                <img
-                  src={part.image_url.url}
-                  alt="User upload"
-                  className="max-h-60 w-auto object-contain rounded"
-                />
-              </div>
-            );
-          }
-          if (part.type === 'text') {
-            return (
-              <div key={idx} className="whitespace-pre-wrap">
-                {part.text}
-              </div>
-            );
-          }
-          return null;
-        })}
-      </div>
-    );
-  }
-
-  return null;
-}
+const STORAGE_KEY = 'zaylo_playground_conversations_v3';
+const SETTINGS_KEY = 'zaylo_playground_settings_v3';
 
 export const PlaygroundView: React.FC = () => {
   const {
-    playgroundMessages,
-    isGenerating,
-    generationStats,
-    systemPrompt,
-    temperature,
-    topP,
-    selectedModel,
+    availableModels,
     installedModels,
     serverState,
     serverInstance,
+    serverConfig,
+    currentMetric,
     ragEnabled,
     ragDocuments,
     pendingImage,
-    setSystemPrompt,
-    setTemperature,
-    setTopP,
-    setSelectedModel,
+    startServer,
     setRagEnabled,
     setPendingImage,
     fetchRagDocuments,
     addRagDocument,
     deleteRagDocument,
-    clearPlayground,
-    sendChatMessage,
-    stopGeneration,
+    imageHistory,
+    isGeneratingImage,
+    activeImageJob,
+    imageProgress,
+    generateImage,
+    cancelImageGeneration,
+    deleteGeneratedImage,
+    saveImageAs,
+    openImageFolder,
+    fetchImageHistory,
+    selectedModel,
+    setSelectedModel,
   } = useAppStore();
 
-  const [input, setInput] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
-  const [showRagModal, setShowRagModal] = useState(false);
-  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const docInputRef = useRef<HTMLInputElement>(null);
+  // Fine-Tuned Models from Forge
+  const [forgeArtifacts, setForgeArtifacts] = useState<FineTunedModelArtifact[]>([]);
 
-  useEffect(() => {
-    fetchRagDocuments();
+  // Image Lightbox & Inspiration State
+  const [lightboxImage, setLightboxImage] = useState<GeneratedImage | null>(null);
+  const [selectedInspirationPrompt, setSelectedInspirationPrompt] = useState<string>('');
+  const [canvasSessionTime, setCanvasSessionTime] = useState<number>(() => Date.now());
+  const [composerResetTrigger, setComposerResetTrigger] = useState<number>(0);
+
+  // Generation Settings State
+  const [settings, setSettings] = useState<GenerationSettings>(() => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_KEY);
+      if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+    } catch {
+      // Ignored
+    }
+    return DEFAULT_SETTINGS;
+  });
+
+  // Conversations State
+  const [conversations, setConversations] = useState<PlaygroundConversation[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // Ignored
+    }
+    const initialId = `conv_${Date.now()}`;
+    return [
+      {
+        id: initialId,
+        title: 'New Chat',
+        modelId: '',
+        modelName: '',
+        messages: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+    ];
+  });
+
+  const [activeConvId, setActiveConvId] = useState<string>(() => conversations[0]?.id || `conv_${Date.now()}`);
+
+  // Selected Model ID
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [isLoadingModel, setIsLoadingModel] = useState<boolean>(false);
+  const [isStartingServer, setIsStartingServer] = useState<boolean>(false);
+
+  // Streaming & Generation State
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
+  const [liveStats, setLiveStats] = useState<{
+    tokensPerSec: number;
+    tokenCount: number;
+    latencyMs: number;
+    timeToFirstTokenMs?: number;
+    promptTokens?: number;
+  }>({ tokensPerSec: 0, tokenCount: 0, latencyMs: 0 });
+
+  // RAG Document Selection
+  const [selectedRagDocIds, setSelectedRagDocIds] = useState<string[]>([]);
+  const [isRagModalOpen, setIsRagModalOpen] = useState<boolean>(false);
+
+  // Drawers Visibility
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [isPerformanceOpen, setIsPerformanceOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isCompareMode, setIsCompareMode] = useState<boolean>(false);
+
+  // Compare Mode History
+  const [compareHistory, setCompareHistory] = useState<CompareRunResult[]>([]);
+  const [isComparing, setIsComparing] = useState<boolean>(false);
+
+  // Refs for streaming token accumulation
+  const activeStreamContentRef = useRef<string>('');
+  const streamTokenCountRef = useRef<number>(0);
+  const streamStartTimeRef = useRef<number>(0);
+  const firstTokenTimeRef = useRef<number | null>(null);
+
+  // Load Forge Artifacts & Documents
+  const loadForgeArtifacts = useCallback(async () => {
+    try {
+      const artifacts = await api.invoke('forge:list-fine-tuned-models', undefined);
+      setForgeArtifacts(artifacts || []);
+    } catch (err) {
+      console.error('Failed to load forge artifacts:', err);
+    }
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [playgroundMessages, isGenerating]);
+    fetchRagDocuments();
+    loadForgeArtifacts();
+    fetchImageHistory();
+  }, [fetchRagDocuments, loadForgeArtifacts, fetchImageHistory]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if ((!input.trim() && !pendingImage) || isGenerating) return;
-    const msg = input;
-    setInput('');
-    sendChatMessage(msg);
-  };
+  // Persist conversations
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+    } catch {
+      // Ignored
+    }
+  }, [conversations]);
 
-  const handleCopy = (content: string | ChatMessageContentPart[], index: number) => {
-    navigator.clipboard.writeText(getMessageText(content));
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
+  // Persist settings
+  useEffect(() => {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch {
+      // Ignored
+    }
+  }, [settings]);
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setPendingImage({ dataUrl: reader.result, name: file.name });
-      }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
+  // Build Unified Model List (Installed Models + Image Models + Forge LoRA Adapters)
+  const unifiedModels: UnifiedModelOption[] = React.useMemo(() => {
+    const list: UnifiedModelOption[] = [];
 
-  const handlePaste = (e: React.ClipboardEvent) => {
-    const items = e.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.startsWith('image/')) {
-        const file = items[i].getAsFile();
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (typeof reader.result === 'string') {
-              setPendingImage({ dataUrl: reader.result, name: file.name || 'pasted-image.png' });
-            }
-          };
-          reader.readAsDataURL(file);
-          e.preventDefault();
-          break;
+    // 1. Installed models (Text, Vision, and Image)
+    for (const inst of installedModels) {
+      const taskType = inst.taskType || ModelCapabilityRegistry.resolveTaskType(inst);
+      const isImage = taskType === 'image-generation';
+      list.push({
+        id: inst.id,
+        name: inst.name,
+        type: 'base',
+        taskType,
+        isImageModel: isImage,
+        imageProfile: isImage ? ModelCapabilityRegistry.getProfile(inst.modelId || inst.id) : undefined,
+        format: inst.format,
+        quantization: inst.quantization,
+        localPath: inst.localPath,
+        isLoaded: Boolean(inst.isLoaded || serverInstance?.modelName === inst.name),
+        isVisionSupported: Boolean(inst.mmprojPath || taskType === 'vision'),
+        rawInstallation: inst,
+      });
+    }
+
+    // 2. Curated Image Generation Models from catalog
+    for (const avail of availableModels) {
+      if (ModelCapabilityRegistry.isImageGenerationModel(avail)) {
+        if (!list.some((item) => item.id === avail.id || item.rawInstallation?.modelId === avail.id)) {
+          const profile = ModelCapabilityRegistry.getProfile(avail.id);
+          list.push({
+            id: avail.id,
+            name: avail.name,
+            type: 'base',
+            taskType: 'image-generation',
+            isImageModel: true,
+            imageProfile: profile,
+            format: avail.variants[0]?.format || 'safetensors',
+            quantization: avail.variants[0]?.quantization || 'F16',
+            isLoaded: false,
+            isVisionSupported: false,
+          });
         }
       }
     }
-  };
 
-  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setIsUploadingDoc(true);
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const content = await file.text();
-        const ext = file.name.split('.').pop()?.toLowerCase() || 'txt';
-        await addRagDocument(file.name, content, ext as any);
+    // 3. Fine-tuned models & adapters from Forge
+    for (const art of forgeArtifacts) {
+      list.push({
+        id: art.id,
+        name: art.name,
+        type: art.type === 'lora' ? 'adapter' : 'standalone',
+        taskType: 'text-generation',
+        isImageModel: false,
+        baseModelId: art.baseModelId,
+        baseModelName: art.baseModelName,
+        adapterPath: art.artifactPath,
+        localPath: art.artifactPath,
+        format: art.format,
+        isLoaded: false,
+        isVisionSupported: false,
+        rawArtifact: art,
+      });
+    }
+
+    return list;
+  }, [installedModels, availableModels, forgeArtifacts, serverInstance]);
+
+  // Sync selected model with global store (e.g. from Models view "Open in Playground") or server
+  useEffect(() => {
+    if (unifiedModels.length === 0) return;
+
+    if (selectedModel) {
+      // Find matching model from store
+      const match = unifiedModels.find(
+        (m) =>
+          m.id === selectedModel ||
+          m.rawInstallation?.modelId === selectedModel ||
+          m.rawInstallation?.id === selectedModel ||
+          m.name.toLowerCase() === selectedModel.toLowerCase() ||
+          m.rawInstallation?.name?.toLowerCase() === selectedModel.toLowerCase()
+      );
+      if (match) {
+        if (selectedModelId !== match.id) {
+          setSelectedModelId(match.id);
+        }
+        return;
       }
-    } catch (err: any) {
-      alert(`Failed to ingest document: ${err.message}`);
-    } finally {
-      setIsUploadingDoc(false);
-      e.target.value = '';
+    }
+
+    if (!selectedModelId) {
+      const loaded = unifiedModels.find((m) => m.isLoaded);
+      const initial = loaded || unifiedModels[0];
+      setSelectedModelId(initial.id);
+      setSelectedModel(initial.name);
+    }
+  }, [selectedModel, unifiedModels, selectedModelId, setSelectedModel]);
+
+  // Current active conversation
+  const activeConv = conversations.find((c) => c.id === activeConvId) || conversations[0];
+  const activeModel = unifiedModels.find((m) => m.id === selectedModelId) || unifiedModels[0];
+
+  // Handle Model Switching
+  const handleSelectModel = async (modelId: string) => {
+    setSelectedModelId(modelId);
+    const target = unifiedModels.find((m) => m.id === modelId);
+    if (!target) return;
+
+    // Keep global store in sync so Header and other views immediately reflect active model
+    setSelectedModel(target.name);
+
+    if (target.isImageModel) {
+      // Image model selected: do not disrupt active text server
+      return;
+    }
+
+    // Update active conversation's model metadata
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === activeConvId
+          ? {
+              ...c,
+              modelId: target.id,
+              modelName: target.name,
+              isAdapter: target.type === 'adapter',
+              adapterPath: target.adapterPath,
+              updatedAt: Date.now(),
+            }
+          : c
+      )
+    );
+
+    // If it's a base GGUF model and server is running, switch it
+    if (target.type === 'base' && target.rawInstallation) {
+      setIsLoadingModel(true);
+      try {
+        if (serverState === 'RUNNING') {
+          await api.invoke('server:load-model', { modelId: target.rawInstallation.id });
+        } else {
+          await startServer(target.rawInstallation.modelId, target.rawInstallation.variantId);
+        }
+      } catch (err: any) {
+        console.error('Failed to switch model:', err);
+      } finally {
+        setIsLoadingModel(false);
+      }
     }
   };
 
-  const isServerReady = serverState === 'RUNNING';
-  const currentModelInst = installedModels.find(
-    (m) => m.name === selectedModel || m.name === serverInstance?.modelName || m.isLoaded
-  );
-  const isVisionSupported = Boolean(currentModelInst?.mmprojPath);
+  // Handle Image Generation
+  const handleGenerateImage = async (params: ImageGenerationParams) => {
+    try {
+      await generateImage({
+        modelId: activeModel.rawInstallation?.modelId || activeModel.id,
+        modelName: activeModel.name,
+        modelPath: activeModel.localPath || activeModel.rawInstallation?.localPath,
+        params,
+      });
+    } catch (err: any) {
+      alert(`Image generation failed: ${err.message}`);
+    }
+  };
+
+  const handleCancelImage = async () => {
+    await cancelImageGeneration(activeImageJob?.id || '');
+  };
+
+  // Start Server handler
+  const handleStartServer = async () => {
+    setIsStartingServer(true);
+    try {
+      const target = activeModel?.rawInstallation || installedModels[0];
+      if (target) {
+        await startServer(target.modelId, target.variantId);
+      }
+    } catch (err: any) {
+      alert(`Failed to start server: ${err.message}`);
+    } finally {
+      setIsStartingServer(false);
+    }
+  };
+
+  // Conversation & Canvas Management Handlers
+  const handleNewChat = () => {
+    if (activeModel?.isImageModel) {
+      setCanvasSessionTime(Date.now());
+      setSelectedInspirationPrompt('');
+      setComposerResetTrigger((prev) => prev + 1);
+      setIsHistoryOpen(false);
+      return;
+    }
+
+    const newId = `conv_${Date.now()}`;
+    const newConv: PlaygroundConversation = {
+      id: newId,
+      title: 'New Chat',
+      modelId: activeModel?.id || '',
+      modelName: activeModel?.name || '',
+      isAdapter: activeModel?.type === 'adapter',
+      adapterPath: activeModel?.adapterPath,
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    setConversations((prev) => [newConv, ...prev]);
+    setActiveConvId(newId);
+    setIsHistoryOpen(false);
+  };
+
+  const handleSelectConversation = (id: string) => {
+    const conv = conversations.find((c) => c.id === id);
+    if (conv) {
+      setActiveConvId(id);
+      if (conv.modelId && unifiedModels.some((m) => m.id === conv.modelId)) {
+        setSelectedModelId(conv.modelId);
+      }
+    }
+    setIsHistoryOpen(false);
+  };
+
+  const handleRenameConversation = (id: string, newTitle: string) => {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, title: newTitle, updatedAt: Date.now() } : c))
+    );
+  };
+
+  const handleDeleteConversation = (id: string) => {
+    setConversations((prev) => {
+      const next = prev.filter((c) => c.id !== id);
+      if (next.length === 0) {
+        const freshId = `conv_${Date.now()}`;
+        return [
+          {
+            id: freshId,
+            title: 'New Chat',
+            modelId: activeModel?.id || '',
+            modelName: activeModel?.name || '',
+            messages: [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
+        ];
+      }
+      return next;
+    });
+
+    if (activeConvId === id) {
+      const remaining = conversations.filter((c) => c.id !== id);
+      if (remaining.length > 0) {
+        setActiveConvId(remaining[0].id);
+      }
+    }
+  };
+
+  const handleClearConversation = () => {
+    if (!confirm('Clear all messages in this conversation?')) return;
+    setConversations((prev) =>
+      prev.map((c) => (c.id === activeConvId ? { ...c, messages: [], updatedAt: Date.now() } : c))
+    );
+  };
+
+  // Chat Submission & Streaming Execution
+  const handleSendMessage = async (userText: string) => {
+    if (isGenerating || (!userText.trim() && !pendingImage)) return;
+
+    const attachedImage = pendingImage;
+    const userMsg: ChatMessage = attachedImage
+      ? {
+          role: 'user',
+          content: [
+            { type: 'text', text: userText.trim() || 'Analyze this image.' },
+            { type: 'image_url', image_url: { url: attachedImage.dataUrl } },
+          ],
+        }
+      : { role: 'user', content: userText.trim() };
+
+    setPendingImage(undefined);
+
+    // Build message payload
+    const existingMsgs = activeConv?.messages || [];
+    const payloadMessages: ChatMessage[] = [];
+
+    if (settings.systemPrompt.trim()) {
+      payloadMessages.push({ role: 'system', content: settings.systemPrompt.trim() });
+    }
+    payloadMessages.push(...existingMsgs, userMsg);
+
+    // Append user message + blank assistant message to conversation
+    const updatedMessages: ChatMessage[] = [
+      ...existingMsgs,
+      userMsg,
+      { role: 'assistant', content: '' },
+    ];
+
+    // Generate auto-title for conversation from first message if titled 'New Chat'
+    const newTitle =
+      activeConv.title === 'New Chat' && userText.trim()
+        ? userText.trim().slice(0, 32) + (userText.trim().length > 32 ? '...' : '')
+        : activeConv.title;
+
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === activeConvId
+          ? {
+              ...c,
+              title: newTitle,
+              messages: updatedMessages,
+              updatedAt: Date.now(),
+            }
+          : c
+      )
+    );
+
+    setIsGenerating(true);
+    activeStreamContentRef.current = '';
+    streamTokenCountRef.current = 0;
+    streamStartTimeRef.current = performance.now();
+    firstTokenTimeRef.current = null;
+
+    const reqId = `chatcmpl-${Date.now()}`;
+    setActiveRequestId(reqId);
+
+    // Listen to real streamed token chunks
+    const unsubChunk = api.on('inference:chunk', (data: { requestId: string; chunk: ChatCompletionResponse }) => {
+      const delta = data.chunk.choices[0]?.delta?.content;
+      if (delta) {
+        if (!firstTokenTimeRef.current) {
+          firstTokenTimeRef.current = performance.now();
+        }
+
+        activeStreamContentRef.current += delta;
+        streamTokenCountRef.current += 1;
+
+        const now = performance.now();
+        const durationSec = (now - (firstTokenTimeRef.current || streamStartTimeRef.current)) / 1000;
+        const liveTokPerSec = durationSec > 0 ? streamTokenCountRef.current / durationSec : 0;
+        const liveLatency = Math.round(now - streamStartTimeRef.current);
+        const ttft = firstTokenTimeRef.current
+          ? Math.round(firstTokenTimeRef.current - streamStartTimeRef.current)
+          : undefined;
+
+        setLiveStats({
+          tokensPerSec: parseFloat(liveTokPerSec.toFixed(1)),
+          tokenCount: streamTokenCountRef.current,
+          latencyMs: liveLatency,
+          timeToFirstTokenMs: ttft,
+          promptTokens: Math.max(1, Math.ceil(userText.length / 4)),
+        });
+
+        // Update active assistant bubble in state
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== activeConvId) return c;
+            const msgs = [...c.messages];
+            if (msgs.length > 0 && msgs[msgs.length - 1].role === 'assistant') {
+              msgs[msgs.length - 1] = {
+                role: 'assistant',
+                content: activeStreamContentRef.current,
+              };
+            }
+            return { ...c, messages: msgs };
+          })
+        );
+      }
+    });
+
+    try {
+      const response = await api.invoke('inference:chat', {
+        model: activeModel?.name || 'default',
+        messages: payloadMessages,
+        temperature: settings.temperature,
+        top_p: settings.topP,
+        max_tokens: settings.maxTokens,
+        frequency_penalty: settings.frequencyPenalty,
+        presence_penalty: settings.presencePenalty,
+        stop: settings.stopSequences.length > 0 ? settings.stopSequences : undefined,
+        stream: true,
+        rag: ragEnabled,
+        ragDocumentIds: selectedRagDocIds.length > 0 ? selectedRagDocIds : undefined,
+      });
+
+      const endTime = performance.now();
+      const totalLatencyMs = Math.round(endTime - streamStartTimeRef.current);
+      const ttftMs = firstTokenTimeRef.current
+        ? Math.round(firstTokenTimeRef.current - streamStartTimeRef.current)
+        : undefined;
+
+      // Final response text
+      const rawFinal = response?.choices[0]?.message?.content || activeStreamContentRef.current;
+      const finalContent =
+        typeof rawFinal === 'string'
+          ? rawFinal
+          : Array.isArray(rawFinal)
+          ? rawFinal.map((p: any) => (p.type === 'text' ? p.text : '')).join('')
+          : '';
+
+      const completionTokens =
+        response?.usage?.completion_tokens || Math.max(1, streamTokenCountRef.current || Math.ceil(finalContent.length / 4));
+      const promptTokens =
+        response?.usage?.prompt_tokens || Math.max(1, Math.ceil(userText.length / 4));
+
+      const durationSec = (endTime - (firstTokenTimeRef.current || streamStartTimeRef.current)) / 1000;
+      const finalTokensPerSec = durationSec > 0 ? parseFloat((completionTokens / durationSec).toFixed(1)) : 0;
+
+      const finalStats: InferenceGenerationStats = {
+        latencyMs: totalLatencyMs,
+        tokensPerSec: finalTokensPerSec,
+        tokenCount: completionTokens,
+        timeToFirstTokenMs: ttftMs,
+        promptTokens,
+        totalDurationMs: totalLatencyMs,
+      };
+
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeConvId) return c;
+          const msgs = [...c.messages];
+          if (msgs.length > 0) {
+            msgs[msgs.length - 1] = {
+              role: 'assistant',
+              content: finalContent || activeStreamContentRef.current,
+            };
+          }
+          return {
+            ...c,
+            messages: msgs,
+            lastStats: finalStats,
+            updatedAt: Date.now(),
+          };
+        })
+      );
+    } catch (err: any) {
+      const rawError = err?.message || 'Inference request failed';
+      let errorMsg = `[Error: ${rawError}]`;
+
+      if (rawError.includes('image input is not supported') || rawError.includes('mmproj')) {
+        errorMsg = `⚠️ **Vision Projector Required**\n\n**${activeModel?.name}** is running in text-only mode and does not have a multimodal projector loaded.\n\nTo chat with images, select a vision model in the model dropdown.`;
+      }
+
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeConvId) return c;
+          const msgs = [...c.messages];
+          if (msgs.length > 0) {
+            msgs[msgs.length - 1] = { role: 'assistant', content: errorMsg };
+          }
+          return { ...c, messages: msgs };
+        })
+      );
+    } finally {
+      unsubChunk?.();
+      setIsGenerating(false);
+      setActiveRequestId(null);
+    }
+  };
+
+  // Stop active generation
+  const handleStopGeneration = () => {
+    if (activeRequestId) {
+      api.invoke('inference:abort', { requestId: activeRequestId });
+    }
+    setIsGenerating(false);
+  };
+
+  // Regenerate last response
+  const handleRegenerate = () => {
+    const msgs = activeConv?.messages || [];
+    if (msgs.length < 2) return;
+    const lastUserIndex = [...msgs].reverse().findIndex((m) => m.role === 'user');
+    if (lastUserIndex === -1) return;
+    const realIndex = msgs.length - 1 - lastUserIndex;
+    const lastUserMsg = msgs[realIndex];
+
+    const promptText =
+      typeof lastUserMsg.content === 'string'
+        ? lastUserMsg.content
+        : Array.isArray(lastUserMsg.content)
+        ? (lastUserMsg.content.find((p) => p.type === 'text') as any)?.text || ''
+        : '';
+
+    // Remove the last assistant message
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === activeConvId
+          ? { ...c, messages: c.messages.slice(0, realIndex), updatedAt: Date.now() }
+          : c
+      )
+    );
+
+    handleSendMessage(promptText);
+  };
+
+  // Run Comparison Mode Execution
+  const handleRunComparison = async (prompt: string) => {
+    setIsComparing(true);
+    try {
+      const baseInst = installedModels[0];
+      const ftArtifact = forgeArtifacts[0];
+
+      if (!baseInst) {
+        throw new Error('No base model installed to compare against.');
+      }
+
+      const res = await api.invoke('forge:compare-models', {
+        baseModelPath: baseInst.localPath,
+        adapterPath: ftArtifact?.artifactPath,
+        prompt,
+        temperature: settings.temperature,
+        maxTokens: settings.maxTokens,
+      });
+
+      setCompareHistory((prev) => [
+        {
+          prompt,
+          baseResponse: res.baseResponse,
+          baseLatencyMs: res.baseDurationMs,
+          ftResponse: res.fineTunedResponse,
+          ftLatencyMs: res.fineTunedDurationMs,
+          timestamp: Date.now(),
+        },
+        ...prev,
+      ]);
+    } catch (err: any) {
+      alert(`Comparison error: ${err.message}`);
+    } finally {
+      setIsComparing(false);
+    }
+  };
+
+  const isVisionSupported = Boolean(activeModel?.isVisionSupported);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden relative">
-      {/* Main Chat Studio */}
-      <div className="flex-1 flex flex-col justify-between bg-[#090a0c] border-r border-[#202227]">
-        {/* Top Chat Bar */}
-        <div className="h-12 border-b border-[#202227] px-6 flex items-center justify-between bg-[#0e1013]">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-mono text-zinc-400">MODEL:</span>
-            <select
-              value={selectedModel || serverInstance?.modelName || ''}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="bg-[#181a20] border border-[#282b34] rounded px-2 py-1 text-xs font-mono text-zinc-200 focus:outline-none"
-            >
-              {installedModels.map((m) => (
-                <option key={m.id} value={m.name}>
-                  {m.name} ({m.quantization})
-                </option>
-              ))}
-            </select>
+    <div className="flex h-full w-full bg-[#090a0c] text-zinc-100 overflow-hidden relative font-sans">
+      {/* Main Workspace Column */}
+      <div className="flex-1 flex flex-col min-w-0 justify-between overflow-hidden bg-[#090a0c]">
+        {/* Top Toolbar */}
+        <PlaygroundToolbar
+          models={unifiedModels}
+          selectedModelId={selectedModelId}
+          onSelectModel={handleSelectModel}
+          serverState={serverState}
+          isLoadingModel={isLoadingModel}
+          isGeneratingImage={isGeneratingImage}
+          onNewChat={handleNewChat}
+          onToggleHistory={() => {
+            setIsHistoryOpen(!isHistoryOpen);
+            setIsPerformanceOpen(false);
+            setIsSettingsOpen(false);
+          }}
+          onTogglePerformance={() => {
+            setIsPerformanceOpen(!isPerformanceOpen);
+            setIsHistoryOpen(false);
+            setIsSettingsOpen(false);
+          }}
+          onToggleSettings={() => {
+            setIsSettingsOpen(!isSettingsOpen);
+            setIsHistoryOpen(false);
+            setIsPerformanceOpen(false);
+          }}
+          onToggleCompare={() => setIsCompareMode(!isCompareMode)}
+          isHistoryOpen={isHistoryOpen}
+          isPerformanceOpen={isPerformanceOpen}
+          isSettingsOpen={isSettingsOpen}
+          isCompareMode={isCompareMode}
+          conversationCount={conversations.length}
+        />
 
-            {currentModelInst && (
-              <span
-                className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
-                  isVisionSupported
-                    ? 'bg-blue-950/60 text-blue-300 border-blue-800/50'
-                    : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/50'
-                }`}
-              >
-                {isVisionSupported ? 'VISION ENABLED' : 'TEXT ONLY'}
-              </span>
+        {/* Workspace Canvas: Normal Conversation Area, Comparative View, or Image Generation Canvas */}
+        {activeModel?.isImageModel ? (
+          <>
+            <ImagePlaygroundArea
+              images={imageHistory}
+              sessionStartTime={canvasSessionTime}
+              isGenerating={isGeneratingImage}
+              progress={imageProgress}
+              selectedModel={activeModel}
+              onSelectSuggestion={(prompt) => setSelectedInspirationPrompt(prompt)}
+              onCancelGeneration={handleCancelImage}
+              onSaveImageAs={saveImageAs}
+              onOpenFolder={openImageFolder}
+              onDeleteImage={deleteGeneratedImage}
+              onOpenLightbox={(img) => setLightboxImage(img)}
+              onRegenerate={(img) => setSelectedInspirationPrompt(img.prompt)}
+              onResetCanvas={handleNewChat}
+            />
+
+            <ImagePromptComposer
+              selectedModel={activeModel}
+              isGenerating={isGeneratingImage}
+              onGenerate={handleGenerateImage}
+              onCancel={handleCancelImage}
+              externalPrompt={selectedInspirationPrompt}
+              onClearExternalPrompt={() => setSelectedInspirationPrompt('')}
+              resetTrigger={composerResetTrigger}
+            />
+
+            {lightboxImage && (
+              <ImageLightboxModal
+                image={lightboxImage}
+                onClose={() => setLightboxImage(null)}
+                onSaveAs={saveImageAs}
+                onOpenFolder={openImageFolder}
+                onRegenerate={(img) => setSelectedInspirationPrompt(img.prompt)}
+              />
             )}
-          </div>
+          </>
+        ) : isCompareMode ? (
+          <CompareView
+            baseModel={unifiedModels.find((m) => m.type === 'base')}
+            fineTunedModel={unifiedModels.find((m) => m.type === 'adapter') || unifiedModels[0]}
+            onRunComparison={handleRunComparison}
+            isComparing={isComparing}
+            history={compareHistory}
+          />
+        ) : (
+          <>
+            <ConversationArea
+              messages={activeConv?.messages || []}
+              isGenerating={isGenerating}
+              selectedModel={activeModel}
+              generationStats={activeConv?.lastStats}
+              onSelectSuggestion={(prompt) => handleSendMessage(prompt)}
+              onRegenerate={handleRegenerate}
+              onRetry={handleRegenerate}
+              onClearConversation={handleClearConversation}
+            />
 
-          <div className="flex items-center gap-3">
-            {/* Live generation stats */}
-            {generationStats && (
-              <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-400">
-                <span className="flex items-center gap-1 text-emerald-400">
-                  <Zap className="w-3 h-3" />
-                  {generationStats.tokensPerSec} tok/s
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-zinc-500" />
-                  {generationStats.latencyMs} ms
-                </span>
-                <span className="text-zinc-500">{generationStats.tokenCount} tokens</span>
-              </div>
-            )}
-
-            {/* Knowledge RAG Toggle Button */}
-            <button
-              onClick={() => setShowRagModal(true)}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors border ${
-                ragEnabled
-                  ? 'bg-emerald-950/40 border-emerald-700/60 text-emerald-300'
-                  : 'bg-[#14161b] border-[#22252c] text-zinc-400 hover:text-zinc-200'
-              }`}
-              title="Configure Local Document RAG"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>RAG</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                ragEnabled ? 'bg-emerald-800/80 text-emerald-100' : 'bg-zinc-800 text-zinc-400'
-              }`}>
-                {ragDocuments.length}
-              </span>
-            </button>
-
-            <button
-              onClick={clearPlayground}
-              className="p-1.5 rounded text-zinc-500 hover:text-zinc-300 hover:bg-[#1a1c22] transition-colors"
-              title="Clear conversation"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className={`p-1.5 rounded transition-colors ${
-                showSettings ? 'bg-[#22252e] text-blue-400' : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="Toggle inference parameters"
-            >
-              <Settings2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Server Warning if not running */}
-        {!isServerReady && (
-          <div className="mx-6 mt-4 p-3 rounded-md bg-amber-950/40 border border-amber-800/50 flex items-center justify-between text-xs text-amber-300">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-400" />
-              <span>Server is currently {serverState.toLowerCase()}. Start server from the header to enable inference.</span>
-            </div>
-          </div>
+            {/* Bottom Message Composer */}
+            <MessageComposer
+              onSendMessage={handleSendMessage}
+              onStopGeneration={handleStopGeneration}
+              isGenerating={isGenerating}
+              serverState={serverState}
+              isVisionSupported={isVisionSupported}
+              pendingImage={pendingImage}
+              onSetPendingImage={setPendingImage}
+              ragEnabled={ragEnabled}
+              ragDocsCount={ragDocuments.length}
+              onOpenRagModal={() => setIsRagModalOpen(true)}
+              onStartServer={handleStartServer}
+              isStartingServer={isStartingServer}
+            />
+          </>
         )}
-
-        {/* Chat Message List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 font-sans">
-          {playgroundMessages.map((msg, index) => {
-            const isUser = msg.role === 'user';
-            return (
-              <div key={index} className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                {!isUser && (
-                  <div className="w-7 h-7 rounded-md bg-blue-950/80 border border-blue-800/40 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                )}
-
-                <div
-                  className={`max-w-[78%] rounded-lg px-4 py-3 text-xs leading-relaxed group relative ${
-                    isUser
-                      ? 'bg-blue-600 text-white rounded-br-none'
-                      : 'bg-[#14161b] text-zinc-200 border border-[#22252c] rounded-bl-none font-sans'
-                  }`}
-                >
-                  {renderMessageContent(msg.content)}
-
-                  {!isUser && getMessageText(msg.content) && (
-                    <button
-                      onClick={() => handleCopy(msg.content, index)}
-                      className="absolute right-2 top-2 p-1 rounded bg-[#1c1f26] text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Copy response"
-                    >
-                      {copiedIndex === index ? (
-                        <Check className="w-3 h-3 text-emerald-400" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </button>
-                  )}
-                </div>
-
-                {isUser && (
-                  <div className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 shrink-0 mt-0.5">
-                    <User className="w-4 h-4" />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input Area */}
-        <div className="p-4 border-t border-[#202227] bg-[#0c0d10]">
-          {/* Pending Image Attachment Pill */}
-          {pendingImage && (
-            <div className="mb-2.5 flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <div className="flex items-center gap-2 p-1.5 pl-2 bg-[#171a22] border border-blue-500/40 rounded-md w-fit">
-                <img
-                  src={pendingImage.dataUrl}
-                  alt="Pending upload preview"
-                  className="w-7 h-7 rounded object-cover border border-zinc-700"
-                />
-                <span className="text-[11px] text-zinc-200 truncate max-w-[180px]">
-                  {pendingImage.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setPendingImage(undefined)}
-                  className="p-1 text-zinc-400 hover:text-zinc-100 transition-colors"
-                  title="Remove image"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {!isVisionSupported && (
-                <div className="text-[11px] text-amber-300 bg-amber-950/40 border border-amber-800/50 px-2.5 py-1 rounded-md flex items-center gap-1.5">
-                  <span>⚠️ Active model is text-only. Switch to a Vision model (e.g. Qwen 2.5-VL or SmolVLM) in the Models tab to analyze images.</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="relative flex items-center">
-            <textarea
-              rows={2}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onPaste={handlePaste}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-              placeholder={
-                isServerReady
-                  ? ragEnabled
-                    ? 'Type prompt (RAG active)... Paste or attach images (Shift+Enter for newline)'
-                    : 'Type prompt... Paste or attach images (Shift+Enter for newline)'
-                  : 'Server stopped. Start server to chat.'
-              }
-              disabled={!isServerReady || isGenerating}
-              className="w-full bg-[#13151a] border border-[#23262f] rounded-lg pl-4 pr-32 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none font-sans"
-            />
-
-            <input
-              type="file"
-              ref={imageInputRef}
-              onChange={handleImageFileChange}
-              accept="image/*"
-              className="hidden"
-            />
-
-            <div className="absolute right-3 flex items-center gap-1.5">
-              {/* Image attach button for Multimodal Vision */}
-              <button
-                type="button"
-                onClick={() => imageInputRef.current?.click()}
-                disabled={!isServerReady || isGenerating}
-                className={`p-1.5 rounded-md transition-colors ${
-                  pendingImage
-                    ? 'bg-blue-900/60 text-blue-300'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#1a1d24]'
-                }`}
-                title={
-                  isVisionSupported
-                    ? 'Attach image for vision model (or paste from clipboard)'
-                    : 'Attach image (Requires Vision model like Qwen 2.5-VL with mmproj)'
-                }
-              >
-                <ImageIcon className="w-4 h-4" />
-              </button>
-
-              {isGenerating ? (
-                <button
-                  type="button"
-                  onClick={stopGeneration}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-950/50 transition-all animate-pulse"
-                  title="Stop generating response"
-                >
-                  <Square className="w-3.5 h-3.5 fill-current" />
-                  <span>Stop</span>
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={!isServerReady || (!input.trim() && !pendingImage)}
-                  className="p-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-colors"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
       </div>
 
-      {/* Right Drawer: Inference Parameters */}
-      {showSettings && (
-        <aside className="w-72 bg-[#0c0d10] p-6 space-y-6 select-none overflow-y-auto border-l border-[#202227]">
-          <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 pb-2 border-b border-[#202227]">
-            Inference Parameters
-          </div>
-
-          {/* System Prompt */}
-          <div className="space-y-2">
-            <label className="text-xs text-zinc-400 font-medium">System Prompt</label>
-            <textarea
-              rows={4}
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              className="w-full bg-[#13151a] border border-[#23262f] rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 resize-none font-mono"
-            />
-          </div>
-
-          {/* Temperature */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-mono">
-              <span className="text-zinc-400">Temperature</span>
-              <span className="text-zinc-200 font-bold">{temperature.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="1.5"
-              step="0.05"
-              value={temperature}
-              onChange={(e) => setTemperature(parseFloat(e.target.value))}
-              className="w-full accent-blue-500 bg-zinc-800"
-            />
-          </div>
-
-          {/* Top P */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-mono">
-              <span className="text-zinc-400">Top P</span>
-              <span className="text-zinc-200 font-bold">{topP.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={topP}
-              onChange={(e) => setTopP(parseFloat(e.target.value))}
-              className="w-full accent-blue-500 bg-zinc-800"
-            />
-          </div>
-        </aside>
+      {/* Right Drawer: Performance Panel */}
+      {isPerformanceOpen && (
+        <PerformancePanel
+          stats={activeConv?.lastStats}
+          liveStats={liveStats}
+          systemMetric={currentMetric}
+          contextLimit={serverConfig?.contextLimit || 4096}
+          isGenerating={activeModel?.isImageModel ? isGeneratingImage : isGenerating}
+          isImageModel={activeModel?.isImageModel}
+          lastGeneratedImage={imageHistory[0]}
+          onClose={() => setIsPerformanceOpen(false)}
+        />
       )}
 
-      {/* RAG & Knowledge Base Modal */}
-      {showRagModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#101217] border border-[#282b36] rounded-xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-[#20232c] flex items-center justify-between bg-[#14161d]">
-              <div className="flex items-center gap-2.5">
-                <BookOpen className="w-5 h-5 text-emerald-400" />
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-100">Local Knowledge Base & RAG</h3>
-                  <p className="text-[11px] text-zinc-400">Index private documents for offline semantic search</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowRagModal(false)}
-                className="p-1 rounded text-zinc-400 hover:text-zinc-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Content Body */}
-            <div className="p-6 overflow-y-auto space-y-5">
-              {/* RAG Toggle */}
-              <div className="p-3.5 rounded-lg bg-[#171922] border border-[#252834] flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-medium text-zinc-200">Augment Inference with Documents</div>
-                  <div className="text-[11px] text-zinc-400">
-                    Retrieves top relevant passages and inserts citations into your conversation
-                  </div>
-                </div>
-                <button
-                  onClick={() => setRagEnabled(!ragEnabled)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                    ragEnabled ? 'bg-emerald-600' : 'bg-zinc-700'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      ragEnabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Upload Drop Zone */}
-              <div>
-                <input
-                  type="file"
-                  ref={docInputRef}
-                  onChange={handleDocUpload}
-                  multiple
-                  accept=".txt,.md,.markdown,.json,.csv,.ts,.js,.py,.html,.css"
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => docInputRef.current?.click()}
-                  disabled={isUploadingDoc}
-                  className="w-full border-2 border-dashed border-[#2b2f3e] hover:border-emerald-500/60 rounded-lg p-5 flex flex-col items-center justify-center gap-2 bg-[#14161f]/60 hover:bg-[#14161f] transition-all cursor-pointer group"
-                >
-                  {isUploadingDoc ? (
-                    <>
-                      <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-                      <span className="text-xs text-zinc-300">Chunking & indexing document...</span>
-                    </>
-                  ) : (
-                    <>
-                      <UploadCloud className="w-6 h-6 text-zinc-400 group-hover:text-emerald-400 transition-colors" />
-                      <div className="text-xs font-medium text-zinc-300">
-                        Click to upload local documents or code
-                      </div>
-                      <div className="text-[11px] text-zinc-500">
-                        Supports Markdown (.md), Plaintext (.txt), JSON, CSV, Source Code
-                      </div>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Indexed Documents List */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                  <span>INDEXED DOCUMENTS ({ragDocuments.length})</span>
-                </div>
-
-                {ragDocuments.length === 0 ? (
-                  <div className="p-4 rounded-lg bg-[#14161e] border border-[#20232e] text-center text-xs text-zinc-500">
-                    No documents indexed yet. Upload documents above to chat with them.
-                  </div>
-                ) : (
-                  <div className="divide-y divide-[#1e212b] border border-[#222532] rounded-lg overflow-hidden bg-[#12141a]">
-                    {ragDocuments.map((doc) => (
-                      <div key={doc.id} className="p-3 flex items-center justify-between hover:bg-[#181a24] transition-colors">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <div className="min-w-0">
-                            <div className="text-xs font-medium text-zinc-200 truncate">{doc.name}</div>
-                            <div className="text-[10px] text-zinc-400 flex items-center gap-2">
-                              <span>{(doc.sizeBytes / 1024).toFixed(1)} KB</span>
-                              <span>•</span>
-                              <span>{doc.chunkCount} chunks</span>
-                              <span>•</span>
-                              <span className="uppercase text-[9px] px-1 rounded bg-zinc-800 text-zinc-300">{doc.type}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => deleteRagDocument(doc.id)}
-                          className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/30 rounded transition-colors"
-                          title="Delete document and chunks"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-3 border-t border-[#20232c] bg-[#14161d] flex justify-end">
-              <button
-                onClick={() => setShowRagModal(false)}
-                className="px-4 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition-colors"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Right Drawer: Generation Settings */}
+      {isSettingsOpen && (
+        <SettingsDrawer
+          settings={settings}
+          onChange={(up) => setSettings((s) => ({ ...s, ...up }))}
+          onReset={() => setSettings(DEFAULT_SETTINGS)}
+          onClose={() => setIsSettingsOpen(false)}
+          contextLimit={serverConfig?.contextLimit || 4096}
+        />
       )}
+
+      {/* Right Drawer: History */}
+      {isHistoryOpen && (
+        <HistoryDrawer
+          conversations={conversations}
+          activeId={activeConvId}
+          onSelect={handleSelectConversation}
+          onNewChat={handleNewChat}
+          onRename={handleRenameConversation}
+          onDelete={handleDeleteConversation}
+          onClose={() => setIsHistoryOpen(false)}
+        />
+      )}
+
+      {/* RAG Knowledge Selector Modal */}
+      <RagSelectorModal
+        isOpen={isRagModalOpen}
+        onClose={() => setIsRagModalOpen(false)}
+        ragEnabled={ragEnabled}
+        onToggleRag={setRagEnabled}
+        documents={ragDocuments}
+        selectedDocIds={selectedRagDocIds}
+        onToggleDocSelect={(id) => {
+          setSelectedRagDocIds((prev) =>
+            prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]
+          );
+        }}
+        onSelectAllDocs={() => {
+          if (selectedRagDocIds.length === ragDocuments.length) {
+            setSelectedRagDocIds([]);
+          } else {
+            setSelectedRagDocIds(ragDocuments.map((d) => d.id));
+          }
+        }}
+        onAddDocument={addRagDocument}
+        onDeleteDocument={deleteRagDocument}
+      />
     </div>
   );
 };

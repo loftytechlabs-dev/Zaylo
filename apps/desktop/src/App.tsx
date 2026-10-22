@@ -6,6 +6,7 @@ import { useAppStore } from './stores/useAppStore';
 import { api } from './api/client';
 import { OverviewView } from './features/overview/OverviewView';
 import { ModelsView } from './features/models/ModelsView';
+import { ForgeView } from './features/forge/ForgeView';
 import { PlaygroundView } from './features/playground/PlaygroundView';
 import { ServerApiView } from './features/server-api/ServerApiView';
 import { DevicesView } from './features/devices/DevicesView';
@@ -55,15 +56,72 @@ export const App: React.FC = () => {
       fetchModels();
     });
 
-    const unsubDownloads = api.on('download:progress', () => {
+    const unsubDownloads = api.on('download:progress', (progress: any) => {
+      if (progress?.status === 'cancelled' || progress?.status === 'failed') {
+        useAppStore.getState().removeDownload(progress.id);
+      } else if (progress?.status === 'completed') {
+        useAppStore.getState().removeDownload(progress.id);
+        fetchModels();
+      } else if (progress) {
+        useAppStore.getState().setDownloadProgress(progress);
+      }
+    });
+
+    const unsubModelsUpdated = api.on('models:updated', () => {
       fetchModels();
     });
+
+    const unsubForgeStatus = api.on('forge:training-status', (event: any) => {
+      if (event?.status === 'COMPLETED') {
+        fetchModels();
+      }
+    });
+
+    const unsubImageProgress = api.on('image:progress', (event: any) => {
+      useAppStore.getState().setImageProgress(event.progress);
+    });
+
+    const unsubImageStatus = api.on('image:status', (event: any) => {
+      if (event.status === 'CANCELLED' || event.status === 'FAILED') {
+        useAppStore.getState().setIsGeneratingImage(false);
+        useAppStore.getState().setImageProgress(undefined);
+      } else if (event.message) {
+        const cur = useAppStore.getState().imageProgress;
+        useAppStore.getState().setImageProgress({
+          step: cur?.step || 0,
+          totalSteps: cur?.totalSteps || 20,
+          percentage: cur?.percentage || 0,
+          elapsedSeconds: cur?.elapsedSeconds || 0,
+          statusMessage: event.message,
+        });
+      }
+    });
+
+    const unsubImageCompleted = api.on('image:completed', () => {
+      useAppStore.getState().setIsGeneratingImage(false);
+      useAppStore.getState().setImageProgress(undefined);
+      useAppStore.getState().fetchImageHistory();
+    });
+
+    const unsubImageError = api.on('image:error', (event: any) => {
+      useAppStore.getState().setIsGeneratingImage(false);
+      useAppStore.getState().setImageProgress(undefined);
+      console.error('Image generation error:', event.error);
+    });
+
+    useAppStore.getState().fetchImageHistory();
 
     return () => {
       unsubMetrics?.();
       unsubLogs?.();
       unsubState?.();
       unsubDownloads?.();
+      unsubModelsUpdated?.();
+      unsubForgeStatus?.();
+      unsubImageProgress?.();
+      unsubImageStatus?.();
+      unsubImageCompleted?.();
+      unsubImageError?.();
     };
   }, []);
 
@@ -79,6 +137,7 @@ export const App: React.FC = () => {
         <main className="flex-1 overflow-hidden bg-[#090a0b]">
           {activeTab === 'overview' && <OverviewView />}
           {activeTab === 'models' && <ModelsView />}
+          {activeTab === 'forge' && <ForgeView />}
           {activeTab === 'playground' && <PlaygroundView />}
           {activeTab === 'server' && <ServerApiView />}
           {activeTab === 'devices' && <DevicesView />}

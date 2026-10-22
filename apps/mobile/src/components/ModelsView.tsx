@@ -143,12 +143,13 @@ export const ModelsView: React.FC<ModelsViewProps> = ({
         }));
       },
       () => {
-        // Download complete
+        // Download complete - immediately activate and load into memory
         setDownloadProgressMap((prev) => {
           const next = { ...prev };
           delete next[model.id];
           return next;
         });
+        handleLoadModel(model);
       }
     );
   };

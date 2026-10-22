@@ -13,7 +13,7 @@ import { MobileMemoryPagingEngine } from './memoryPaging';
  */
 export const MOBILE_MODELS: OnDeviceModel[] = [
   {
-    id: 'smollm2-135m-q8_0',
+    id: 'smollm2-135m-instruct',
     name: 'SmolLM2 135M',
     tagline: 'Runs on literally any device. Featherlight.',
     parameters: '135 Million',
@@ -25,7 +25,7 @@ export const MOBILE_MODELS: OnDeviceModel[] = [
     isDownloaded: false,
   },
   {
-    id: 'qwen2.5-0.5b-q4_k_m',
+    id: 'qwen2.5-0.5b-instruct',
     name: 'Qwen 2.5 0.5B',
     tagline: 'Fast everyday assistant for mobile processors.',
     parameters: '490 Million',
@@ -37,7 +37,7 @@ export const MOBILE_MODELS: OnDeviceModel[] = [
     isDownloaded: false,
   },
   {
-    id: 'llama-3.2-1b-q4_k_m',
+    id: 'llama-3.2-1b-instruct',
     name: 'Llama 3.2 1B',
     tagline: 'High quality reasoning with mmap memory paging.',
     parameters: '1.2 Billion',
@@ -49,7 +49,7 @@ export const MOBILE_MODELS: OnDeviceModel[] = [
     isDownloaded: false,
   },
   {
-    id: 'llama-3.2-3b-q4_k_m',
+    id: 'llama-3.2-3b-instruct',
     name: 'Llama 3.2 3B (Paged)',
     tagline: 'Desktop-grade intelligence with virtual memory paging & q8 KV cache.',
     parameters: '3.2 Billion',
@@ -109,18 +109,18 @@ export class DeviceProfiler {
 
     let deviceTier: DeviceTier = 'tier_2_balanced';
     let tierLabel = 'Tier 2: Balanced (4–6GB RAM)';
-    let recommendedModelId = 'llama-3.2-1b-q4_k_m';
+    let recommendedModelId = 'llama-3.2-1b-instruct';
     let canRun3B = false;
 
     if (totalRamMb < 3800) {
       deviceTier = 'tier_1_eco';
       tierLabel = 'Tier 1: Eco Mode (< 4GB RAM)';
-      recommendedModelId = 'smollm2-135m-q8_0';
+      recommendedModelId = 'smollm2-135m-instruct';
       canRun3B = false;
     } else if (totalRamMb >= 7500) {
       deviceTier = 'tier_3_flagship';
       tierLabel = 'Tier 3: Flagship (8GB+ RAM)';
-      recommendedModelId = 'llama-3.2-3b-q4_k_m';
+      recommendedModelId = 'llama-3.2-3b-instruct';
       canRun3B = true;
     } else {
       canRun3B = totalRamMb >= 5500;

@@ -97,6 +97,18 @@ async function createWindow() {
     return { action: 'deny' };
   });
 
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error('[Electron Main] Render process gone:', details);
+  });
+
+  mainWindow.webContents.on('unresponsive', () => {
+    console.warn('[Electron Main] WebContents unresponsive');
+  });
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
   cleanupHandlers = await registerIpcHandlers(mainWindow);
 
   if (VITE_DEV_SERVER_URL) {

@@ -9,7 +9,6 @@ import {
   Platform,
 } from 'react-native';
 import type { Theme } from '../theme/theme';
-import type { HybridMode } from '../types';
 import { Icon } from './common/Icon';
 
 interface MessageInputProps {
@@ -17,7 +16,6 @@ interface MessageInputProps {
   onSendMessage: (text: string) => void;
   onStopGeneration: () => void;
   isStreaming: boolean;
-  activeMode: HybridMode;
   onAttachMedia?: () => void;
 }
 
@@ -26,7 +24,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   onStopGeneration,
   isStreaming,
-  activeMode,
   onAttachMedia,
 }) => {
   const [inputText, setInputText] = useState('');
@@ -74,11 +71,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           {/* Text Input */}
           <TextInput
             style={[styles.textInput, { color: theme.textPrimary }]}
-            placeholder={
-              activeMode === 'on_device'
-                ? 'Message local paged model...'
-                : 'Message Zaylo Desktop Host...'
-            }
+            placeholder="Message local AI..."
             placeholderTextColor={theme.textMuted}
             value={inputText}
             onChangeText={setInputText}
@@ -115,15 +108,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         {/* Engine status caption */}
         <View style={styles.captionContainer}>
           <Icon
-            name={activeMode === 'on_device' ? 'cpu' : 'monitor'}
+            name="cpu"
             size={11}
             color={theme.accent}
             style={{ marginRight: 4 }}
           />
           <Text style={[styles.captionText, { color: theme.textMuted }]}>
-            {activeMode === 'on_device'
-              ? 'Running offline via kernel virtual memory paging'
-              : 'Streaming from Desktop Fastify Gateway :8080'}
+            100% On-Device Offline AI (llama.rn)
           </Text>
         </View>
       </View>

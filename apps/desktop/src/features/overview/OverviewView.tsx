@@ -1,280 +1,700 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  Server,
   Cpu,
   HardDrive,
-  Activity,
   Zap,
-  Smartphone,
+  Activity,
+  Layers,
+  Flame,
+  MessageSquare,
+  Terminal,
+  ArrowRight,
+  Shield,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore';
+
+/**
+ * ThroughputTrendChart
+ * Renders an elegant SVG trendline using actual historical inference throughput samples.
+ * If inference is idle or no non-zero metrics have been recorded, displays a clean baseline
+ * with an informative empty state without fabricating curves.
+ */
+interface ThroughputChartProps {
+  samples: number[];
+  serverRunning: boolean;
+}
+
+const ThroughputTrendChart: React.FC<ThroughputChartProps> = ({ samples, serverRunning }) => {
+  const hasThroughput = samples.some((v) => v > 0);
+
+  // If we have actual throughput, find the scale maximum (at least 10 tok/s for good proportion)
+  const maxTps = hasThroughput ? Math.max(12, ...samples) * 1.15 : 20;
+
+  const width = 500;
+  const height = 120;
+  const padTop = 14;
+  const padBottom = 24;
+  const padLeft = 46;
+  const padRight = 14;
+
+  const chartW = width - padLeft - padRight;
+  const chartH = height - padTop - padBottom;
+
+  // Gridline Y positions
+  const yZero = padTop + chartH;
+  const yMid = padTop + chartH / 2;
+  const yTop = padTop;
+
+  // Compute points
+  const points = useMemo(() => {
+    if (samples.length === 0) return [];
+    return samples.map((val, idx) => {
+      const x = padLeft + (idx / Math.max(1, samples.length - 1)) * chartW;
+      const y = yZero - (Math.min(val, maxTps) / maxTps) * chartH;
+      return { x, y, val };
+    });
+  }, [samples, maxTps, chartW, chartH, padLeft, yZero]);
+
+  const linePath = useMemo(() => {
+    if (points.length === 0) return '';
+    return points.reduce((acc, pt, i) => (i === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`), '');
+  }, [points]);
+
+  const areaPath = useMemo(() => {
+    if (points.length === 0) return '';
+    return `${linePath} L ${points[points.length - 1].x} ${yZero} L ${points[0].x} ${yZero} Z`;
+  }, [linePath, points, yZero]);
+
+  return (
+    <div className="overview-chart-box relative w-full rounded-md bg-[#0a0c0f] border border-[#181a20] p-3 overflow-hidden select-none">
+      <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 mb-2">
+        <span className="flex items-center gap-1.5 uppercase tracking-wider">
+          <Activity className="w-3.5 h-3.5 text-blue-400" />
+          Throughput History (tok/s)
+        </span>
+        <span className="text-zinc-500 font-sans text-[11px]">
+          {hasThroughput ? 'Live Generation Stream' : serverRunning ? 'Idle Baseline' : 'Engine Offline'}
+        </span>
+      </div>
+
+      <div className="relative h-28 w-full">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="overviewTpsFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2563eb" stopOpacity="0.32" />
+              <stop offset="85%" stopColor="#2563eb" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Horizontal gridlines */}
+          <line
+            x1={padLeft}
+            y1={yTop}
+            x2={width - padRight}
+            y2={yTop}
+            stroke="#1d212b"
+            strokeDasharray="3 3"
+            strokeWidth="1"
+          />
+          <line
+            x1={padLeft}
+            y1={yMid}
+            x2={width - padRight}
+            y2={yMid}
+            stroke="#1d212b"
+            strokeDasharray="3 3"
+            strokeWidth="1"
+          />
+          <line
+            x1={padLeft}
+            y1={yZero}
+            x2={width - padRight}
+            y2={yZero}
+            stroke="#262a36"
+            strokeWidth="1"
+          />
+
+          {/* Gridline Y labels */}
+          <text x={padLeft - 8} y={yTop + 4} textAnchor="end" className="text-[10px] fill-zinc-500 font-mono">
+            {maxTps.toFixed(0)}
+          </text>
+          <text x={padLeft - 8} y={yMid + 4} textAnchor="end" className="text-[10px] fill-zinc-600 font-mono">
+            {(maxTps / 2).toFixed(0)}
+          </text>
+          <text x={padLeft - 8} y={yZero + 3} textAnchor="end" className="text-[10px] fill-zinc-600 font-mono">
+            0
+          </text>
+
+          {/* Area & Stroke for active throughput */}
+          {hasThroughput && areaPath && (
+            <path d={areaPath} fill="url(#overviewTpsFill)" />
+          )}
+          {hasThroughput && linePath && (
+            <path d={linePath} fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          )}
+
+          {/* Endpoint highlight */}
+          {hasThroughput && points.length > 0 && (
+            <circle
+              cx={points[points.length - 1].x}
+              cy={points[points.length - 1].y}
+              r="3.5"
+              className="fill-blue-400 stroke-[#0a0c0f] stroke-2"
+            />
+          )}
+
+          {/* Time axis labels */}
+          <text x={padLeft} y={height - 4} textAnchor="start" className="text-[10px] fill-zinc-600 font-mono">
+            ~60s ago
+          </text>
+          <text x={width - padRight} y={height - 4} textAnchor="end" className="text-[10px] fill-zinc-600 font-mono">
+            Live
+          </text>
+        </svg>
+
+        {/* Empty / Idle State Overlay */}
+        {!hasThroughput && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+            <span className="text-xs font-medium text-zinc-400">
+              {serverRunning ? 'Inference Engine Idle' : 'Server Stopped'}
+            </span>
+            <span className="text-[11px] text-zinc-500 mt-0.5">
+              {serverRunning
+                ? 'Throughput curves display here during active token generation'
+                : 'Start inference server to stream live token throughput'}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const OverviewView: React.FC = () => {
   const {
     serverState,
     serverInstance,
     serverConfig,
+    lanAddress,
     hardware,
     currentMetric,
+    metricHistory,
     installedModels,
     devices,
     logs,
     setActiveTab,
   } = useAppStore();
 
-  const totalRamGb = hardware ? (hardware.memory.totalBytes / 1e9).toFixed(1) : '16.0';
-  const usedRamGb = currentMetric ? (currentMetric.memoryUsedBytes / 1e9).toFixed(1) : '0.0';
-  const cpuPercent = currentMetric ? currentMetric.cpuPercent.toFixed(1) : '0.0';
-  const tokPerSec = currentMetric ? currentMetric.tokensPerSecond.toFixed(1) : '0.0';
-  const latencyMs = currentMetric ? currentMetric.latencyMs : 0;
-  const activeRequests = currentMetric ? currentMetric.activeRequests : 0;
+  // Resource Calculations with real hardware and telemetry (binary GiB for standard OS memory reporting)
+  const GIB = 1024 * 1024 * 1024;
+  const rawTotalGb = hardware ? hardware.memory.totalBytes / GIB : 16;
+  const totalRamGb = Math.abs(rawTotalGb - Math.round(rawTotalGb)) < 0.15
+    ? Math.round(rawTotalGb).toString()
+    : rawTotalGb.toFixed(1);
+  const usedRamGb = currentMetric
+    ? (currentMetric.memoryUsedBytes / GIB).toFixed(1)
+    : hardware
+    ? (hardware.memory.usedBytes / GIB).toFixed(1)
+    : '0.0';
+  const availableRamGb = hardware ? (hardware.memory.availableBytes / GIB).toFixed(1) : '—';
+  const ramPercent = hardware && hardware.memory.totalBytes > 0
+    ? Math.min(
+        100,
+        Math.max(
+          0,
+          ((currentMetric ? currentMetric.memoryUsedBytes : hardware.memory.usedBytes) /
+            hardware.memory.totalBytes) *
+            100
+        )
+      )
+    : 0;
+
+  const cpuPercent = currentMetric ? currentMetric.cpuPercent : 0;
+  const cpuDisplay = currentMetric ? `${cpuPercent.toFixed(1)}%` : '—';
+  const cpuModel = hardware?.cpu?.model || 'Multi-Core Host Processor';
+  const cpuCoresLabel = hardware?.cpu?.physicalCores
+    ? `${hardware.cpu.physicalCores} Cores · ${hardware.cpu.logicalThreads} Threads`
+    : 'Host CPU';
 
   const primaryGpu = hardware?.primaryGPU;
+  const gpuBackend = primaryGpu?.backend ? primaryGpu.backend.toUpperCase() : 'METAL';
+  const gpuModel = primaryGpu?.model || 'Apple Neural & Graphics Engine';
+
+  // Primary Disk Information
+  const primaryDisk = hardware?.disks?.[0];
+  const totalDiskGb = primaryDisk ? (primaryDisk.totalBytes / 1e9).toFixed(0) : '—';
+  const freeDiskGb = primaryDisk ? (primaryDisk.availableBytes / 1e9).toFixed(1) : '—';
+  const usedDiskGb = primaryDisk
+    ? ((primaryDisk.totalBytes - primaryDisk.availableBytes) / 1e9).toFixed(1)
+    : '—';
+  const diskPercent = primaryDisk
+    ? Math.min(
+        100,
+        Math.max(
+          0,
+          ((primaryDisk.totalBytes - primaryDisk.availableBytes) / (primaryDisk.totalBytes || 1)) * 100
+        )
+      )
+    : 0;
+
+  // Performance Telemetry
+  const isServerRunning = serverState === 'RUNNING';
+  const tokPerSec = currentMetric ? currentMetric.tokensPerSecond : 0;
+  const tokPerSecDisplay =
+    tokPerSec > 0 ? tokPerSec.toFixed(1) : isServerRunning ? '0.0' : '—';
+
+  const latencyMs = currentMetric ? currentMetric.latencyMs : 0;
+  const latencyDisplay = latencyMs > 0 ? `${latencyMs}` : isServerRunning ? '0' : '—';
+
+  const activeRequests = currentMetric ? currentMetric.activeRequests : 0;
+  const concurrencyLimit = serverConfig?.maxConcurrentRequests || 4;
+
+  // Collect historical throughput samples (last 24 measurements)
+  const throughputSamples = useMemo(() => {
+    if (!metricHistory || metricHistory.length === 0) {
+      return currentMetric ? [currentMetric.tokensPerSecond] : [];
+    }
+    return metricHistory.slice(-24).map((s) => s.tokensPerSecond);
+  }, [metricHistory, currentMetric]);
+
+  // Connected Devices Count
+  const onlineDevicesCount = useMemo(() => {
+    const threshold = 60000; // 60 seconds
+    const now = Date.now();
+    return devices.filter((d) => !d.isRevoked && now - d.lastRequestAt < threshold).length;
+  }, [devices]);
+
+  // Curated meaningful recent activity
+  const curatedLogs = useMemo(() => {
+    const isRawLlamaNoise = (msg: string) => {
+      const lower = msg.toLowerCase();
+      return (
+        lower.startsWith('llama_') ||
+        lower.startsWith('ggml_') ||
+        lower.startsWith('slot ') ||
+        lower.startsWith('main: ') ||
+        lower.startsWith('srv ') ||
+        lower.includes('print_timings') ||
+        lower.includes('load time =') ||
+        lower.includes('prompt eval time =') ||
+        /0x[0-9a-f]{6,}/i.test(msg)
+      );
+    };
+
+    return logs
+      .filter((l) => {
+        if (isRawLlamaNoise(l.message)) return false;
+        if (l.level === 'ERROR' || l.level === 'WARN') return true;
+
+        const comp = (l.component || '').toLowerCase();
+        const msg = l.message.toLowerCase();
+
+        const isKnownComp = ['server', 'runtime', 'inference', 'security', 'system', 'network'].includes(
+          comp
+        );
+        const hasKeyword =
+          msg.includes('start') ||
+          msg.includes('stop') ||
+          msg.includes('load') ||
+          msg.includes('device') ||
+          msg.includes('key') ||
+          msg.includes('ready') ||
+          msg.includes('connect') ||
+          msg.includes('forge') ||
+          msg.includes('training') ||
+          msg.includes('eval');
+
+        return isKnownComp && hasKeyword;
+      })
+      .slice(0, 5);
+  }, [logs]);
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
-      {/* Top Banner / Status Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* 1. Server Status Card */}
-        <div className="p-5 rounded-lg bg-[#111317] border border-[#22252c] flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-zinc-400 font-mono mb-2">
-              <span>INFERENCE SERVER</span>
-              <Server className="w-4 h-4 text-zinc-500" />
-            </div>
-            <div className="flex items-center gap-2.5 my-2">
-              <span
-                className={`w-3 h-3 rounded-full ${
-                  serverState === 'RUNNING'
-                    ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+    <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
+      {/* 1. First Section — Runtime Status Summary */}
+      <section className="rounded-lg bg-[#0e1014] border border-[#1b1e25] p-5 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#1a1d24]">
+          {/* Inference Server Group */}
+          <div className="pb-4 md:pb-0 md:pr-6 flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-mono tracking-wider text-zinc-400 uppercase font-semibold">
+                Inference Server
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    serverState === 'RUNNING'
+                      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]'
+                      : serverState === 'STARTING'
+                      ? 'bg-amber-400 animate-pulse'
+                      : 'bg-zinc-600'
+                  }`}
+                />
+                <span className="text-base font-semibold text-zinc-100 tracking-tight">
+                  {serverState === 'RUNNING'
+                    ? 'Server Active'
                     : serverState === 'STARTING'
-                    ? 'bg-amber-500 animate-pulse'
-                    : 'bg-zinc-600'
-                }`}
-              />
-              <span className="text-xl font-bold tracking-tight text-zinc-100">{serverState}</span>
+                    ? 'Starting Engine...'
+                    : 'Server Stopped'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-3 text-xs text-zinc-400 flex items-center justify-between">
+              <span className="font-mono text-zinc-400">Port {serverConfig?.port || 8080}</span>
+              <span className="font-mono text-[11px] text-zinc-500">
+                {serverConfig?.lanEnabled && lanAddress ? `${lanAddress} (LAN)` : '127.0.0.1 (Local)'}
+              </span>
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-[#1c1f26] flex items-center justify-between text-xs">
-            <span className="text-zinc-500">Port {serverConfig?.port || 8080}</span>
-            <span className="text-zinc-400 font-mono">{serverConfig?.lanEnabled ? 'LAN Active' : 'Localhost Only'}</span>
-          </div>
-        </div>
 
-        {/* 2. Loaded Model Card */}
-        <div className="p-5 rounded-lg bg-[#111317] border border-[#22252c] flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-zinc-400 font-mono mb-2">
-              <span>LOADED MODEL</span>
-              <Activity className="w-4 h-4 text-blue-400" />
-            </div>
-            <div className="text-xl font-bold tracking-tight text-zinc-100 truncate my-2">
-              {serverInstance?.modelName || (installedModels.length > 0 ? 'Ready to load' : 'No models installed')}
-            </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-[#1c1f26] flex items-center justify-between text-xs">
-            <span className="text-zinc-500">
-              {serverInstance ? `${serverInstance.gpuLayersOffloaded} GPU Layers` : `${installedModels.length} Installed`}
-            </span>
-            <button
-              onClick={() => setActiveTab('models')}
-              className="text-blue-400 hover:text-blue-300 font-medium"
-            >
-              Manage Models →
-            </button>
-          </div>
-        </div>
-
-        {/* 3. Connected Devices Card */}
-        <div className="p-5 rounded-lg bg-[#111317] border border-[#22252c] flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-zinc-400 font-mono mb-2">
-              <span>CONNECTED DEVICES</span>
-              <Smartphone className="w-4 h-4 text-blue-400" />
-            </div>
-            {(() => {
-              const onlineCount = devices.filter((d) => !d.isRevoked && Date.now() - d.lastRequestAt < 45000).length;
-              return (
-                <div className="text-xl font-bold tracking-tight text-zinc-100 my-2 flex items-baseline gap-2">
-                  <span>{onlineCount}</span>
-                  <span className="text-xs font-normal text-zinc-400 font-sans">
-                    {onlineCount === 1 ? 'Device Online' : 'Devices Online'}
+          {/* Active Model Group */}
+          <div className="py-4 md:py-0 md:px-6 flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-mono tracking-wider text-zinc-400 uppercase font-semibold">
+                Active Model
+              </div>
+              <div className="text-base font-semibold text-zinc-100 tracking-tight mt-2 truncate">
+                {serverInstance?.modelName || (
+                  <span className="text-zinc-500 font-normal">
+                    {serverState === 'STARTING' ? 'Loading model...' : 'No model loaded'}
                   </span>
-                </div>
-              );
-            })()}
+                )}
+              </div>
+            </div>
+            <div className="mt-3 text-xs flex items-center justify-between">
+              <span className="text-zinc-500 truncate">
+                {serverInstance
+                  ? `${serverInstance.gpuLayersOffloaded} GPU layers offloaded`
+                  : `${installedModels.length} installed model${installedModels.length === 1 ? '' : 's'}`}
+              </span>
+              <button
+                onClick={() => setActiveTab('models')}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium ml-2 shrink-0"
+              >
+                Models →
+              </button>
+            </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-[#1c1f26] flex items-center justify-between text-xs">
-            <span className="text-zinc-500">{serverConfig?.lanEnabled ? 'LAN Active' : 'LAN Disabled'}</span>
-            <button
-              onClick={() => setActiveTab('devices')}
-              className="text-blue-400 hover:text-blue-300 font-medium"
-            >
-              Manage Devices →
-            </button>
+
+          {/* Connected Devices Group */}
+          <div className="pt-4 md:pt-0 md:pl-6 flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-mono tracking-wider text-zinc-400 uppercase font-semibold">
+                Connected Devices
+              </div>
+              <div className="text-base font-semibold text-zinc-100 tracking-tight mt-2 flex items-baseline gap-2">
+                <span>{onlineDevicesCount}</span>
+                <span className="text-xs font-normal text-zinc-400 font-sans">
+                  {onlineDevicesCount === 1 ? 'device online' : 'devices online'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-3 text-xs flex items-center justify-between">
+              <span className="text-zinc-500">
+                {serverConfig?.lanEnabled ? 'LAN access enabled' : 'Localhost only'}
+              </span>
+              <button
+                onClick={() => setActiveTab('devices')}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium ml-2 shrink-0"
+              >
+                Devices →
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Compute & Telemetry Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Compute Resource Gauges */}
-        <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-6">
-          <div className="flex items-center justify-between border-b border-[#1c1f26] pb-3">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-400">Host Compute Utilization</h2>
-            <span className="text-[11px] text-zinc-500 font-mono">Real OS telemetry</span>
+      {/* 2. Second Section — Two-Column Monitoring Area */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {/* Left Column: System Resources */}
+        <div className="rounded-lg bg-[#0e1014] border border-[#1b1e25] p-5 flex flex-col justify-between shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-[#181a20] pb-3">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-semibold">
+                System Resources
+              </h2>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-500">Live Hardware Telemetry</span>
           </div>
 
           <div className="space-y-4">
-            {/* CPU */}
+            {/* Host CPU Row */}
             <div>
-              <div className="flex justify-between text-xs font-mono mb-1.5">
-                <span className="text-zinc-400 flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-zinc-500" />
-                  CPU Load
+              <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                <span className="text-zinc-300 flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-zinc-400" />
+                  Host CPU
                 </span>
-                <span className="text-zinc-200 font-bold">{cpuPercent}%</span>
+                <span className="text-zinc-100 font-bold">{cpuDisplay}</span>
               </div>
-              <div className="h-2 w-full bg-[#1c1f26] rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-[#181a20] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(0, parseFloat(cpuPercent)))}%` }}
+                  className={`h-full transition-all duration-500 ${
+                    cpuPercent > 85 ? 'bg-amber-500' : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${Math.min(100, Math.max(0, cpuPercent))}%` }}
                 />
               </div>
-              <div className="mt-1 text-[11px] text-zinc-500 truncate">
-                {hardware?.cpu.model || 'Multi-core CPU'}
+              <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 font-sans">
+                <span className="truncate max-w-[240px]">{cpuModel}</span>
+                <span className="font-mono">{cpuCoresLabel}</span>
               </div>
             </div>
 
-            {/* RAM */}
+            {/* System Memory (RAM) Row */}
             <div>
-              <div className="flex justify-between text-xs font-mono mb-1.5">
-                <span className="text-zinc-400 flex items-center gap-1.5">
-                  <HardDrive className="w-3.5 h-3.5 text-zinc-500" />
+              <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                <span className="text-zinc-300 flex items-center gap-1.5">
+                  <HardDrive className="w-3.5 h-3.5 text-zinc-400" />
                   System Memory (RAM)
                 </span>
-                <span className="text-zinc-200 font-bold">
+                <span className="text-zinc-100 font-bold">
                   {usedRamGb} / {totalRamGb} GB
                 </span>
               </div>
-              <div className="h-2 w-full bg-[#1c1f26] rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-[#181a20] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-500 transition-all duration-500"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      (parseFloat(usedRamGb) / (parseFloat(totalRamGb) || 1)) * 100
-                    )}%`,
-                  }}
+                  className={`h-full transition-all duration-500 ${
+                    ramPercent > 85 ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${ramPercent}%` }}
                 />
               </div>
-              <div className="mt-1 text-[11px] text-zinc-500">
-                {hardware ? `${(hardware.memory.availableBytes / 1e9).toFixed(1)} GB available for models` : ''}
+              <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 font-sans">
+                <span>{availableRamGb} GB available for models</span>
+                <span className="font-mono">{ramPercent.toFixed(0)}% allocated</span>
               </div>
             </div>
 
-            {/* GPU if available */}
-            {primaryGpu && (
-              <div>
-                <div className="flex justify-between text-xs font-mono mb-1.5">
-                  <span className="text-zinc-400 flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 text-amber-500" />
-                    GPU: {primaryGpu.model}
-                  </span>
-                  <span className="text-zinc-200 font-bold">{primaryGpu.backend.toUpperCase()}</span>
-                </div>
-                <div className="text-[11px] text-zinc-500">
-                  {primaryGpu.vramBytes
-                    ? `${(primaryGpu.vramBytes / 1e9).toFixed(1)} GB Dedicated VRAM`
-                    : 'Hardware Acceleration Active'}
-                </div>
+            {/* GPU / Accelerator Row */}
+            <div>
+              <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                <span className="text-zinc-300 flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  GPU Accelerator
+                </span>
+                <span className="text-zinc-100 font-bold font-mono">{gpuBackend}</span>
               </div>
-            )}
+              <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 font-sans">
+                <span className="truncate max-w-[260px]">{gpuModel}</span>
+                <span className="font-mono text-emerald-400 text-[10px]">Active Engine</span>
+              </div>
+            </div>
+
+            {/* VRAM / Accelerator Memory Row */}
+            <div>
+              <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                <span className="text-zinc-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                  VRAM Allocation
+                </span>
+                <span className="text-zinc-100 font-bold font-mono">
+                  {primaryGpu?.vramBytes
+                    ? `${(primaryGpu.vramBytes / GIB).toFixed(1)} GB (Unified)`
+                    : `Unified Host Memory (${totalRamGb} GB)`}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 font-sans">
+                <span>
+                  {serverInstance
+                    ? `${serverInstance.gpuLayersOffloaded} layers offloaded to GPU`
+                    : 'Zero-copy high throughput unified bus'}
+                </span>
+                <span className="font-mono text-zinc-500">
+                  {serverInstance ? 'Offload Active' : 'Idle'}
+                </span>
+              </div>
+            </div>
+
+            {/* Model Storage Disk Row */}
+            <div>
+              <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                <span className="text-zinc-300 flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-zinc-400" />
+                  Model Storage Disk
+                </span>
+                <span className="text-zinc-100 font-bold font-mono">
+                  {freeDiskGb} GB free / {totalDiskGb} GB
+                </span>
+              </div>
+              <div className="h-1.5 w-full bg-[#181a20] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-zinc-500 transition-all duration-500"
+                  style={{ width: `${diskPercent}%` }}
+                />
+              </div>
+              <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 font-sans">
+                <span>Local models & checkpoints store</span>
+                <span className="font-mono">{usedDiskGb} GB used</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 text-[11px] text-zinc-500 font-mono border-t border-[#181a20]">
+            Architecture: {hardware?.cpu.architecture || 'ARM64'} · Platform: {hardware?.platform || 'Darwin'}
           </div>
         </div>
 
-        {/* Live Inference Performance Card */}
-        <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-6">
-          <div className="flex items-center justify-between border-b border-[#1c1f26] pb-3">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-400">Live Inference Performance</h2>
-            <span className="text-[11px] text-zinc-500 font-mono">Real-time throughput</span>
+        {/* Right Column: Inference Performance */}
+        <div className="rounded-lg bg-[#0e1014] border border-[#1b1e25] p-5 flex flex-col justify-between shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-[#181a20] pb-3">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-semibold">
+              Inference Performance
+            </h2>
+            <span className="text-[11px] font-mono text-zinc-500">Real-Time Metrics</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 rounded bg-[#0e1013] border border-[#1d2027]">
-              <div className="text-zinc-500 text-xs font-mono">GENERATION SPEED</div>
-              <div className="text-2xl font-bold text-zinc-100 font-mono mt-1">
-                {tokPerSec} <span className="text-xs font-normal text-zinc-400">tok/s</span>
+          {/* Scannable Metrics Grid using compact typography & whitespace */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-1">
+            {/* 1. Generation Speed */}
+            <div>
+              <div className="text-[10px] font-mono uppercase text-zinc-400 tracking-wider">Speed</div>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-2xl font-bold font-mono text-zinc-100">{tokPerSecDisplay}</span>
+                <span className="text-[11px] text-zinc-400 font-mono">tok/s</span>
               </div>
             </div>
 
-            <div className="p-4 rounded bg-[#0e1013] border border-[#1d2027]">
-              <div className="text-zinc-500 text-xs font-mono">LATENCY</div>
-              <div className="text-2xl font-bold text-zinc-100 font-mono mt-1">
-                {latencyMs} <span className="text-xs font-normal text-zinc-400">ms</span>
+            {/* 2. Latency (TTFT) */}
+            <div>
+              <div className="text-[10px] font-mono uppercase text-zinc-400 tracking-wider">TTFT</div>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-2xl font-bold font-mono text-zinc-100">{latencyDisplay}</span>
+                <span className="text-[11px] text-zinc-400 font-mono">ms</span>
               </div>
             </div>
 
-            <div className="p-4 rounded bg-[#0e1013] border border-[#1d2027]">
-              <div className="text-zinc-500 text-xs font-mono">ACTIVE REQUESTS</div>
-              <div className="text-2xl font-bold text-zinc-100 font-mono mt-1">{activeRequests}</div>
+            {/* 3. Active Requests */}
+            <div>
+              <div className="text-[10px] font-mono uppercase text-zinc-400 tracking-wider">Active</div>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-2xl font-bold font-mono text-zinc-100">{activeRequests}</span>
+                <span className="text-[11px] text-zinc-400 font-mono">req</span>
+              </div>
             </div>
 
-            <div className="p-4 rounded bg-[#0e1013] border border-[#1d2027]">
-              <div className="text-zinc-500 text-xs font-mono">CONCURRENCY LIMIT</div>
-              <div className="text-2xl font-bold text-zinc-100 font-mono mt-1">
-                {serverConfig?.maxConcurrentRequests || 4}
+            {/* 4. Concurrency Limit */}
+            <div>
+              <div className="text-[10px] font-mono uppercase text-zinc-400 tracking-wider">Concurrency</div>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-2xl font-bold font-mono text-zinc-100">{concurrencyLimit}</span>
+                <span className="text-[11px] text-zinc-400 font-mono">max</span>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end">
+          {/* Throughput Trendline Chart */}
+          <ThroughputTrendChart samples={throughputSamples} serverRunning={isServerRunning} />
+
+          {/* Primary Action Button */}
+          <div className="pt-2 flex items-center justify-between border-t border-[#181a20]">
+            <span className="text-[11px] text-zinc-500 font-sans">
+              Test streaming generation and model responses
+            </span>
             <button
               onClick={() => setActiveTab('playground')}
-              className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm"
             >
-              Open Interactive Playground →
+              <span>Open Playground</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Recent System Activity Log */}
-      <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-4">
-        <div className="flex items-center justify-between border-b border-[#1c1f26] pb-3">
-          <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-400">Live Activity Feed</h2>
-          <button onClick={() => setActiveTab('logs')} className="text-xs text-blue-400 hover:text-blue-300">
-            View All Logs →
+      {/* 3. Third Section — Recent Activity */}
+      <section className="rounded-lg bg-[#0e1014] border border-[#1b1e25] p-5 shadow-sm space-y-3">
+        <div className="flex items-center justify-between border-b border-[#181a20] pb-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-semibold">
+              Recent Activity
+            </h2>
+          </div>
+          <button
+            onClick={() => setActiveTab('logs')}
+            className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors inline-flex items-center gap-1"
+          >
+            <span>View All Activity</span>
+            <ArrowRight className="w-3 h-3" />
           </button>
         </div>
 
-        {logs.length === 0 ? (
-          <div className="text-xs text-zinc-500 py-4 text-center">No system events logged yet.</div>
+        {curatedLogs.length === 0 ? (
+          <div className="py-8 text-center space-y-1">
+            <p className="text-xs text-zinc-400 font-medium">No operational events recorded yet</p>
+            <p className="text-[11px] text-zinc-500">
+              System events will appear here as the inference server runs and queries are executed.
+            </p>
+          </div>
         ) : (
-          <div className="space-y-2 font-mono text-xs max-h-48 overflow-y-auto">
-            {logs.slice(0, 6).map((log) => (
-              <div key={log.id} className="flex items-start gap-3 p-2 rounded bg-[#0d0f12]">
-                <span
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                    log.level === 'ERROR'
-                      ? 'bg-rose-950 text-rose-300'
-                      : log.level === 'WARN'
-                      ? 'bg-amber-950 text-amber-300'
-                      : 'bg-zinc-800 text-zinc-300'
-                  }`}
-                >
-                  {log.level}
-                </span>
-                <span className="text-zinc-500 text-[11px]">[{log.component}]</span>
-                <span className="text-zinc-300 flex-1 truncate">{log.message}</span>
-                <span className="text-zinc-600 text-[10px]">
-                  {new Date(log.timestamp).toLocaleTimeString()}
-                </span>
-              </div>
-            ))}
+          <div className="divide-y divide-[#161820]">
+            {curatedLogs.map((log) => {
+              const isError = log.level === 'ERROR';
+              const isWarn = log.level === 'WARN';
+
+              return (
+                <div key={log.id} className="py-2.5 flex items-center justify-between gap-4 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        isError ? 'bg-rose-400' : isWarn ? 'bg-amber-400' : 'bg-emerald-400'
+                      }`}
+                    />
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-[#14161d] text-zinc-400 border border-[#20232c] shrink-0">
+                      {log.component || 'SYSTEM'}
+                    </span>
+                    <span className="text-zinc-300 truncate font-sans">{log.message}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] font-mono text-zinc-500 shrink-0">
+                    <Clock className="w-3 h-3 text-zinc-600" />
+                    <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
-      </div>
+      </section>
+
+      {/* 4. Fourth Section — Contextual Quick Actions */}
+      <footer className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs border-t border-[#181a20]">
+        <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+          Quick Shortcuts
+        </span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setActiveTab('playground')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#111317] hover:bg-[#181b22] border border-[#20232b] text-zinc-300 hover:text-zinc-100 transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+            <span>Playground</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('models')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#111317] hover:bg-[#181b22] border border-[#20232b] text-zinc-300 hover:text-zinc-100 transition-colors"
+          >
+            <Layers className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Models</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('forge')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#111317] hover:bg-[#181b22] border border-[#20232b] text-zinc-300 hover:text-zinc-100 transition-colors"
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>Forge</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('server')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#111317] hover:bg-[#181b22] border border-[#20232b] text-zinc-300 hover:text-zinc-100 transition-colors"
+          >
+            <Terminal className="w-3.5 h-3.5 text-blue-400" />
+            <span>Server & API</span>
+          </button>
+        </div>
+      </footer>
     </div>
   );
 };

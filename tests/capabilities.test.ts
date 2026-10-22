@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { CapabilityEngine } from '@local-ai/capabilities';
-import type { HardwareProfile, ModelVariant } from '@local-ai/shared';
+import { CapabilityEngine, ModelCapabilityRegistry } from '@local-ai/capabilities';
+import type { HardwareProfile, ModelVariant, Model, ModelInstallation } from '@local-ai/shared';
 
 describe('CapabilityEngine', () => {
   const mockHardware: HardwareProfile = {
@@ -150,5 +150,83 @@ describe('CapabilityEngine', () => {
     const lowMem12B = CapabilityEngine.evaluateModelCompatibility(variant12B, caps, { lowMemoryMode: true });
     expect(lowMem12B.rating).toBe('Good');
     expect(lowMem12B.reason).toContain('Low-Memory Mode');
+  });
+});
+
+describe('ModelCapabilityRegistry & Image Generation Support', () => {
+  it('correctly classifies image generation models vs vision understanding models', () => {
+    // Image Generation Models
+    const sdTurboModel: Partial<Model> = {
+      id: 'sd-turbo',
+      name: 'SD-Turbo',
+      capabilities: ['IMAGE_GENERATION'],
+    };
+    expect(ModelCapabilityRegistry.resolveTaskType(sdTurboModel as Model)).toBe('image-generation');
+    expect(ModelCapabilityRegistry.isImageGenerationModel(sdTurboModel as Model)).toBe(true);
+
+    const sd15Installation: Partial<ModelInstallation> = {
+      modelId: 'stable-diffusion-v1-5',
+      name: 'Stable Diffusion v1.5',
+      capabilities: ['IMAGE_GENERATION'],
+    };
+    expect(ModelCapabilityRegistry.resolveTaskType(sd15Installation as ModelInstallation)).toBe('image-generation');
+    expect(ModelCapabilityRegistry.isImageGenerationModel(sd15Installation as ModelInstallation)).toBe(true);
+
+    // Vision Understanding Model (Qwen 2.5 VL, LLaVA) - Must NEVER be classified as image-generation
+    const visionModel: Partial<Model> = {
+      id: 'qwen2.5-vl-7b',
+      name: 'Qwen 2.5 VL 7B Instruct',
+      capabilities: ['VISION'],
+    };
+    expect(ModelCapabilityRegistry.resolveTaskType(visionModel as Model)).toBe('vision');
+    expect(ModelCapabilityRegistry.isImageGenerationModel(visionModel as Model)).toBe(false);
+
+    // Text Generation Model
+    const textModel: Partial<Model> = {
+      id: 'llama-3.2-3b-instruct',
+      name: 'Llama 3.2 3B Instruct',
+      capabilities: ['CHAT', 'TEXT_GENERATION'],
+    };
+    expect(ModelCapabilityRegistry.resolveTaskType(textModel as Model)).toBe('text-generation');
+    expect(ModelCapabilityRegistry.isImageGenerationModel(textModel as Model)).toBe(false);
+  });
+
+  it('provides verified capability profiles with parameters and runtime adapters', () => {
+    const profile = ModelCapabilityRegistry.getProfile('sd-turbo');
+    expect(profile).toBeDefined();
+    expect(profile?.taskType).toBe('image-generation');
+    expect(profile?.supportedRuntimes).toContain('diffusers');
+    expect(profile?.supportedPlatforms).toContain('darwin');
+    expect(profile?.accelerationOptions).toContain('mps');
+    expect(profile?.imageParameters?.minSteps).toBe(1);
+    expect(profile?.imageParameters?.defaultSteps).toBe(4);
+    expect(profile?.imageParameters?.defaultGuidanceScale).toBe(1.0);
+  });
+
+  it('validates and clamps image generation parameters properly', () => {
+    const res = ModelCapabilityRegistry.validateImageParameters('sd-turbo', {
+      prompt: 'a majestic mountain landscape',
+      width: 500, // Should snap to multiple of 64 (e.g. 512)
+      height: 700,
+      steps: 100, // Exceeds max for sd-turbo (maxSteps: 10)
+      guidanceScale: 15,
+      seed: -5,
+    });
+
+    expect(res.valid).toBe(true);
+    expect(res.sanitized.prompt).toBe('a majestic mountain landscape');
+    expect(res.sanitized.width % 64).toBe(0);
+    expect(res.sanitized.height % 64).toBe(0);
+    expect(res.sanitized.steps).toBeLessThanOrEqual(10);
+    expect(res.sanitized.seed).toBeGreaterThanOrEqual(0);
+  });
+
+  it('estimates resource requirements accurately for diffusion architectures', () => {
+    const turboResources = ModelCapabilityRegistry.estimateImageResources('sd-turbo', { width: 512, height: 512 });
+    expect(turboResources.estimatedVRAMBytes).toBeGreaterThan(0);
+    expect(turboResources.estimatedRAMBytes).toBeGreaterThan(0);
+
+    const sdxlResources = ModelCapabilityRegistry.estimateImageResources('sdxl-turbo', { width: 1024, height: 1024 });
+    expect(sdxlResources.estimatedVRAMBytes).toBeGreaterThan(turboResources.estimatedVRAMBytes);
   });
 });

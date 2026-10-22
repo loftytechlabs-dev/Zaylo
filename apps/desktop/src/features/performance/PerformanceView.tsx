@@ -11,9 +11,13 @@ import { useAppStore } from '../../stores/useAppStore';
 export const PerformanceView: React.FC = () => {
   const { metricHistory, currentMetric, hardware } = useAppStore();
 
-  const totalRamGb = hardware ? (hardware.memory.totalBytes / 1e9).toFixed(1) : '16.0';
+  const GIB = 1024 * 1024 * 1024;
+  const rawTotalGb = hardware ? hardware.memory.totalBytes / GIB : 16;
+  const totalRamGb = Math.abs(rawTotalGb - Math.round(rawTotalGb)) < 0.15
+    ? Math.round(rawTotalGb).toString()
+    : rawTotalGb.toFixed(1);
   const cpuPercent = currentMetric ? currentMetric.cpuPercent.toFixed(1) : '0.0';
-  const usedRamGb = currentMetric ? (currentMetric.memoryUsedBytes / 1e9).toFixed(1) : '0.0';
+  const usedRamGb = currentMetric ? (currentMetric.memoryUsedBytes / GIB).toFixed(1) : '0.0';
   const tokPerSec = currentMetric ? currentMetric.tokensPerSecond.toFixed(1) : '0.0';
   const latencyMs = currentMetric ? currentMetric.latencyMs : 0;
 
@@ -52,7 +56,7 @@ export const PerformanceView: React.FC = () => {
   };
 
   const cpuSeries = metricHistory.map((s) => s.cpuPercent);
-  const ramSeries = metricHistory.map((s) => s.memoryUsedBytes / 1e9);
+  const ramSeries = metricHistory.map((s) => s.memoryUsedBytes / GIB);
   const tokSeries = metricHistory.map((s) => s.tokensPerSecond);
   const latSeries = metricHistory.map((s) => s.latencyMs);
 

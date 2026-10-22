@@ -43,6 +43,7 @@ export const ServerApiView: React.FC = () => {
   const [selectedKeyText, setSelectedKeyText] = useState('');
   const [selectedModelText, setSelectedModelText] = useState('');
   const [customPrompt, setCustomPrompt] = useState('Explain quantum computing in one sentence.');
+  const [apiTaskTab, setApiTaskTab] = useState<'chat' | 'vision' | 'image'>('chat');
 
   // QR Code State
   const [showQrModal, setShowQrModal] = useState(false);
@@ -154,8 +155,132 @@ export const ServerApiView: React.FC = () => {
   const effectiveKey = selectedKeyText.trim() || (generatedKey || 'lcl_click_quick_gen_to_create_key');
   const effectiveModel = selectedModelText || 'default';
 
-  const codeSnippets = {
-    curl: `curl ${apiEndpointUrl}/chat/completions \\
+  const codeSnippets = React.useMemo(() => {
+    if (apiTaskTab === 'image') {
+      return {
+        curl: `curl ${apiEndpointUrl}/images/generations \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${effectiveKey}" \\
+  -d '{
+    "model": "${effectiveModel}",
+    "prompt": "${customPrompt.replace(/"/g, '\\"')}",
+    "size": "512x512",
+    "n": 1,
+    "response_format": "url"
+  }'`,
+        python: `from openai import OpenAI
+
+client = OpenAI(
+    base_url="${apiEndpointUrl}",
+    api_key="${effectiveKey}"
+)
+
+# Generate image locally using Zaylo Diffusion Engine
+response = client.images.generate(
+    model="${effectiveModel}",
+    prompt="${customPrompt.replace(/"/g, '\\"')}",
+    size="512x512",
+    n=1
+)
+
+image_url = response.data[0].url
+print(f"Generated Image URL: {image_url}")`,
+        node: `import OpenAI from 'openai';
+
+const client = new OpenAI({
+  baseURL: '${apiEndpointUrl}',
+  apiKey: '${effectiveKey}',
+});
+
+// Generate image locally using Zaylo Diffusion Engine
+const response = await client.images.generate({
+  model: '${effectiveModel}',
+  prompt: '${customPrompt.replace(/'/g, "\\'")}',
+  size: '512x512',
+  n: 1,
+});
+
+console.log('Generated Image URL:', response.data[0].url);
+`,
+      };
+    }
+
+    if (apiTaskTab === 'vision') {
+      return {
+        curl: `curl ${apiEndpointUrl}/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${effectiveKey}" \\
+  -d '{
+    "model": "${effectiveModel}",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          { "type": "text", "text": "${customPrompt.replace(/"/g, '\\"')}" },
+          { "type": "image_url", "image_url": { "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg" } }
+        ]
+      }
+    ],
+    "temperature": 0.7,
+    "stream": true
+  }'`,
+        python: `from openai import OpenAI
+
+client = OpenAI(
+    base_url="${apiEndpointUrl}",
+    api_key="${effectiveKey}"
+)
+
+# Multimodal Visual Understanding (supports base64 and URLs)
+response = client.chat.completions.create(
+    model="${effectiveModel}",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "${customPrompt.replace(/"/g, '\\"')}"},
+                {"type": "image_url", "image_url": {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg"}}
+            ]
+        }
+    ],
+    stream=True
+)
+
+for chunk in response:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)
+print()`,
+        node: `import OpenAI from 'openai';
+
+const client = new OpenAI({
+  baseURL: '${apiEndpointUrl}',
+  apiKey: '${effectiveKey}',
+});
+
+// Multimodal Visual Understanding
+const stream = await client.chat.completions.create({
+  model: '${effectiveModel}',
+  messages: [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: '${customPrompt.replace(/'/g, "\\'")}' },
+        { type: 'image_url', image_url: { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg' } }
+      ]
+    }
+  ],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content || '');
+}
+`,
+      };
+    }
+
+    return {
+      curl: `curl ${apiEndpointUrl}/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${effectiveKey}" \\
   -d '{
@@ -166,7 +291,7 @@ export const ServerApiView: React.FC = () => {
     "temperature": 0.7,
     "stream": true
   }'`,
-    python: `from openai import OpenAI
+      python: `from openai import OpenAI
 
 client = OpenAI(
     base_url="${apiEndpointUrl}",
@@ -185,7 +310,7 @@ for chunk in response:
     if chunk.choices[0].delta.content:
         print(chunk.choices[0].delta.content, end="", flush=True)
 print()`,
-    node: `import OpenAI from 'openai';
+      node: `import OpenAI from 'openai';
 
 const client = new OpenAI({
   baseURL: '${apiEndpointUrl}',
@@ -202,7 +327,8 @@ for await (const chunk of stream) {
   process.stdout.write(chunk.choices[0]?.delta?.content || '');
 }
 `,
-  };
+    };
+  }, [apiTaskTab, apiEndpointUrl, effectiveKey, effectiveModel, customPrompt]);
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
@@ -381,18 +507,56 @@ for await (const chunk of stream) {
             </p>
           </div>
 
-          <div className="flex items-center gap-1 bg-[#0c0d10] p-1 rounded-md border border-[#1e2026]">
-            {(['curl', 'python', 'node'] as const).map((lang) => (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 bg-[#0c0d10] p-1 rounded-md border border-[#1e2026]">
               <button
-                key={lang}
-                onClick={() => setActiveCodeLang(lang)}
-                className={`px-3 py-1 rounded text-xs font-mono capitalize transition-colors ${
-                  activeCodeLang === lang ? 'bg-[#1e2129] text-blue-400 font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+                onClick={() => {
+                  setApiTaskTab('chat');
+                  setCustomPrompt('Explain quantum computing in one sentence.');
+                }}
+                className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
+                  apiTaskTab === 'chat' ? 'bg-blue-600/20 text-blue-300 font-semibold border border-blue-500/40' : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                {lang === 'node' ? 'Node.js' : lang}
+                💬 Chat
               </button>
-            ))}
+              <button
+                onClick={() => {
+                  setApiTaskTab('vision');
+                  setCustomPrompt('What is visible in this landscape photograph?');
+                }}
+                className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
+                  apiTaskTab === 'vision' ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/40' : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                👁️ Vision
+              </button>
+              <button
+                onClick={() => {
+                  setApiTaskTab('image');
+                  setCustomPrompt('A cozy cabin in a snowy pine forest at twilight, 8k, photorealistic');
+                }}
+                className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
+                  apiTaskTab === 'image' ? 'bg-blue-600/20 text-blue-300 font-semibold border border-blue-500/40' : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                🎨 Image Gen
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 bg-[#0c0d10] p-1 rounded-md border border-[#1e2026]">
+              {(['curl', 'python', 'node'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setActiveCodeLang(lang)}
+                  className={`px-3 py-1 rounded text-xs font-mono capitalize transition-colors ${
+                    activeCodeLang === lang ? 'bg-[#1e2129] text-blue-400 font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  {lang === 'node' ? 'Node.js' : lang}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,12 @@ import {
   StyleSheet,
   Image,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import type { Theme } from '../theme/theme';
-import type { ChatMessage, HybridMode, OnDeviceModel } from '../types';
+import type { ChatMessage, HybridMode, OnDeviceModel, DownloadProgress } from '../types';
+import { ZAYLO_MODELS, ZayloModel } from '../engine/modelsCatalog';
+import { ModelStorage } from '../engine/modelStorage';
 import { ZLogo } from './common/ZLogo';
 import { Icon } from './common/Icon';
 
@@ -17,10 +20,10 @@ interface ChatViewProps {
   theme: Theme;
   messages: ChatMessage[];
   isStreaming: boolean;
-  activeMode: HybridMode;
   activeLocalModel?: OnDeviceModel | null;
   onSelectPromptSuggestion: (prompt: string) => void;
   onOpenModelModal?: () => void;
+  onSelectModel?: (model: OnDeviceModel) => void;
 }
 
 interface ChatSuggestion {
@@ -229,18 +232,57 @@ export const ChatView: React.FC<ChatViewProps> = ({
   theme,
   messages,
   isStreaming,
-  activeMode,
   activeLocalModel,
   onSelectPromptSuggestion,
   onOpenModelModal,
+  onSelectModel,
 }) => {
   const scrollViewRef = useRef<ScrollView>(null);
+  const [downloadProgressMap, setDownloadProgressMap] = useState<Record<string, DownloadProgress>>({});
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages, isStreaming]);
 
+  const handleStartDownload = (model: ZayloModel) => {
+    ModelStorage.startDownload(
+      model,
+      (progress) => {
+        setDownloadProgressMap((prev) => ({
+          ...prev,
+          [model.id]: progress,
+        }));
+      },
+      () => {
+        // Download complete - activate model immediately
+        setDownloadProgressMap((prev) => {
+          const next = { ...prev };
+          delete next[model.id];
+          return next;
+        });
+        const converted: OnDeviceModel = {
+          id: model.id,
+          name: model.name,
+          tagline: model.description,
+          parameters: model.parameterCount,
+          sizeMb: model.sizeMb,
+          requiredRamMb: Math.round(model.sizeMb * 1.3),
+          minTier: model.sizeMb > 1500 ? 'tier_3_flagship' : 'tier_2_balanced',
+          quantization: model.quantization,
+          downloadUrl: model.downloadUrl,
+          isDownloaded: true,
+        };
+        if (onSelectModel) {
+          onSelectModel(converted);
+        }
+      }
+    );
+  };
+
   if (messages.length === 0) {
+    // Top mobile-first starter models
+    const starterModels = ZAYLO_MODELS.slice(0, 2);
+
     return (
       <ScrollView
         style={[styles.container, { backgroundColor: theme.background }]}
@@ -271,49 +313,135 @@ export const ChatView: React.FC<ChatViewProps> = ({
             />
           </View>
           <Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>
-            {activeMode === 'on_device'
-              ? activeLocalModel
-                ? activeLocalModel.name
-                : 'Local Engine'
-              : 'Desktop Host Session'}
+            {activeLocalModel ? activeLocalModel.name : 'On-Device Mobile AI'}
           </Text>
           <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>
-            {activeMode === 'on_device'
-              ? activeLocalModel
-                ? 'Zero-cloud execution on device hardware with kernel memory paging.'
-                : 'No model loaded yet. Choose and download a certified model to chat offline.'
-              : 'Streaming directly from your Zaylo Desktop Host gateway on port 8080.'}
+            {activeLocalModel
+              ? 'Zero-cloud execution on phone hardware with native C++ llama.rn.'
+              : 'Download a lightweight AI model directly to your phone to chat 100% offline with zero cloud latency.'}
           </Text>
 
-          {activeMode === 'on_device' && !activeLocalModel && onOpenModelModal && (
-            <TouchableOpacity
-              style={[
-                styles.selectModelCta,
-                { backgroundColor: theme.floatingNav },
-                theme.shadows.sm,
-              ]}
-              onPress={onOpenModelModal}
-              activeOpacity={0.8}
-            >
-              <Icon name="layers" size={14} color="#ffffff" />
-              <Text style={styles.selectModelCtaText}>Choose & Load Model</Text>
-            </TouchableOpacity>
+          {!activeLocalModel && (
+            <View style={styles.starterModelsSection}>
+              {starterModels.map((m) => {
+                const isDownloaded = ModelStorage.isModelDownloaded(m.id);
+                const progress = downloadProgressMap[m.id];
+                const isDownloading = progress?.status === 'downloading';
+
+                return (
+                  <View
+                    key={m.id}
+                    style={[
+                      styles.starterCard,
+                      {
+                        backgroundColor: theme.backgroundSecondary,
+                        borderColor: theme.cardBorder,
+                      },
+                    ]}
+                  >
+                    <View style={styles.starterCardTop}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.starterCardTitle, { color: theme.textPrimary }]}>
+                          {m.name}
+                        </Text>
+                        <Text style={[styles.starterCardDesc, { color: theme.textMuted }]}>
+                          {m.sizeMb} MB • {m.quantization} • {m.parameterCount}
+                        </Text>
+                      </View>
+                      {isDownloaded ? (
+                        <TouchableOpacity
+                          style={[styles.starterBtn, { backgroundColor: theme.success }]}
+                          onPress={() => {
+                            const converted: OnDeviceModel = {
+                              id: m.id,
+                              name: m.name,
+                              tagline: m.description,
+                              parameters: m.parameterCount,
+                              sizeMb: m.sizeMb,
+                              requiredRamMb: Math.round(m.sizeMb * 1.3),
+                              minTier: m.sizeMb > 1500 ? 'tier_3_flagship' : 'tier_2_balanced',
+                              quantization: m.quantization,
+                              downloadUrl: m.downloadUrl,
+                              isDownloaded: true,
+                            };
+                            if (onSelectModel) onSelectModel(converted);
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.starterBtnText}>Load & Chat</Text>
+                        </TouchableOpacity>
+                      ) : isDownloading ? (
+                        <View style={styles.starterDownloadingBadge}>
+                          <ActivityIndicator size="small" color={theme.accent} />
+                          <Text style={[styles.starterProgressText, { color: theme.accent }]}>
+                            {progress.percent}%
+                          </Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={[styles.starterBtn, { backgroundColor: theme.floatingNav }]}
+                          onPress={() => handleStartDownload(m)}
+                          activeOpacity={0.8}
+                        >
+                          <Icon name="download" size={13} color="#ffffff" style={{ marginRight: 4 }} />
+                          <Text style={styles.starterBtnText}>Download</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    {isDownloading && (
+                      <View style={styles.starterProgressBarWrapper}>
+                        <View style={[styles.starterProgressBarTrack, { backgroundColor: theme.cardBorder }]}>
+                          <View
+                            style={[
+                              styles.starterProgressBarFill,
+                              {
+                                width: `${progress.percent}%`,
+                                backgroundColor: theme.accent,
+                              },
+                            ]}
+                          />
+                        </View>
+                        <Text style={[styles.starterProgressMeta, { color: theme.textMuted }]}>
+                          {progress.downloadedMb} / {progress.totalMb} MB {progress.speedMbS > 0 ? `• ${progress.speedMbS} MB/s` : ''}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+
+              {onOpenModelModal && (
+                <TouchableOpacity
+                  style={[styles.browseAllBtn, { borderColor: theme.cardBorder }]}
+                  onPress={onOpenModelModal}
+                  activeOpacity={0.8}
+                >
+                  <Icon name="layers" size={14} color={theme.textPrimary} style={{ marginRight: 6 }} />
+                  <Text style={[styles.browseAllText, { color: theme.textPrimary }]}>
+                    Browse All 7 Mobile Models
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           )}
         </View>
 
-        <View style={styles.suggestionsWrapper}>
-          <Text style={[styles.suggestionsLabel, { color: theme.textMuted }]}>
-            SUGGESTIONS
-          </Text>
-          {CHAT_SUGGESTIONS.map((item, idx) => (
-            <SuggestionChipItem
-              key={idx}
-              item={item}
-              theme={theme}
-              onPress={() => onSelectPromptSuggestion(item.text)}
-            />
-          ))}
-        </View>
+        {activeLocalModel && (
+          <View style={styles.suggestionsWrapper}>
+            <Text style={[styles.suggestionsLabel, { color: theme.textMuted }]}>
+              SUGGESTIONS
+            </Text>
+            {CHAT_SUGGESTIONS.map((item, idx) => (
+              <SuggestionChipItem
+                key={idx}
+                item={item}
+                theme={theme}
+                onPress={() => onSelectPromptSuggestion(item.text)}
+              />
+            ))}
+          </View>
+        )}
       </ScrollView>
     );
   }
@@ -462,6 +590,86 @@ const styles = StyleSheet.create({
   metricsText: {
     fontSize: 10,
     fontFamily: 'monospace',
+    fontWeight: '600',
+  },
+  starterModelsSection: {
+    width: '100%',
+    marginTop: 18,
+    gap: 10,
+  },
+  starterCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+  },
+  starterCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  starterCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  starterCardDesc: {
+    fontSize: 11,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  starterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  starterBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  starterDownloadingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  starterProgressText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  starterProgressBarWrapper: {
+    marginTop: 10,
+  },
+  starterProgressBarTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  starterProgressBarFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  starterProgressMeta: {
+    fontSize: 10,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  browseAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  browseAllText: {
+    fontSize: 12,
     fontWeight: '600',
   },
 });

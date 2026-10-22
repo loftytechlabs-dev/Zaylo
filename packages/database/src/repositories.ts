@@ -10,6 +10,9 @@ import type {
   BenchmarkResult,
   DocumentInfo,
   DocumentChunk,
+  TrainingJob,
+  TrainingJobStatus,
+  FineTunedModelArtifact,
 } from '@local-ai/shared';
 import {
   DEFAULT_SERVER_PORT,
@@ -723,4 +726,248 @@ export class DocumentRepository {
     }));
   }
 }
+
+export class TrainingJobRepository {
+  constructor(private db: IDatabase) {}
+
+  private mapRow(r: any): TrainingJob {
+    return {
+      id: r.id,
+      name: r.name,
+      modelId: r.model_id,
+      modelName: r.model_name,
+      checkpointPath: r.checkpoint_path,
+      datasetPath: r.dataset_path,
+      datasetRecords: Number(r.dataset_records || 0),
+      status: r.status as TrainingJobStatus,
+      config: JSON.parse(r.config || '{}'),
+      estimates: JSON.parse(r.estimates || '{}'),
+      currentStep: Number(r.current_step || 0),
+      totalSteps: Number(r.total_steps || 0),
+      currentEpoch: Number(r.current_epoch || 0),
+      totalEpochs: Number(r.total_epochs || 0),
+      currentLoss: r.current_loss !== null && r.current_loss !== undefined ? Number(r.current_loss) : undefined,
+      metricsHistory: JSON.parse(r.metrics_history || '[]'),
+      recentLogs: JSON.parse(r.recent_logs || '[]'),
+      checkpoints: JSON.parse(r.checkpoints || '[]'),
+      outputDir: r.output_dir,
+      artifactPath: r.artifact_path || undefined,
+      artifactType: r.artifact_type || undefined,
+      artifactSizeBytes: r.artifact_size_bytes ? Number(r.artifact_size_bytes) : undefined,
+      error: r.error || undefined,
+      createdAt: Number(r.created_at),
+      startedAt: r.started_at ? Number(r.started_at) : undefined,
+      completedAt: r.completed_at ? Number(r.completed_at) : undefined,
+      updatedAt: Number(r.updated_at),
+    };
+  }
+
+  createJob(job: TrainingJob): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO training_jobs (
+        id, name, model_id, model_name, checkpoint_path, dataset_path, dataset_records,
+        status, config, estimates, current_step, total_steps, current_epoch, total_epochs,
+        current_loss, metrics_history, recent_logs, checkpoints, output_dir, artifact_path,
+        artifact_type, artifact_size_bytes, error, created_at, started_at, completed_at, updated_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?
+      )
+    `);
+
+    stmt.run(
+      job.id,
+      job.name,
+      job.modelId,
+      job.modelName,
+      job.checkpointPath,
+      job.datasetPath,
+      job.datasetRecords,
+      job.status,
+      JSON.stringify(job.config),
+      JSON.stringify(job.estimates),
+      job.currentStep,
+      job.totalSteps,
+      job.currentEpoch,
+      job.totalEpochs,
+      job.currentLoss ?? null,
+      JSON.stringify(job.metricsHistory),
+      JSON.stringify(job.recentLogs),
+      JSON.stringify(job.checkpoints),
+      job.outputDir,
+      job.artifactPath ?? null,
+      job.artifactType ?? null,
+      job.artifactSizeBytes ?? null,
+      job.error ?? null,
+      job.createdAt,
+      job.startedAt ?? null,
+      job.completedAt ?? null,
+      job.updatedAt
+    );
+  }
+
+  updateJob(job: Partial<TrainingJob> & { id: string }): void {
+    const existing = this.getJob(job.id);
+    if (!existing) return;
+
+    const merged = { ...existing, ...job, updatedAt: Date.now() };
+
+    const stmt = this.db.prepare(`
+      UPDATE training_jobs SET
+        name = ?,
+        status = ?,
+        config = ?,
+        estimates = ?,
+        current_step = ?,
+        total_steps = ?,
+        current_epoch = ?,
+        total_epochs = ?,
+        current_loss = ?,
+        metrics_history = ?,
+        recent_logs = ?,
+        checkpoints = ?,
+        artifact_path = ?,
+        artifact_type = ?,
+        artifact_size_bytes = ?,
+        error = ?,
+        started_at = ?,
+        completed_at = ?,
+        updated_at = ?
+      WHERE id = ?
+    `);
+
+    stmt.run(
+      merged.name,
+      merged.status,
+      JSON.stringify(merged.config),
+      JSON.stringify(merged.estimates),
+      merged.currentStep,
+      merged.totalSteps,
+      merged.currentEpoch,
+      merged.totalEpochs,
+      merged.currentLoss ?? null,
+      JSON.stringify(merged.metricsHistory),
+      JSON.stringify(merged.recentLogs),
+      JSON.stringify(merged.checkpoints),
+      merged.artifactPath ?? null,
+      merged.artifactType ?? null,
+      merged.artifactSizeBytes ?? null,
+      merged.error ?? null,
+      merged.startedAt ?? null,
+      merged.completedAt ?? null,
+      merged.updatedAt,
+      merged.id
+    );
+  }
+
+  getJob(id: string): TrainingJob | null {
+    const row = this.db.prepare('SELECT * FROM training_jobs WHERE id = ?').get(id);
+    if (!row) return null;
+    return this.mapRow(row);
+  }
+
+  getAllJobs(): TrainingJob[] {
+    const rows = this.db.prepare('SELECT * FROM training_jobs ORDER BY created_at DESC').all();
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  getActiveJobs(): TrainingJob[] {
+    const rows = this.db.prepare(
+      "SELECT * FROM training_jobs WHERE status IN ('QUEUED', 'INITIALIZING', 'TRAINING', 'PAUSED') ORDER BY created_at DESC"
+    ).all();
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  deleteJob(id: string): boolean {
+    const res = this.db.prepare('DELETE FROM training_jobs WHERE id = ?').run(id);
+    return res.changes > 0;
+  }
+
+  recoverInterruptedJobs(): void {
+    // If a job was running when Zaylo was closed/restarted, mark it as paused or interrupted with checkpoints preserved
+    const activeJobs = this.getActiveJobs();
+    for (const job of activeJobs) {
+      if (job.status === 'TRAINING' || job.status === 'INITIALIZING') {
+        this.updateJob({
+          id: job.id,
+          status: 'PAUSED',
+          error: 'Job was paused due to application restart. Checkpoints and progress are preserved.',
+        });
+      }
+    }
+  }
+}
+
+export class FineTunedModelRepository {
+  constructor(private db: IDatabase) {}
+
+  private mapRow(r: any): FineTunedModelArtifact {
+    return {
+      id: r.id,
+      jobId: r.job_id,
+      name: r.name,
+      baseModelId: r.base_model_id,
+      baseModelName: r.base_model_name,
+      type: r.type as 'lora' | 'merged' | 'standalone',
+      artifactPath: r.artifact_path,
+      sizeBytes: Number(r.size_bytes || 0),
+      format: r.format,
+      compatibilityStatus: r.compatibility_status as any,
+      statusReason: r.status_reason || undefined,
+      finalLoss: r.final_loss !== null && r.final_loss !== undefined ? Number(r.final_loss) : undefined,
+      trainingDurationSeconds: Number(r.training_duration_seconds || 0),
+      createdAt: Number(r.created_at),
+    };
+  }
+
+  registerModel(model: FineTunedModelArtifact): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO fine_tuned_models (
+        id, job_id, name, base_model_id, base_model_name, type,
+        artifact_path, size_bytes, format, compatibility_status,
+        status_reason, final_loss, training_duration_seconds, created_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?
+      )
+    `);
+
+    stmt.run(
+      model.id,
+      model.jobId,
+      model.name,
+      model.baseModelId,
+      model.baseModelName,
+      model.type,
+      model.artifactPath,
+      model.sizeBytes,
+      model.format,
+      model.compatibilityStatus,
+      model.statusReason ?? null,
+      model.finalLoss ?? null,
+      model.trainingDurationSeconds,
+      model.createdAt
+    );
+  }
+
+  getModel(id: string): FineTunedModelArtifact | null {
+    const row = this.db.prepare('SELECT * FROM fine_tuned_models WHERE id = ?').get(id);
+    if (!row) return null;
+    return this.mapRow(row);
+  }
+
+  getAllModels(): FineTunedModelArtifact[] {
+    const rows = this.db.prepare('SELECT * FROM fine_tuned_models ORDER BY created_at DESC').all();
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  deleteModel(id: string): boolean {
+    const res = this.db.prepare('DELETE FROM fine_tuned_models WHERE id = ?').run(id);
+    return res.changes > 0;
+  }
+}
+
 

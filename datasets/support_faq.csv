@@ -1,0 +1,6 @@
+instruction,input,output
+"What is Zaylo?","","Zaylo is a high-performance local AI inference engine and desktop studio designed for privacy-first AI workflows."
+"How do I start the server?","","Navigate to the Server & API tab in the sidebar and click Start Server, or use the model quick-launch button."
+"Can I use Zaylo with LangChain or LlamaIndex?","","Yes. Zaylo provides an OpenAI-compatible REST API at http://localhost:8080/v1 so any standard framework can connect immediately."
+"What fine-tuning methods are supported in Forge?","","Forge currently supports parameter-efficient fine-tuning (LoRA), with automated hyperparameter selection and hardware profiling."
+"Where are downloaded models stored?","","Models are stored in your user application support directory under LocalAIServer/models."

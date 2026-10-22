@@ -1,8 +1,10 @@
 import { ipcMain, dialog, shell, BrowserWindow } from 'electron';
 import type { IPCChannels, IPCEvents } from '@local-ai/protocol';
-import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepository, DeviceRepository, MetricsRepository, LogsRepository, BenchmarkRepository, DocumentRepository } from '@local-ai/database';
+import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepository, DeviceRepository, MetricsRepository, LogsRepository, BenchmarkRepository, DocumentRepository, TrainingJobRepository, FineTunedModelRepository } from '@local-ai/database';
+import { ModelInspector, DatasetParser, AutoConfigurator, PreflightValidator, ForgeTrainingEngine } from '../forge/index.js';
+import { ImageEngine } from '../image/imageEngine.js';
 import { HardwareScanner } from '@local-ai/hardware';
-import { CapabilityEngine } from '@local-ai/capabilities';
+import { CapabilityEngine, ModelCapabilityRegistry } from '@local-ai/capabilities';
 import { ModelManager } from '@local-ai/models';
 import { KeyManager } from '@local-ai/security';
 import { NetworkScanner, DevicePairingManager, generateQrCode } from '@local-ai/network';
@@ -10,7 +12,7 @@ import { LlamaRuntime } from '@local-ai/runtime-llama';
 import { InferenceService, RagEngine } from '@local-ai/inference';
 import { ApiServer } from '@local-ai/server';
 import { SystemMonitor } from '@local-ai/monitoring';
-import { getDefaultDatabasePath, getDefaultModelsDir, getDefaultRuntimeDir } from '@local-ai/shared';
+import { getDefaultDatabasePath, getDefaultModelsDir, getDefaultRuntimeDir, NotFoundError } from '@local-ai/shared';
 import type { BenchmarkResult, ServerState } from '@local-ai/shared';
 
 export async function registerIpcHandlers(mainWindow: BrowserWindow) {
@@ -23,6 +25,9 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
   const logsRepo = new LogsRepository(dbConn.raw);
   const benchmarkRepo = new BenchmarkRepository(dbConn.raw);
   const documentRepo = new DocumentRepository(dbConn.raw);
+  const trainingJobRepo = new TrainingJobRepository(dbConn.raw);
+  const fineTunedModelRepo = new FineTunedModelRepository(dbConn.raw);
+  const forgeEngine = new ForgeTrainingEngine(trainingJobRepo, fineTunedModelRepo);
 
   let config = serverRepo.getConfig();
   const fs = await import('node:fs');
@@ -55,6 +60,39 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
     sendEvent('metrics:update', sample);
   });
   monitor.start();
+
+  // Setup Forge training event listeners
+  forgeEngine.setEventCallbacks({
+    onMetric: (jobId, sample) => {
+      sendEvent('forge:training-metric', { jobId, sample });
+    },
+    onLog: (jobId, log) => {
+      sendEvent('forge:training-log', { jobId, log });
+    },
+    onStatus: (jobId, status, error) => {
+      sendEvent('forge:training-status', { jobId, status, error });
+      if (status === 'COMPLETED') {
+        sendEvent('models:updated', undefined);
+      }
+    },
+  });
+
+  // Setup Image Engine
+  const imageEngine = new ImageEngine();
+  imageEngine.setCallbacks({
+    onStatus: (jobId, status, message) => {
+      sendEvent('image:status', { jobId, status, message });
+    },
+    onProgress: (jobId, progress) => {
+      sendEvent('image:progress', { jobId, progress });
+    },
+    onCompleted: (jobId, images) => {
+      sendEvent('image:completed', { jobId, images });
+    },
+    onError: (jobId, error) => {
+      sendEvent('image:error', { jobId, error });
+    },
+  });
 
   // Setup runtime supervisor listener
   runtime.getSupervisor().on('stateChanged', (state, instance) => {
@@ -101,11 +139,19 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
 
   // 2. Models
   handle('models:list-available', async () => {
-    return modelManager.getAvailableModels();
+    const list = modelManager.getAvailableModels();
+    return list.map((m) => ({
+      ...m,
+      taskType: m.taskType || ModelCapabilityRegistry.resolveTaskType(m),
+    }));
   });
 
   handle('models:list-installed', async () => {
-    return modelManager.getInstalledModels();
+    const list = modelManager.getInstalledModels();
+    return list.map((m) => ({
+      ...m,
+      taskType: m.taskType || ModelCapabilityRegistry.resolveTaskType(m),
+    }));
   });
 
   handle('models:search-hf', async ({ query, limit }) => {
@@ -126,7 +172,20 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
   });
 
   handle('models:cancel-download', async ({ downloadId }) => {
-    return modelManager.cancelDownload(downloadId);
+    const cancelled = modelManager.cancelDownload(downloadId);
+    sendEvent('download:progress', {
+      id: downloadId,
+      modelId: '',
+      variantId: '',
+      filename: '',
+      status: 'cancelled',
+      downloadedBytes: 0,
+      totalBytes: 0,
+      bytesPerSecond: 0,
+      startedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    return cancelled;
   });
 
   handle('models:delete', async ({ installationId }) => {
@@ -139,9 +198,13 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
 
   handle('models:select-file', async () => {
     const res = await dialog.showOpenDialog(mainWindow, {
-      title: 'Select Local GGUF Model File',
+      title: 'Select Local Model File (GGUF, SafeTensors, or PyTorch)',
       properties: ['openFile'],
-      filters: [{ name: 'GGUF Models', extensions: ['gguf', 'bin'] }],
+      filters: [
+        { name: 'All Supported Models', extensions: ['gguf', 'safetensors', 'bin', 'ckpt'] },
+        { name: 'GGUF LLM Models', extensions: ['gguf', 'bin'] },
+        { name: 'SafeTensors Diffusion Models', extensions: ['safetensors', 'ckpt'] },
+      ],
     });
     return res.canceled || res.filePaths.length === 0 ? null : res.filePaths[0];
   });
@@ -150,9 +213,13 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
     let targetPath = filePath;
     if (!targetPath) {
       const res = await dialog.showOpenDialog(mainWindow, {
-        title: 'Select Local GGUF Model File',
+        title: 'Select Local Model File (GGUF or SafeTensors)',
         properties: ['openFile'],
-        filters: [{ name: 'GGUF Models', extensions: ['gguf', 'bin'] }],
+        filters: [
+          { name: 'All Supported Models', extensions: ['gguf', 'safetensors', 'bin', 'ckpt'] },
+          { name: 'GGUF LLM Models', extensions: ['gguf', 'bin'] },
+          { name: 'SafeTensors Diffusion Models', extensions: ['safetensors', 'ckpt'] },
+        ],
       });
       if (res.canceled || res.filePaths.length === 0) return null;
       targetPath = res.filePaths[0];
@@ -166,16 +233,25 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
 
     const stats = fs.statSync(targetPath);
     const filename = path.basename(targetPath);
-    const parsedName = name || filename.replace(/\.gguf$/i, '').replace(/[-_]/g, ' ');
+    const parsedName = name || filename.replace(/\.(gguf|safetensors|ckpt|bin)$/i, '').replace(/[-_]/g, ' ');
     const modelId = `local_${filename.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
+    const isImageFormat = filename.endsWith('.safetensors') || filename.endsWith('.ckpt');
+    const taskType = isImageFormat
+      ? 'image-generation'
+      : ModelCapabilityRegistry.resolveTaskType({ modelId, name: parsedName });
+
     let quant = 'Q4_K_M';
-    const quantMatch = filename.match(/(q\d_[k_0-9a-z]+|f16|f32|q8_0|q4_0|q4_1)/i);
-    if (quantMatch) quant = quantMatch[1].toUpperCase();
+    if (isImageFormat) {
+      quant = 'F16';
+    } else {
+      const quantMatch = filename.match(/(q\d_[k_0-9a-z]+|f16|f32|q8_0|q4_0|q4_1)/i);
+      if (quantMatch) quant = quantMatch[1].toUpperCase();
+    }
 
     const dir = path.dirname(targetPath);
     let mmprojPath: string | undefined;
-    const baseWithoutExt = filename.replace(/\.gguf$/i, '');
+    const baseWithoutExt = filename.replace(/\.(gguf|safetensors|ckpt)$/i, '');
     const candidateMmproj = [
       path.join(dir, `${baseWithoutExt}.mmproj.gguf`),
       path.join(dir, `${baseWithoutExt}-mmproj.gguf`),
@@ -199,13 +275,15 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
       sizeBytes: stats.size,
       installedAt: Date.now(),
       isLoaded: false,
-      format: 'gguf' as const,
+      format: (isImageFormat ? 'safetensors' : 'gguf') as any,
       quantization: quant as any,
-      contextLength: 4096,
+      contextLength: isImageFormat ? 77 : 4096,
       mmprojPath,
+      taskType,
     };
 
     modelRepo.upsertInstallation(installation);
+    sendEvent('models:updated', undefined);
     return installation;
   });
 
@@ -290,6 +368,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
       pairingManager,
       logsRepo,
       documentRepo,
+      imageEngine,
     });
 
     await apiServer.start();
@@ -345,6 +424,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
         pairingManager,
         logsRepo,
         documentRepo,
+        imageEngine,
       });
       await apiServer.start();
       serverState = 'RUNNING';
@@ -564,6 +644,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
         pairingManager,
         logsRepo,
         documentRepo,
+        imageEngine,
       });
       await apiServer.start();
 
@@ -624,7 +705,242 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
     return benchmarkRepo.getAll();
   });
 
-  // 10. App & System
+  // 9.5 Forge In-App Fine-Tuning Studio
+  handle('forge:list-models', async () => {
+    const installed = modelManager.getInstalledModels();
+    return installed.map((inst) => ModelInspector.inspectModel(inst));
+  });
+
+  handle('forge:inspect-model', async ({ modelId }) => {
+    const installed = modelManager.getInstalledModels();
+    const inst = installed.find((i) => i.modelId === modelId || i.id === modelId);
+    if (!inst) throw new NotFoundError(`Model ${modelId} not found in installed models`);
+    return ModelInspector.inspectModel(inst);
+  });
+
+  handle('forge:fetch-checkpoint', async ({ modelId, hfRepoId }) => {
+    let repoToFetch = hfRepoId;
+    if (!repoToFetch) {
+      const installed = modelManager.getInstalledModels();
+      const inst = installed.find((i) => i.modelId === modelId || i.id === modelId);
+      if (inst) {
+        const inspection = ModelInspector.inspectModel(inst);
+        repoToFetch = inspection.hfRepoId;
+      }
+    }
+    if (!repoToFetch) {
+      return { success: false, error: 'No HuggingFace repository known for this model' };
+    }
+    return forgeEngine.fetchCheckpoint(repoToFetch);
+  });
+
+  handle('forge:parse-dataset', async ({ filePath, columnMapping, maxPreview }) => {
+    return DatasetParser.parseFile(filePath, columnMapping, maxPreview);
+  });
+
+  handle('forge:select-dataset-file', async () => {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select Training Dataset File',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Dataset Files (*.jsonl, *.csv, *.json)', extensions: ['jsonl', 'csv', 'json'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+    });
+    return res.canceled ? null : res.filePaths[0];
+  });
+
+  handle('forge:load-sample-dataset', async ({ type }) => {
+    return DatasetParser.createSampleDataset(type);
+  });
+
+  handle('forge:auto-configure', async ({ modelId, datasetPath, objective, columnMapping }) => {
+    const installed = modelManager.getInstalledModels();
+    const inst = installed.find((i) => i.modelId === modelId || i.id === modelId);
+    if (!inst) throw new NotFoundError(`Model ${modelId} not found`);
+    const model = ModelInspector.inspectModel(inst);
+    const dataset = DatasetParser.parseFile(datasetPath, columnMapping);
+    const hw = await HardwareScanner.scan();
+    const caps = CapabilityEngine.analyzeHardware(hw);
+    return AutoConfigurator.generateConfig({
+      model,
+      dataset,
+      objective,
+      hwProfile: hw,
+      capabilities: caps,
+      columnMapping,
+    });
+  });
+
+  handle('forge:validate-config', async ({ config }) => {
+    const installed = modelManager.getInstalledModels();
+    const inst = installed.find((i) => i.modelId === config.modelId || i.id === config.modelId);
+    const model = inst ? ModelInspector.inspectModel(inst) : null;
+    const dataset = DatasetParser.parseFile(config.datasetPath, config.columnMapping);
+    const hw = await HardwareScanner.scan();
+    const estimates = AutoConfigurator.evaluateHardwareFeasibility(
+      config,
+      model || {
+        modelId: config.modelId,
+        variantId: '',
+        name: config.modelName,
+        format: 'safetensors',
+        quantization: 'None',
+        sizeBytes: 300_000_000,
+        localPath: config.checkpointPath,
+        status: 'READY',
+        supportedBackends: ['peft'],
+      },
+      dataset,
+      hw
+    );
+    const preflight = PreflightValidator.validate(config);
+    const errors = preflight.checks
+      .filter((c) => c.status === 'failed')
+      .map((c) => `${c.name}: ${c.message}`);
+    return {
+      valid: preflight.canProceed && estimates.isFeasible,
+      estimates,
+      errors,
+    };
+  });
+
+  handle('forge:run-preflight', async ({ config }) => {
+    return PreflightValidator.validate(config);
+  });
+
+  handle('forge:start-training', async ({ config }) => {
+    const preflight = PreflightValidator.validate(config);
+    if (!preflight.canProceed) {
+      const failed = preflight.checks.find((c) => c.status === 'failed');
+      throw new Error(`Preflight check failed: ${failed?.name} - ${failed?.message}`);
+    }
+    const dataset = DatasetParser.parseFile(config.datasetPath, config.columnMapping);
+    return forgeEngine.startTraining(config, config.modelName, dataset.validRecords);
+  });
+
+  handle('forge:pause-training', async ({ jobId }) => {
+    return forgeEngine.pauseTraining(jobId);
+  });
+
+  handle('forge:resume-training', async ({ jobId }) => {
+    return forgeEngine.resumeTraining(jobId);
+  });
+
+  handle('forge:resume-from-checkpoint', async ({ jobId, checkpointStep }) => {
+    return forgeEngine.resumeFromCheckpoint(jobId, checkpointStep);
+  });
+
+  handle('forge:evaluate-dataset', async ({ jobId, numExamples }) => {
+    return forgeEngine.evaluateDataset(jobId, numExamples);
+  });
+
+  handle('forge:cancel-training', async ({ jobId }) => {
+    return forgeEngine.cancelTraining(jobId);
+  });
+
+  handle('forge:get-job', async ({ jobId }) => {
+    return trainingJobRepo.getJob(jobId);
+  });
+
+  handle('forge:list-jobs', async () => {
+    return trainingJobRepo.getAllJobs();
+  });
+
+  handle('forge:list-fine-tuned-models', async () => {
+    return fineTunedModelRepo.getAllModels();
+  });
+
+  handle('forge:compare-models', async (req) => {
+    return forgeEngine.compareModels(req);
+  });
+
+  handle('forge:merge-adapter', async ({ artifactId }) => {
+    const res = await forgeEngine.mergeAdapter(artifactId);
+    sendEvent('models:updated', undefined);
+    return res;
+  });
+
+  handle('forge:export-artifact', async ({ artifactId, destinationDir }) => {
+    return forgeEngine.exportArtifact(artifactId, destinationDir);
+  });
+
+  handle('forge:delete-artifact', async ({ artifactId }) => {
+    const res = await forgeEngine.deleteArtifact(artifactId);
+    sendEvent('models:updated', undefined);
+    return res;
+  });
+
+  // 10. Image Generation
+  handle('image:generate', async ({ modelId, modelName, modelPath, params, outputDir, device }) => {
+    let resolvedPath = modelPath;
+    if (!resolvedPath) {
+      const allInstalled = modelManager.getInstalledModels();
+      const match = allInstalled.find((m) => m.modelId === modelId || m.id === modelId);
+      if (match) {
+        resolvedPath = match.localPath;
+      }
+    }
+    return imageEngine.startGeneration({
+      modelId,
+      modelName,
+      modelPath: resolvedPath,
+      generationParams: params,
+      outputDir,
+      device,
+    });
+  });
+
+  handle('image:cancel', async ({ jobId }) => {
+    return imageEngine.cancelGeneration(jobId);
+  });
+
+  handle('image:get-job', async ({ jobId }) => {
+    return imageEngine.getJob(jobId) || null;
+  });
+
+  handle('image:list-history', async () => {
+    return imageEngine.getHistory();
+  });
+
+  handle('image:delete', async ({ imageId }) => {
+    return imageEngine.deleteImage(imageId);
+  });
+
+  handle('image:save-as', async ({ imagePath, defaultName }) => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const os = await import('node:os');
+    if (!fs.existsSync(imagePath)) {
+      throw new Error(`Source image not found at ${imagePath}`);
+    }
+
+    const defaultFilename = defaultName || path.basename(imagePath);
+    const saveRes = await dialog.showSaveDialog(mainWindow, {
+      title: 'Save Image',
+      defaultPath: path.join(os.homedir(), 'Pictures', defaultFilename),
+      filters: [{ name: 'PNG Image', extensions: ['png'] }],
+    });
+
+    if (saveRes.canceled || !saveRes.filePath) return null;
+    fs.copyFileSync(imagePath, saveRes.filePath);
+    return saveRes.filePath;
+  });
+
+  handle('image:open-folder', async ({ imagePath }) => {
+    shell.showItemInFolder(imagePath);
+  });
+
+  // 11. Model Capabilities
+  handle('capabilities:get-model-profile', async ({ modelId }) => {
+    return ModelCapabilityRegistry.getProfile(modelId) || null;
+  });
+
+  handle('capabilities:list-profiles', async () => {
+    return ModelCapabilityRegistry.listAllProfiles();
+  });
+
+  // 12. App & System
   handle('app:get-version', async () => {
     return '2.0.0';
   });

@@ -1,0 +1,180 @@
+{
+  "name": "zaylo-vscode",
+  "displayName": "Zaylo AI - Local Codebase Assistant",
+  "description": "Local AI Code Assistant powered by Zaylo. Connects to your local AI engine for autonomous agent coding, code completion, and sidebar chat.",
+  "version": "2.0.0",
+  "publisher": "zaylo",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Snippets",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "ai",
+    "local-ai",
+    "zaylo",
+    "codex",
+    "antigravity",
+    "copilot",
+    "agent",
+    "qwen",
+    "llama"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "media/zaylo-logo.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "zaylo-sidebar",
+          "title": "Zaylo",
+          "icon": "media/zaylo-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "zaylo-sidebar": [
+        {
+          "type": "webview",
+          "id": "zaylo.chatView",
+          "name": "Agent"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "zaylo.connect",
+        "title": "Zaylo: Connect to Server",
+        "icon": "$(plug)",
+        "category": "Zaylo"
+      },
+      {
+        "command": "zaylo.disconnect",
+        "title": "Zaylo: Disconnect",
+        "icon": "$(debug-disconnect)",
+        "category": "Zaylo"
+      },
+      {
+        "command": "zaylo.openChat",
+        "title": "Zaylo: Open Chat in Sidebar",
+        "category": "Zaylo"
+      },
+      {
+        "command": "zaylo.moveToRightSide",
+        "title": "Zaylo: Move Agent to Right Side (Secondary Side Bar)",
+        "icon": "$(layout-sidebar-right-off)",
+        "category": "Zaylo"
+      },
+      {
+        "command": "zaylo.newSession",
+        "title": "Zaylo: Start New Session",
+        "icon": "$(add)",
+        "category": "Zaylo"
+      },
+      {
+        "command": "zaylo.explainCode",
+        "title": "Zaylo: Explain Selected Code",
+        "category": "Zaylo"
+      },
+      {
+        "command": "zaylo.refactorCode",
+        "title": "Zaylo: Refactor Code",
+        "category": "Zaylo"
+      },
+      {
+        "command": "zaylo.generateTests",
+        "title": "Zaylo: Generate Unit Tests",
+        "category": "Zaylo"
+      },
+      {
+        "command": "zaylo.switchModel",
+        "title": "Zaylo: Switch Active Model",
+        "category": "Zaylo"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "zaylo.explainCode",
+          "when": "editorHasSelection",
+          "group": "zaylo_ai@1"
+        },
+        {
+          "command": "zaylo.refactorCode",
+          "when": "editorHasSelection",
+          "group": "zaylo_ai@2"
+        },
+        {
+          "command": "zaylo.generateTests",
+          "when": "editorHasSelection",
+          "group": "zaylo_ai@3"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "zaylo.moveToRightSide",
+          "when": "view == zaylo.chatView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "zaylo.newSession",
+          "when": "view == zaylo.chatView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "zaylo.disconnect",
+          "when": "view == zaylo.chatView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "zaylo.connect",
+          "when": "view == zaylo.chatView",
+          "group": "navigation@4"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Zaylo Local AI",
+      "properties": {
+        "zaylo.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8080",
+          "description": "Base URL of the local Zaylo inference server."
+        },
+        "zaylo.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically detect and connect to Zaylo when VS Code opens."
+        },
+        "zaylo.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Local API key if authentication is enabled in Zaylo Server."
+        },
+        "zaylo.agentMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Agent capabilities (file read, file edit, diff preview, terminal commands)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run build",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.8.2"
+  }
+}
