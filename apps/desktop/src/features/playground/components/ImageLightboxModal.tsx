@@ -59,7 +59,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
         <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-[#20232c] p-5 flex flex-col justify-between bg-[#12141a] overflow-y-auto max-h-[40vh] md:max-h-[85vh] space-y-5">
           <div className="space-y-4">
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-blue-400 font-semibold mb-1 flex items-center gap-1.5">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-semibold mb-1 flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3" />
                 <span>Generated Image</span>
               </div>
@@ -118,7 +118,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-zinc-500">Device:</span>
-                <span className="text-blue-400 uppercase">{image.device || 'MPS (Metal)'}</span>
+                <span className="text-[#111111] dark:text-white uppercase">{image.device || 'MPS (Metal)'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-zinc-500">File Size:</span>
@@ -128,10 +128,10 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2 pt-3 border-t border-[#1e222b]">
+          <div className="space-y-2 pt-3 border-t border-[#eaeaea] dark:border-[#1e222b]">
             <button
               onClick={() => onSaveAs(image.localPath, `zaylo_${image.seed}.png`)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Save Image As...</span>

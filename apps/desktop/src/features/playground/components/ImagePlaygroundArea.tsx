@@ -110,20 +110,20 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
 
       {/* Active Generation Banner Card */}
       {isGenerating && (
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-[#12141c] to-[#101217] border border-blue-500/30 shadow-xl space-y-3.5 animate-in fade-in duration-300">
+        <div className="p-5 rounded-2xl bg-[#fafafa] dark:bg-[#12141c] border border-[#eaeaea] dark:border-zinc-800 shadow-xl space-y-3.5 animate-in fade-in duration-300">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-blue-500/15 text-blue-400">
+              <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white">
                 <RotateCw className="w-4 h-4 animate-spin" />
               </div>
               <div>
-                <div className="text-xs font-semibold text-zinc-100 flex items-center gap-2">
+                <div className="text-xs font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
                   <span>Generating Local Diffusion Image</span>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
                     {progress?.percentage || 0}%
                   </span>
                 </div>
-                <div className="text-[11px] text-zinc-400 font-mono mt-0.5">
+                <div className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono mt-0.5">
                   {progress?.statusMessage || `Denoising step ${progress?.step || 0} of ${progress?.totalSteps || 20}`}
                   {progress?.elapsedSeconds ? ` • ${progress.elapsedSeconds.toFixed(1)}s elapsed` : ''}
                 </div>
@@ -132,7 +132,7 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
 
             <button
               onClick={onCancelGeneration}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-medium transition-colors"
             >
               <X className="w-3.5 h-3.5" />
               <span>Cancel</span>
@@ -140,9 +140,9 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
           </div>
 
           {/* Progress Bar */}
-          <div className="h-2 w-full bg-[#1b1e27] rounded-full overflow-hidden">
+          <div className="h-2 w-full bg-zinc-100 dark:bg-[#1b1e27] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full transition-all duration-200"
+              className="h-full bg-black dark:bg-white rounded-full transition-all duration-200"
               style={{ width: `${Math.max(5, progress?.percentage || 0)}%` }}
             />
           </div>
@@ -151,22 +151,22 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
 
       {/* Scope Selector & Canvas Management Bar */}
       {images.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#1d2028]">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#eaeaea] dark:border-[#1d2028]">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-xs text-zinc-200">Canvas</span>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-zinc-800/80 text-zinc-400">
+            <span className="font-semibold text-xs text-[#111111] dark:text-zinc-200">Canvas</span>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
               {displayImages.length} {displayImages.length === 1 ? 'image' : 'images'}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center p-0.5 rounded-lg bg-[#12141a] border border-[#222530] text-xs">
+            <div className="flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#222530] text-xs">
               <button
                 onClick={() => setViewScope('current')}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                   viewScope === 'current'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
+                    : 'text-zinc-500 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Current Canvas ({sessionImages.length})
@@ -175,8 +175,8 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
                 onClick={() => setViewScope('all')}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                   viewScope === 'all'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
+                    : 'text-zinc-500 hover:text-black dark:hover:text-white'
                 }`}
               >
                 All History ({images.length})
@@ -186,10 +186,10 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
             {onResetCanvas && (
               <button
                 onClick={onResetCanvas}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#161820] hover:bg-[#1e212b] border border-[#262a38] text-zinc-300 hover:text-zinc-100 text-[11px] font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-[#161820] hover:bg-zinc-50 dark:hover:bg-[#1e212b] border border-[#eaeaea] dark:border-[#262a38] text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white text-[11px] font-medium transition-colors"
                 title="Start a fresh blank canvas"
               >
-                <Plus className="w-3.5 h-3.5 text-blue-400" />
+                <Plus className="w-3.5 h-3.5 text-zinc-500" />
                 <span>New Canvas</span>
               </button>
             )}
@@ -200,15 +200,15 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
       {/* Empty State / Welcome Screen */}
       {displayImages.length === 0 && !isGenerating && (
         <div className="max-w-2xl mx-auto py-10 text-center space-y-6">
-          <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-sky-500/10 border border-blue-500/20 text-blue-400 mb-1">
+          <div className="inline-flex p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[#111111] dark:text-zinc-200 mb-1 shadow-xs">
             <Sparkles className="w-8 h-8" />
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-xl font-bold text-zinc-100 tracking-tight">
+            <h2 className="text-xl font-bold text-[#111111] dark:text-zinc-100 tracking-tight">
               {viewScope === 'current' && images.length > 0 ? 'Canvas Cleared & Ready' : 'What would you like to create?'}
             </h2>
-            <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
               {viewScope === 'current' && images.length > 0
                 ? 'Your previous generations are safely preserved in All History. Enter a new prompt below to start painting this canvas.'
                 : `Enter a descriptive prompt below to synthesize high-resolution images locally using ${selectedModel.name}.`}
@@ -221,10 +221,10 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
               <div
                 key={idx}
                 onClick={() => onSelectSuggestion(item.prompt)}
-                className="p-3.5 rounded-xl bg-[#12141a] hover:bg-[#161822] border border-[#20232e] hover:border-blue-500/40 transition-all cursor-pointer group space-y-1.5"
+                className="p-3.5 rounded-xl bg-white dark:bg-[#12141a] hover:bg-zinc-50 dark:hover:bg-[#161822] border border-[#eaeaea] dark:border-[#20232e] hover:border-zinc-400 dark:hover:border-zinc-600 transition-all cursor-pointer group space-y-1.5 shadow-xs"
               >
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-semibold text-zinc-200 group-hover:text-blue-300 transition-colors">
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white transition-colors">
                     {item.title}
                   </span>
                   <div className="flex gap-1">

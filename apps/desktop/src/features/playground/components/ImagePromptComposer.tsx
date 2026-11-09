@@ -146,8 +146,8 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
                 }}
                 className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors border ${
                   isActive
-                    ? 'bg-blue-600/15 border-blue-500/40 text-blue-300 font-semibold'
-                    : 'bg-[#14161d] border-[#222530] text-zinc-400 hover:text-zinc-200'
+                    ? 'bg-zinc-100 dark:bg-zinc-800 border-black dark:border-white text-black dark:text-white font-semibold'
+                    : 'bg-zinc-50 dark:bg-[#14161d] border-zinc-200 dark:border-[#222530] text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200'
                 }`}
               >
                 {res.label}
@@ -164,8 +164,8 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
               onClick={() => setShowNegative(!showNegative)}
               className={`px-2.5 py-1 rounded-lg border text-xs transition-colors ${
                 showNegative || negativePrompt.trim()
-                  ? 'bg-blue-600/15 border-blue-500/40 text-blue-300'
-                  : 'bg-[#14161d] border-[#222530] text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-zinc-100 dark:bg-zinc-800 border-black dark:border-white text-black dark:text-white'
+                  : 'bg-zinc-50 dark:bg-[#14161d] border-zinc-200 dark:border-[#222530] text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200'
               }`}
             >
               Negative Prompt
@@ -177,8 +177,8 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
             onClick={() => setShowAdvanced(!showAdvanced)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-colors ${
               showAdvanced
-                ? 'bg-blue-600/15 border-blue-500/40 text-blue-300'
-                : 'bg-[#14161d] border-[#222530] text-zinc-400 hover:text-zinc-200'
+                ? 'bg-zinc-100 dark:bg-zinc-800 border-black dark:border-white text-black dark:text-white'
+                : 'bg-zinc-50 dark:bg-[#14161d] border-zinc-200 dark:border-[#222530] text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200'
             }`}
           >
             <Sliders className="w-3 h-3" />
@@ -219,7 +219,7 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
               max={imageMeta?.maxSteps || 50}
               value={steps}
               onChange={(e) => setSteps(parseInt(e.target.value, 10))}
-              className="w-full accent-blue-500 h-1.5 bg-[#1b1e28] rounded-lg cursor-pointer"
+              className="w-full accent-black dark:accent-white h-1.5 bg-zinc-200 dark:bg-[#1b1e28] rounded-lg cursor-pointer"
             />
             <div className="flex justify-between text-[9px] text-zinc-500">
               <span>{imageMeta?.minSteps || 1} min</span>
@@ -242,7 +242,7 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
                 step="0.5"
                 value={guidanceScale}
                 onChange={(e) => setGuidanceScale(parseFloat(e.target.value))}
-                className="w-full accent-blue-500 h-1.5 bg-[#1b1e28] rounded-lg cursor-pointer"
+                className="w-full accent-black dark:accent-white h-1.5 bg-zinc-200 dark:bg-[#1b1e28] rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[9px] text-zinc-500">
                 <span>{imageMeta?.minGuidanceScale || 0}</span>
@@ -264,7 +264,7 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
               <button
                 type="button"
                 onClick={() => setUseRandomSeed(!useRandomSeed)}
-                className={`text-[10px] ${useRandomSeed ? 'text-blue-400 font-semibold' : 'text-zinc-500'}`}
+                className={`text-[10px] ${useRandomSeed ? 'text-black dark:text-white font-semibold' : 'text-zinc-500'}`}
               >
                 {useRandomSeed ? 'Randomized' : 'Fixed'}
               </button>
@@ -302,8 +302,8 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
                   onClick={() => setBatchSize(n)}
                   className={`py-1 rounded text-center text-xs border ${
                     batchSize === n
-                      ? 'bg-blue-600/20 border-blue-500/40 text-blue-300 font-semibold'
-                      : 'bg-[#181a24] border-[#272b38] text-zinc-400'
+                      ? 'bg-zinc-100 dark:bg-zinc-800 border-black dark:border-white text-black dark:text-white font-semibold'
+                      : 'bg-zinc-50 dark:bg-[#181a24] border-zinc-200 dark:border-[#272b38] text-zinc-600 dark:text-zinc-400'
                   }`}
                 >
                   {n}
@@ -316,7 +316,7 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
 
       {/* Main Composer Box */}
       <form onSubmit={handleSubmit} className="flex items-end gap-3">
-        <div className="flex-1 relative rounded-xl bg-[#13151c] border border-[#262935] focus-within:border-blue-500/60 transition-colors p-2.5">
+        <div className="flex-1 relative rounded-xl bg-white dark:bg-[#13151c] border border-[#eaeaea] dark:border-[#262935] focus-within:border-black dark:focus-within:border-white transition-colors p-2.5 shadow-xs">
           <textarea
             ref={textareaRef}
             value={prompt}
@@ -324,7 +324,7 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
             onKeyDown={handleKeyDown}
             rows={2}
             placeholder={`Describe the image you want ${selectedModel.name} to generate... (Press Cmd+Enter to run)`}
-            className="w-full bg-transparent resize-none text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none leading-relaxed"
+            className="w-full bg-transparent resize-none text-xs text-[#111111] dark:text-zinc-100 placeholder-zinc-400 focus:outline-none leading-relaxed"
           />
         </div>
 
@@ -333,7 +333,7 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-5 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs transition-colors flex items-center gap-2 shadow-lg shadow-red-900/20 shrink-0"
+            className="px-5 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs transition-colors flex items-center gap-2 shadow-xs shrink-0"
           >
             <X className="w-4 h-4" />
             <span>Cancel</span>
@@ -342,7 +342,7 @@ export const ImagePromptComposer: React.FC<ImagePromptComposerProps> = ({
           <button
             type="submit"
             disabled={!prompt.trim()}
-            className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-lg shadow-blue-900/25 shrink-0"
+            className="px-6 py-3.5 rounded-xl bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed text-white dark:text-black font-semibold text-xs transition-all flex items-center gap-2 shadow-xs shrink-0"
           >
             <Sparkles className="w-4 h-4" />
             <span>Generate</span>

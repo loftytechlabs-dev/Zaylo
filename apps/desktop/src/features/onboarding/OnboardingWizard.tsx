@@ -95,7 +95,7 @@ export const OnboardingWizard: React.FC = () => {
               <div
                 key={s}
                 className={`h-1.5 rounded-full transition-all ${
-                  s === step ? 'w-6 bg-blue-500' : s < step ? 'w-2 bg-emerald-500' : 'w-2 bg-zinc-700'
+                  s === step ? 'w-6 bg-black dark:bg-white' : s < step ? 'w-2 bg-emerald-500' : 'w-2 bg-zinc-700'
                 }`}
               />
             ))}
@@ -105,7 +105,7 @@ export const OnboardingWizard: React.FC = () => {
         {/* STEP 1: WELCOME */}
         {step === 1 && (
           <div className="space-y-4 text-center py-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto">
+            <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-900 dark:text-zinc-100 mx-auto">
               <Sparkles className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-bold text-zinc-100">Welcome to Zaylo</h2>
@@ -115,7 +115,7 @@ export const OnboardingWizard: React.FC = () => {
             <div className="pt-4">
               <button
                 onClick={() => setStep(2)}
-                className="px-6 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                className="px-6 py-2.5 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
               >
                 Scan Hardware & Setup →
               </button>
@@ -134,7 +134,7 @@ export const OnboardingWizard: React.FC = () => {
             <div className="space-y-3 font-mono text-xs">
               <div className="p-3 rounded bg-[#0d0f12] border border-[#1d2027] flex items-center justify-between">
                 <span className="text-zinc-400 flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-blue-400" />
+                  <Cpu className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
                   CPU
                 </span>
                 <span className="text-zinc-200">
@@ -174,7 +174,7 @@ export const OnboardingWizard: React.FC = () => {
               </button>
               <button
                 onClick={() => setStep(3)}
-                className="px-5 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium"
+                className="px-5 py-2 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium"
               >
                 View Capability Analysis →
               </button>
@@ -198,7 +198,7 @@ export const OnboardingWizard: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-3 rounded bg-[#0d0f12] border border-[#1d2027]">
+            <div className="p-3 rounded bg-[#0d0f12] border border-[#1d2027]">
                 <span className="text-zinc-500 text-[10px] block">MAX RECOMMENDED CONTEXT</span>
                 <span className="text-zinc-200 font-bold text-sm">
                   {capabilities?.maxRecommendedContext} tokens
@@ -222,7 +222,7 @@ export const OnboardingWizard: React.FC = () => {
               </button>
               <button
                 onClick={() => setStep(4)}
-                className="px-5 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium"
+                className="px-5 py-2 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium"
               >
                 Select Starter Model →
               </button>
@@ -239,10 +239,10 @@ export const OnboardingWizard: React.FC = () => {
             </div>
 
             {/* Option A: Select existing local file */}
-            <div className="p-4 rounded-lg bg-[#0d0f12] border border-blue-500/40 space-y-2">
+            <div className="p-4 rounded-lg bg-[#0d0f12] border border-zinc-700 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-xs text-zinc-200 flex items-center gap-2">
-                  <FolderOpen className="w-4 h-4 text-blue-400" />
+                  <FolderOpen className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
                   Have an existing GGUF model on this computer?
                 </span>
               </div>
@@ -251,7 +251,7 @@ export const OnboardingWizard: React.FC = () => {
               </p>
               <button
                 onClick={handleSelectLocalFile}
-                className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium inline-flex items-center gap-2 transition-colors mt-1"
+                className="px-4 py-2 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium inline-flex items-center gap-2 transition-colors mt-1"
               >
                 <FolderOpen className="w-3.5 h-3.5" />
                 <span>Select Local GGUF File...</span>
@@ -284,7 +284,7 @@ export const OnboardingWizard: React.FC = () => {
                   onClick={() => setSelectedModelId(m.id)}
                   className={`p-3.5 rounded-lg border cursor-pointer transition-all ${
                     selectedModelId === m.id
-                      ? 'bg-blue-950/40 border-blue-500/80 ring-1 ring-blue-500/40'
+                      ? 'bg-zinc-800/60 border-black dark:border-white ring-1 ring-black/20 dark:ring-white/20'
                       : 'bg-[#0d0f12] border-[#22252c] hover:border-[#30343f]'
                   }`}
                 >
@@ -307,7 +307,7 @@ export const OnboardingWizard: React.FC = () => {
               <button
                 onClick={handleDownloadAndStart}
                 disabled={isDownloading}
-                className="flex items-center gap-2 px-5 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium disabled:opacity-50"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{isDownloading ? 'Downloading Model...' : 'Download & Continue →'}</span>
@@ -329,7 +329,7 @@ export const OnboardingWizard: React.FC = () => {
                 onClick={() => setEnableLan(false)}
                 className={`p-4 rounded-lg border cursor-pointer transition-all ${
                   !enableLan
-                    ? 'bg-blue-950/40 border-blue-500/80 ring-1 ring-blue-500/40'
+                    ? 'bg-zinc-800/60 border-black dark:border-white ring-1 ring-black/20 dark:ring-white/20'
                     : 'bg-[#0d0f12] border-[#22252c]'
                 }`}
               >
@@ -348,16 +348,16 @@ export const OnboardingWizard: React.FC = () => {
                 onClick={() => setEnableLan(true)}
                 className={`p-4 rounded-lg border cursor-pointer transition-all ${
                   enableLan
-                    ? 'bg-blue-950/40 border-blue-500/80 ring-1 ring-blue-500/40'
+                    ? 'bg-zinc-800/60 border-black dark:border-white ring-1 ring-black/20 dark:ring-white/20'
                     : 'bg-[#0d0f12] border-[#22252c]'
                 }`}
               >
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-zinc-200 flex items-center gap-1.5">
-                    <Wifi className="w-3.5 h-3.5 text-blue-400" />
+                    <Wifi className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" />
                     Enable Local Network (LAN) Access
                   </span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">
                     Multi-Device
                   </span>
                 </div>
@@ -376,7 +376,7 @@ export const OnboardingWizard: React.FC = () => {
               </button>
               <button
                 onClick={() => setStep(6)}
-                className="px-5 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium"
+                className="px-5 py-2 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium"
               >
                 Review & Launch →
               </button>

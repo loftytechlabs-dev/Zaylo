@@ -124,7 +124,7 @@ export const StudioCheckpointsTab: React.FC<StudioCheckpointsTabProps> = ({
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-[#171920] text-blue-400 border border-blue-500/30">
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700">
                       Step {ckpt.step}
                     </span>
 
@@ -146,7 +146,7 @@ export const StudioCheckpointsTab: React.FC<StudioCheckpointsTabProps> = ({
                     <button
                       onClick={() => handleResume(ckpt)}
                       disabled={isTrainingActive || !isRecoverable || isResumingThis}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs font-semibold shadow transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-white dark:text-black text-xs font-semibold shadow transition-colors"
                       title={
                         isTrainingActive
                           ? 'Pause active training to resume'

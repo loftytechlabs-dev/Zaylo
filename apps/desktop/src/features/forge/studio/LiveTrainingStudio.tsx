@@ -58,8 +58,8 @@ export const LiveTrainingStudio: React.FC<LiveTrainingStudioProps> = ({
     switch (status) {
       case 'TRAINING':
         return (
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30 animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-black dark:bg-white animate-ping" />
             TRAINING
           </span>
         );
@@ -72,7 +72,7 @@ export const LiveTrainingStudio: React.FC<LiveTrainingStudioProps> = ({
         );
       case 'INITIALIZING':
         return (
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700">
             <RotateCw className="w-3 h-3 animate-spin" />
             INITIALIZING
           </span>
@@ -202,7 +202,7 @@ export const LiveTrainingStudio: React.FC<LiveTrainingStudioProps> = ({
             <button
               onClick={handleResume}
               disabled={isActionLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium shadow transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-medium shadow transition-colors"
             >
               <Play className="w-3.5 h-3.5" />
               <span>Resume Training</span>
@@ -247,11 +247,11 @@ export const LiveTrainingStudio: React.FC<LiveTrainingStudioProps> = ({
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                   isActive
-                    ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+                    ? 'border-black dark:border-white text-zinc-900 dark:text-zinc-100 bg-zinc-100/50 dark:bg-zinc-800/40'
                     : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-blue-400' : 'text-zinc-500'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500'}`} />
                 <span>{tab.label}</span>
                 {tab.id === 'checkpoints' && (
                   <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-400">
@@ -259,7 +259,7 @@ export const LiveTrainingStudio: React.FC<LiveTrainingStudioProps> = ({
                   </span>
                 )}
                 {tab.id === 'charts' && job.metricsHistory?.length > 0 && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
                 )}
               </button>
             );

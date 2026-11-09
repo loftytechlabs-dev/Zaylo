@@ -202,13 +202,13 @@ export const LiveTrainingMonitorScreen: React.FC<LiveTrainingMonitorScreenProps>
             <span
               className={`px-3 py-1 rounded-md text-xs font-mono font-semibold tracking-wide ${
                 job.status === 'TRAINING'
-                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30 animate-pulse'
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 animate-pulse'
                   : job.status === 'COMPLETED'
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                   : job.status === 'PAUSED'
                   ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                   : job.status === 'INITIALIZING'
-                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700'
                   : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
               }`}
             >
@@ -255,7 +255,7 @@ export const LiveTrainingMonitorScreen: React.FC<LiveTrainingMonitorScreenProps>
             {job.status === 'COMPLETED' && (
               <button
                 onClick={onViewResults}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-sm"
               >
                 <span>View Results & Compare</span>
                 <ArrowRight className="w-4 h-4" />
@@ -273,7 +273,7 @@ export const LiveTrainingMonitorScreen: React.FC<LiveTrainingMonitorScreenProps>
                   ? 'bg-emerald-500'
                   : job.status === 'FAILED'
                   ? 'bg-rose-500'
-                  : 'bg-blue-500'
+                  : 'bg-black dark:bg-white'
               }`}
               style={{ width: `${progressPct}%` }}
             />
@@ -297,7 +297,7 @@ export const LiveTrainingMonitorScreen: React.FC<LiveTrainingMonitorScreenProps>
             {typeof job.currentLoss === 'number' && !isNaN(job.currentLoss) ? job.currentLoss.toFixed(4) : '—'}
           </div>
           {typeof latestSample?.evalLoss === 'number' && !isNaN(latestSample.evalLoss) && (
-            <div className="text-xs text-blue-400 font-mono">
+            <div className="text-xs text-zinc-900 dark:text-zinc-100 font-mono">
               Val Loss: {latestSample.evalLoss.toFixed(4)}
             </div>
           )}
@@ -305,7 +305,7 @@ export const LiveTrainingMonitorScreen: React.FC<LiveTrainingMonitorScreenProps>
 
         <div className="p-4 rounded-xl bg-[#121418] border border-[#202227] space-y-1">
           <div className="text-[11px] text-zinc-400">Learning Rate</div>
-          <div className="text-lg font-bold font-mono text-blue-400">
+          <div className="text-lg font-bold font-mono text-zinc-900 dark:text-zinc-100">
             {latestSample?.learningRate ? latestSample.learningRate.toExponential(2) : '—'}
           </div>
           <div className="text-xs text-zinc-500 font-mono">Warmup + Cosine Decay</div>
@@ -339,7 +339,7 @@ export const LiveTrainingMonitorScreen: React.FC<LiveTrainingMonitorScreenProps>
         <div className="p-4 rounded-xl bg-[#121418] border border-[#202227] space-y-3">
           <div className="flex items-center justify-between text-xs font-semibold text-zinc-200">
             <div className="flex items-center gap-2">
-              <HardDrive className="w-4 h-4 text-blue-400" />
+              <HardDrive className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
               <span>Saved Checkpoints ({checkpoints.length})</span>
             </div>
           </div>

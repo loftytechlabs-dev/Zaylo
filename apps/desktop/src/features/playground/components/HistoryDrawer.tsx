@@ -59,17 +59,17 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
   };
 
   return (
-    <aside className="w-80 border-l border-[#202227] bg-[#0c0d10] p-5 space-y-4 select-none overflow-y-auto shrink-0 z-20 flex flex-col justify-between">
+    <aside className="w-80 border-l border-[#eaeaea] dark:border-[#202227] bg-white dark:bg-[#0c0d10] p-5 space-y-4 select-none overflow-y-auto shrink-0 z-20 flex flex-col justify-between">
       <div className="space-y-4 flex-1">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1f2228] pb-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-200">
-            <History className="w-4 h-4 text-blue-400" />
+        <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#1f2228] pb-3">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#111111] dark:text-zinc-200">
+            <History className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
             <span>Chat History</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded text-zinc-500 hover:text-zinc-200 hover:bg-[#1a1d25] transition-colors"
+            className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#1a1d25] transition-colors"
             title="Close History Panel"
           >
             <X className="w-4 h-4" />
@@ -79,7 +79,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
         {/* New Chat Button */}
         <button
           onClick={onNewChat}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-medium text-xs shadow-xs transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>New Conversation</span>
@@ -88,7 +88,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
         {/* Conversations List */}
         <div className="space-y-1.5 pt-1">
           {conversations.length === 0 ? (
-            <div className="p-6 rounded-xl bg-[#12141a] border border-[#20232c] text-center space-y-1.5 text-zinc-500">
+            <div className="p-6 rounded-xl bg-zinc-50 dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#20232c] text-center space-y-1.5 text-zinc-400">
               <MessageSquare className="w-6 h-6 mx-auto opacity-40" />
               <p className="text-xs">No saved conversations yet.</p>
               <p className="text-[10px]">Your chats will be automatically preserved here.</p>
@@ -104,8 +104,8 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                   onClick={() => onSelect(conv.id)}
                   className={`p-3 rounded-xl border transition-all cursor-pointer group space-y-1.5 ${
                     isActive
-                      ? 'bg-[#151720] border-blue-500/40 text-zinc-100 shadow-sm'
-                      : 'bg-[#101217] border-[#1d2028] hover:border-[#2a2e3a] text-zinc-300'
+                      ? 'bg-zinc-100 dark:bg-[#151720] border-black dark:border-white text-[#111111] dark:text-zinc-100 shadow-xs'
+                      : 'bg-white dark:bg-[#101217] border-[#eaeaea] dark:border-[#1d2028] hover:border-zinc-400 dark:hover:border-[#2a2e3a] text-zinc-600 dark:text-zinc-300'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -115,7 +115,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                           type="text"
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
-                          className="flex-1 bg-[#1a1d26] border border-blue-500 rounded px-2 py-0.5 text-xs text-zinc-100 focus:outline-none"
+                          className="flex-1 bg-white dark:bg-[#1a1d26] border border-black dark:border-white rounded px-2 py-0.5 text-xs text-[#111111] dark:text-zinc-100 focus:outline-none"
                           autoFocus
                         />
                         <button

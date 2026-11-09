@@ -58,8 +58,8 @@ export const LogsView: React.FC = () => {
       {/* Header & Controls */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[#202227] pb-4">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-blue-400" />
+          <h2 className="text-sm font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
+            <Terminal className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
             Structured System & Inference Logs
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
@@ -107,7 +107,7 @@ export const LogsView: React.FC = () => {
             placeholder="Search log messages..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#111317] border border-[#22252c] rounded-md pl-8 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 font-mono focus:outline-none focus:border-blue-500"
+            className="w-full bg-white dark:bg-[#111317] border border-[#eaeaea] dark:border-[#22252c] rounded-md pl-8 pr-3 py-1.5 text-xs text-[#111111] dark:text-zinc-200 placeholder-zinc-400 font-mono focus:outline-none focus:border-black dark:focus:border-white"
           />
         </div>
 
@@ -164,7 +164,7 @@ export const LogsView: React.FC = () => {
                       ? 'bg-amber-950 text-amber-300 border border-amber-800/40'
                       : log.level === 'DEBUG'
                       ? 'bg-zinc-800 text-zinc-400'
-                      : 'bg-blue-950 text-blue-300 border border-blue-800/40'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700'
                   }`}
                 >
                   {log.level}

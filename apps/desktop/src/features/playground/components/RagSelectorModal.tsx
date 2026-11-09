@@ -150,7 +150,7 @@ export const RagSelectorModal: React.FC<RagSelectorModalProps> = ({
               {documents.length > 0 && (
                 <button
                   onClick={onSelectAllDocs}
-                  className="text-[11px] text-blue-400 hover:text-blue-300 font-sans"
+                  className="text-[11px] text-zinc-900 dark:text-zinc-100 hover:underline font-sans"
                 >
                   {selectedDocIds.length === documents.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -219,10 +219,10 @@ export const RagSelectorModal: React.FC<RagSelectorModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-[#20232c] bg-[#14161d] flex justify-end">
+        <div className="px-6 py-3 border-t border-[#eaeaea] dark:border-[#20232c] bg-zinc-50 dark:bg-[#14161d] flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition-colors"
+            className="px-4 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-xs font-semibold text-white dark:text-black transition-colors shadow-xs"
           >
             Done
           </button>

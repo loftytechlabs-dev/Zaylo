@@ -9,8 +9,8 @@
   --card-foreground: #f4f4f5;
   --popover: #121316;
   --popover-foreground: #f4f4f5;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
   --secondary: #1e2025;
   --secondary-foreground: #e4e4e7;
   --muted: #1a1c21;
@@ -21,7 +21,7 @@
   --destructive-foreground: #ffffff;
   --border: #26282e;
   --input: #1e2025;
-  --ring: #3b82f6;
+  --ring: #71717a;
 
   /* Centralized semantic tokens */
   --sidebar-bg: #0e1013;
@@ -31,12 +31,12 @@
   --text-primary: #f4f4f5;
   --text-secondary: #a1a1aa;
   --text-muted: #71717a;
-  --accent-primary: #2563eb;
-  --accent-hover: #1d4ed8;
+  --accent-primary: #ffffff;
+  --accent-hover: #e4e4e7;
   --status-success: #10b981;
   --status-warning: #f59e0b;
   --status-error: #ef4444;
-  --status-info: #3b82f6;
+  --status-info: #a1a1aa;
   --scrollbar-thumb: #2a2d35;
   --scrollbar-thumb-hover: #3f434f;
   --modal-bg: #111317;
@@ -44,42 +44,42 @@
 }
 
 [data-theme="light"] {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #ffffff;
+  --foreground: #111111;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #111111;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #2563eb;
+  --popover-foreground: #111111;
+  --primary: #111111;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #e2e8f0;
-  --accent-foreground: #0f172a;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #111111;
+  --muted: #f5f5f5;
+  --muted-foreground: #666666;
+  --accent: #f5f5f5;
+  --accent-foreground: #111111;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
+  --border: #eaeaea;
   --input: #ffffff;
-  --ring: #2563eb;
+  --ring: #111111;
 
   /* Centralized semantic tokens */
   --sidebar-bg: #ffffff;
   --header-bg: #ffffff;
   --card-bg: #ffffff;
-  --card-inner-bg: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --accent-primary: #2563eb;
-  --accent-hover: #1d4ed8;
-  --status-success: #059669;
-  --status-warning: #d97706;
-  --status-error: #e11d48;
-  --status-info: #2563eb;
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-thumb-hover: #94a3b8;
+  --card-inner-bg: #f5f5f5;
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+  --accent-primary: #111111;
+  --accent-hover: #333333;
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-error: #ef4444;
+  --status-info: #71717a;
+  --scrollbar-thumb: #e5e5e5;
+  --scrollbar-thumb-hover: #cccccc;
   --modal-bg: #ffffff;
   --dropdown-bg: #ffffff;
 }
@@ -462,7 +462,7 @@ body {
 
 [data-theme="light"] .hover\:text-blue-300:hover,
 [data-theme="light"] .hover\:text-blue-400:hover {
-  color: #2563eb !important;
+  color: #111111 !important;
 }
 
 [data-theme="light"] .hover\:text-rose-300:hover,
@@ -479,30 +479,30 @@ body {
 [data-theme="light"] textarea,
 [data-theme="light"] select {
   background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: #cbd5e1 !important;
+  color: #111111 !important;
+  border-color: #eaeaea !important;
 }
 
 [data-theme="light"] select option {
   background-color: #ffffff !important;
-  color: #0f172a !important;
+  color: #111111 !important;
 }
 
 [data-theme="light"] input::placeholder,
 [data-theme="light"] textarea::placeholder {
-  color: #94a3b8 !important;
+  color: #888888 !important;
 }
 
 /* Sidebar Active Navigation Tab */
 [data-theme="light"] aside nav button.bg-\[\#1b1e24\] {
-  background-color: #eff6ff !important;
-  color: #1d4ed8 !important;
-  border-color: #bfdbfe !important;
+  background-color: #f5f5f5 !important;
+  color: #111111 !important;
+  border-color: #eaeaea !important;
 }
 
 [data-theme="light"] aside nav button:not(.bg-\[\#1b1e24\]):hover {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
+  background-color: #fafafa !important;
+  color: #111111 !important;
 }
 
 /* Status Badges */
@@ -543,54 +543,55 @@ body {
 [data-theme="light"] .bg-blue-950,
 [data-theme="light"] .bg-blue-950\/40,
 [data-theme="light"] .bg-blue-900\/60 {
-  background-color: #eff6ff !important;
-  color: #1d4ed8 !important;
-  border-color: #bfdbfe !important;
+  background-color: #f5f5f5 !important;
+  color: #111111 !important;
+  border-color: #eaeaea !important;
 }
 [data-theme="light"] .text-blue-300,
 [data-theme="light"] .text-blue-400 {
-  color: #1d4ed8 !important;
+  color: #111111 !important;
 }
 
 [data-theme="light"] .text-purple-300,
 [data-theme="light"] .text-purple-400 {
-  color: #1d4ed8 !important;
+  color: #111111 !important;
 }
 
-/* Alpha accent badges and alert banners */
+/* Badges and alert banners */
 [data-theme="light"] .bg-purple-500\/10,
 [data-theme="light"] .bg-purple-900\/50,
 [data-theme="light"] .bg-purple-950\/70 {
-  background-color: #eff6ff !important;
-  color: #1d4ed8 !important;
-  border-color: #bfdbfe !important;
+  background-color: #f5f5f5 !important;
+  color: #111111 !important;
+  border-color: #eaeaea !important;
 }
 
-/* Brand Logo Tile in Light Mode - Sleek Frosted Azure Emblem, Zero Sticker Look */
+/* Brand Logo Tile in Light Mode - Sleek Monochrome Tile */
 [data-theme="light"] .brand-logo-tile {
-  background: linear-gradient(180deg, #f0f7ff 0%, #e0effe 100%) !important;
-  border-color: #bae6fd !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 6px rgba(14, 165, 233, 0.08) !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Overview Throughput Trend Chart Container in Light Mode */
 [data-theme="light"] .overview-chart-box {
   background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  border-color: #eaeaea !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
 }
 
 [data-theme="light"] .overview-chart-box svg line {
-  stroke: #e2e8f0 !important;
+  stroke: #eaeaea !important;
 }
 
 [data-theme="light"] .overview-chart-box svg text {
-  fill: #64748b !important;
+  fill: #888888 !important;
 }
 [data-theme="light"] .bg-blue-500\/10 {
-  background-color: #eff6ff !important;
-  color: #1d4ed8 !important;
-  border-color: #bfdbfe !important;
+  background-color: #f5f5f5 !important;
+  color: #111111 !important;
+  border-color: #eaeaea !important;
 }
 [data-theme="light"] .bg-emerald-500\/10 {
   background-color: #ecfdf5 !important;
@@ -611,7 +612,8 @@ body {
 
 /* Gradients in light mode */
 [data-theme="light"] .bg-gradient-to-r {
-  background-image: linear-gradient(to right, #eff6ff, #f8fafc, #f1f5f9) !important;
+  background-image: none !important;
+  background-color: #fafafa !important;
 }
 
 /* Code blocks */

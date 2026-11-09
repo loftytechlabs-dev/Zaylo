@@ -290,7 +290,7 @@ export const StudioLiveChartsTab: React.FC<StudioLiveChartsTabProps> = ({ job })
         {/* Chart Header Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1b1e24] pb-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-blue-400" />
+            <TrendingUp className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
             <h3 className="text-xs font-semibold text-zinc-100 uppercase tracking-wider">
               Real-Time Telemetry Curve
             </h3>
@@ -302,7 +302,7 @@ export const StudioLiveChartsTab: React.FC<StudioLiveChartsTabProps> = ({ job })
           {/* Hover Telemetry Readout */}
           {hoveredSample ? (
             <div className="flex items-center gap-3 text-[11px] font-mono bg-[#161820] px-3 py-1 rounded-lg border border-[#272b36]">
-              <span className="text-blue-400 font-semibold">
+              <span className="text-zinc-900 dark:text-zinc-100 font-semibold">
                 Step {hoveredSample.step} (Epoch {hoveredSample.epoch})
               </span>
               <span className="text-zinc-500">•</span>
@@ -560,7 +560,7 @@ export const StudioLiveChartsTab: React.FC<StudioLiveChartsTabProps> = ({ job })
               onClick={() => setAxisMode('step')}
               className={`px-2.5 py-1 rounded text-xs transition-colors ${
                 axisMode === 'step'
-                  ? 'bg-blue-600 text-white font-medium'
+                  ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
@@ -570,7 +570,7 @@ export const StudioLiveChartsTab: React.FC<StudioLiveChartsTabProps> = ({ job })
               onClick={() => setAxisMode('time')}
               className={`px-2.5 py-1 rounded text-xs transition-colors ${
                 axisMode === 'time'
-                  ? 'bg-blue-600 text-white font-medium'
+                  ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >

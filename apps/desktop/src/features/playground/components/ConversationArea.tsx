@@ -1,12 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import {
-  Sparkles,
-  Bot,
-  Code2,
-  Eye,
-  Zap,
-  ArrowRight,
-  Shield,
+  Code,
+  Database,
+  FileText,
+  Image as ImageIcon,
   Trash2,
 } from 'lucide-react';
 import type { ChatMessage } from '@local-ai/shared';
@@ -22,6 +19,7 @@ interface ConversationAreaProps {
   onRegenerate: () => void;
   onRetry: () => void;
   onClearConversation: () => void;
+  onTriggerImageUpload?: () => void;
 }
 
 export const ConversationArea: React.FC<ConversationAreaProps> = ({
@@ -33,6 +31,7 @@ export const ConversationArea: React.FC<ConversationAreaProps> = ({
   onRegenerate,
   onRetry,
   onClearConversation,
+  onTriggerImageUpload,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -40,129 +39,94 @@ export const ConversationArea: React.FC<ConversationAreaProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, isGenerating]);
 
-  // Generate contextual suggestions based on model capabilities
-  const getSuggestions = () => {
-    if (selectedModel?.isVisionSupported) {
-      return [
-        {
-          icon: Eye,
-          title: 'Visual Scene Analysis',
-          prompt: 'Analyze this image and describe the key objects, actions, and details you observe.',
-        },
-        {
-          icon: Code2,
-          title: 'Extract Text or Code',
-          prompt: 'Extract all visible text, code snippets, and structured tables from this image.',
-        },
-        {
-          icon: Zap,
-          title: 'Diagram Understanding',
-          prompt: 'Explain the workflow and relationships depicted in this architectural diagram.',
-        },
-      ];
+  const handleSuggestionClick = (type: string) => {
+    switch (type) {
+      case 'code':
+        onSelectSuggestion('Write an asynchronous, in-memory cache in TypeScript with sliding TTL expiration and cleanup.');
+        break;
+      case 'sql':
+        onSelectSuggestion('Write an optimized PostgreSQL query using window functions to calculate running monthly revenue by customer tier.');
+        break;
+      case 'summarize':
+        onSelectSuggestion('Summarize the operational and privacy advantages of running local offline LLMs versus cloud AI APIs.');
+        break;
+      case 'image':
+        if (onTriggerImageUpload) {
+          onTriggerImageUpload();
+        } else {
+          onSelectSuggestion('Analyze this visual scene in detail: describe objects, relationships, and structured text.');
+        }
+        break;
+      default:
+        break;
     }
-
-    if (selectedModel?.name?.toLowerCase().includes('coder') || selectedModel?.name?.toLowerCase().includes('code')) {
-      return [
-        {
-          icon: Code2,
-          title: 'Async HTTP Server',
-          prompt: 'Write an asynchronous, high-throughput HTTP server in Rust using Tokio and Axum.',
-        },
-        {
-          icon: Zap,
-          title: 'LoRA Implementation',
-          prompt: 'Explain how Low-Rank Adaptation (LoRA) decomposes weight updates in PyTorch with sample code.',
-        },
-        {
-          icon: Sparkles,
-          title: 'Type-Safe Event Emitter',
-          prompt: 'Create a robust, fully generic type-safe event emitter class in TypeScript.',
-        },
-      ];
-    }
-
-    return [
-      {
-        icon: Sparkles,
-        title: 'Explain Sampling Parameters',
-        prompt: 'Explain the difference between temperature, top-p (nucleus sampling), and repetition penalties.',
-      },
-      {
-        icon: Shield,
-        title: 'Offline AI Privacy',
-        prompt: 'How does running offline LLMs with Zaylo preserve enterprise data privacy compared to cloud APIs?',
-      },
-      {
-        icon: Code2,
-        title: 'Compare LoRA vs Full Fine-Tuning',
-        prompt: 'What are the memory and compute trade-offs between LoRA fine-tuning and full-parameter training?',
-      },
-    ];
   };
 
-  const suggestions = getSuggestions();
-
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 flex flex-col">
-      {/* Empty State Welcome Screen */}
+    <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 flex flex-col scrollbar-thin">
+      {/* Empty State Welcome Screen — The Visual Centerpiece */}
       {messages.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto text-center space-y-6 my-auto select-none">
-          <div className="space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto shadow-sm">
-              <Bot className="w-6 h-6" />
-            </div>
-            <h2 className="text-xl font-bold text-zinc-100 tracking-tight">
-              What would you like to explore?
-            </h2>
-            <p className="text-xs text-zinc-400 max-w-md mx-auto">
-              {selectedModel ? (
-                <span>
-                  Connected to <strong className="text-zinc-200 font-mono">{selectedModel.name}</strong>.
-                  All prompt tokens and generation remain 100% private on your machine.
-                </span>
-              ) : (
-                'Select a model above to begin chatting.'
-              )}
+        <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto text-center space-y-7 my-auto select-none">
+          {/* Prominent Clean Heading */}
+          <div className="space-y-1.5">
+            <h1 className="text-4xl sm:text-5xl font-bold text-[#111111] dark:text-[#f4f4f5] tracking-tight font-sans">
+              Zaylo
+            </h1>
+            <p className="text-base sm:text-lg text-zinc-400 dark:text-zinc-500 font-normal">
+              Your Local AI Playground
             </p>
           </div>
 
-          {/* Contextual Suggestions Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full text-left">
-            {suggestions.map((s, idx) => {
-              const Icon = s.icon;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => onSelectSuggestion(s.prompt)}
-                  className="p-3.5 rounded-xl bg-[#12141a] hover:bg-[#181a24] border border-[#20232c] hover:border-blue-500/40 transition-all space-y-1.5 group cursor-pointer text-left shadow-sm"
-                >
-                  <div className="flex items-center justify-between text-xs font-semibold text-zinc-200 group-hover:text-blue-400 transition-colors">
-                    <div className="flex items-center gap-1.5">
-                      <Icon className="w-3.5 h-3.5 text-blue-400" />
-                      <span>{s.title}</span>
-                    </div>
-                    <ArrowRight className="w-3 h-3 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
-                    {s.prompt}
-                  </p>
-                </button>
-              );
-            })}
+          {/* 4 Minimal Suggestion Buttons in a Row */}
+          <div className="flex flex-wrap items-center justify-center gap-3 w-full max-w-2xl pt-2">
+            {/* 1. Write Code */}
+            <button
+              onClick={() => handleSuggestionClick('code')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs sm:text-sm font-medium text-[#111111] dark:text-[#f4f4f5] transition-all shadow-xs cursor-pointer"
+            >
+              <Code className="w-4 h-4 text-[#111111] dark:text-[#f4f4f5]" />
+              <span>Write Code</span>
+            </button>
+
+            {/* 2. Query SQL */}
+            <button
+              onClick={() => handleSuggestionClick('sql')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs sm:text-sm font-medium text-[#111111] dark:text-[#f4f4f5] transition-all shadow-xs cursor-pointer"
+            >
+              <Database className="w-4 h-4 text-[#111111] dark:text-[#f4f4f5]" />
+              <span>Query SQL</span>
+            </button>
+
+            {/* 3. Summarize */}
+            <button
+              onClick={() => handleSuggestionClick('summarize')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs sm:text-sm font-medium text-[#111111] dark:text-[#f4f4f5] transition-all shadow-xs cursor-pointer"
+            >
+              <FileText className="w-4 h-4 text-[#111111] dark:text-[#f4f4f5]" />
+              <span>Summarize</span>
+            </button>
+
+            {/* 4. Analyze Image */}
+            <button
+              onClick={() => handleSuggestionClick('image')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs sm:text-sm font-medium text-[#111111] dark:text-[#f4f4f5] transition-all shadow-xs cursor-pointer"
+            >
+              <ImageIcon className="w-4 h-4 text-[#111111] dark:text-[#f4f4f5]" />
+              <span>Analyze Image</span>
+            </button>
           </div>
         </div>
       ) : (
-        /* Conversation Message Feed */
-        <div className="space-y-4 max-w-3xl mx-auto w-full">
-          {/* Clear conversation button at top of stream */}
-          <div className="flex justify-end pb-1 select-none">
+        /* Active Conversation Column */
+        <div className="space-y-2 max-w-[850px] mx-auto w-full pb-4">
+          {/* Subtle Clear Conversation header control */}
+          <div className="flex justify-end pb-2 select-none">
             <button
               onClick={onClearConversation}
-              className="flex items-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
-              title="Clear all messages"
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+              title="Clear all messages in this conversation"
             >
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="w-3.5 h-3.5" />
               <span>Clear conversation</span>
             </button>
           </div>

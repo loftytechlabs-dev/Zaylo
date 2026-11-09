@@ -333,17 +333,17 @@ for await (const chunk of stream) {
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* 1. Mobile & Web Chat Access Banner */}
-      <div className="p-6 rounded-xl bg-gradient-to-r from-blue-950/40 via-[#121622] to-slate-900/30 border border-blue-800/40 space-y-4">
+      <div className="p-6 rounded-xl bg-zinc-50 dark:bg-[#121622] border border-zinc-200 dark:border-zinc-800 space-y-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-blue-400" />
-              <h2 className="text-base font-bold text-zinc-100">Mobile & LAN Web Chat Interface</h2>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-900/60 text-blue-300 border border-blue-700/40">
+              <Smartphone className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+              <h2 className="text-base font-bold text-[#111111] dark:text-zinc-100">Mobile & LAN Web Chat Interface</h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
                 PHONE & TABLET
               </span>
             </div>
-            <p className="text-xs text-zinc-400 max-w-2xl">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-2xl">
               Open this link in Safari on your iPhone, Chrome on Android, iPad, or any laptop connected to your Wi-Fi to chat with your local AI models with live token streaming.
             </p>
           </div>
@@ -351,7 +351,7 @@ for await (const chunk of stream) {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setShowQrModal(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#181d28] hover:bg-[#222938] border border-blue-700/50 text-blue-300 text-xs font-semibold transition-colors shadow-sm"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white dark:bg-[#181d28] hover:bg-zinc-50 dark:hover:bg-[#222938] border border-[#eaeaea] dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-semibold transition-colors shadow-xs"
             >
               <QrCode className="w-4 h-4" />
               <span>Scan Phone QR</span>
@@ -364,7 +364,7 @@ for await (const chunk of stream) {
                   : webChatUrl;
                 window.open(target, '_blank');
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-md"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-semibold transition-colors shadow-xs"
             >
               <ExternalLink className="w-4 h-4" />
               <span>Open Web Chat</span>
@@ -393,7 +393,7 @@ for await (const chunk of stream) {
         <div className="p-3 rounded-lg bg-[#0b0d12] border border-[#202532] flex items-center justify-between font-mono text-xs text-zinc-200">
           <div className="flex items-center gap-2 truncate">
             <span className="text-zinc-500 select-none text-[11px]">URL:</span>
-            <span className="text-blue-300 select-all font-semibold">{webChatUrl}</span>
+            <span className="text-zinc-900 dark:text-zinc-100 select-all font-semibold">{webChatUrl}</span>
           </div>
 
           <button
@@ -424,7 +424,7 @@ for await (const chunk of stream) {
         <div className="flex items-center justify-between border-b border-[#1c1f26] pb-4">
           <div>
             <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-              <Server className="w-4 h-4 text-blue-400" />
+              <Server className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
               OpenAI-Compatible API Endpoint
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5">
@@ -433,7 +433,7 @@ for await (const chunk of stream) {
           </div>
           <div className="flex items-center gap-2">
             {serverConfig?.lowMemoryMode && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-blue-950 text-blue-300 border border-blue-800/50">
+              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
                 LOW-RAM STREAMING
               </span>
             )}
@@ -470,7 +470,7 @@ for await (const chunk of stream) {
           <div className="p-4 rounded-md bg-[#0c0d10] border border-[#1d2027] flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200">
-                <Wifi className="w-3.5 h-3.5 text-blue-400" />
+                <Wifi className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
                 LAN Network Access
               </div>
               <p className="text-[11px] text-zinc-500">
@@ -484,7 +484,7 @@ for await (const chunk of stream) {
               onClick={() => handleToggleLan(!serverConfig?.lanEnabled)}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 serverConfig?.lanEnabled
-                  ? 'bg-blue-950 text-blue-300 border border-blue-800'
+                  ? 'bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white'
                   : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
               }`}
             >
@@ -499,7 +499,7 @@ for await (const chunk of stream) {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#1c1f26] pb-4">
           <div>
             <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-              <Code2 className="w-4 h-4 text-blue-400" />
+              <Code2 className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
               Live Interactive Client Snippets
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5">
@@ -515,7 +515,7 @@ for await (const chunk of stream) {
                   setCustomPrompt('Explain quantum computing in one sentence.');
                 }}
                 className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                  apiTaskTab === 'chat' ? 'bg-blue-600/20 text-blue-300 font-semibold border border-blue-500/40' : 'text-zinc-400 hover:text-zinc-200'
+                  apiTaskTab === 'chat' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 💬 Chat
@@ -526,7 +526,7 @@ for await (const chunk of stream) {
                   setCustomPrompt('What is visible in this landscape photograph?');
                 }}
                 className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                  apiTaskTab === 'vision' ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/40' : 'text-zinc-400 hover:text-zinc-200'
+                  apiTaskTab === 'vision' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 👁️ Vision
@@ -537,7 +537,7 @@ for await (const chunk of stream) {
                   setCustomPrompt('A cozy cabin in a snowy pine forest at twilight, 8k, photorealistic');
                 }}
                 className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                  apiTaskTab === 'image' ? 'bg-blue-600/20 text-blue-300 font-semibold border border-blue-500/40' : 'text-zinc-400 hover:text-zinc-200'
+                  apiTaskTab === 'image' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 🎨 Image Gen
@@ -550,7 +550,7 @@ for await (const chunk of stream) {
                   key={lang}
                   onClick={() => setActiveCodeLang(lang)}
                   className={`px-3 py-1 rounded text-xs font-mono capitalize transition-colors ${
-                    activeCodeLang === lang ? 'bg-[#1e2129] text-blue-400 font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+                    activeCodeLang === lang ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   {lang === 'node' ? 'Node.js' : lang}
@@ -569,7 +569,7 @@ for await (const chunk of stream) {
               <button
                 type="button"
                 onClick={() => handleCreateKey()}
-                className="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/40"
+                className="text-[11px] text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white font-medium flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700"
               >
                 <Plus className="w-3 h-3" />
                 + Quick Gen
@@ -586,7 +586,7 @@ for await (const chunk of stream) {
                   }
                 }}
                 placeholder="Click + Quick Gen or paste full lcl_... key"
-                className="flex-1 bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-emerald-300 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+                className="flex-1 bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-emerald-300 placeholder-zinc-600 focus:outline-none focus:border-black dark:focus:border-white"
               />
               {selectedKeyText && (
                 <button
@@ -611,7 +611,7 @@ for await (const chunk of stream) {
             <select
               value={selectedModelText}
               onChange={(e) => setSelectedModelText(e.target.value)}
-              className="w-full bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-zinc-100 focus:outline-none focus:border-blue-500"
+              className="w-full bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
             >
               {installedModels.length === 0 ? (
                 <option value="default">default (No models installed yet)</option>
@@ -634,7 +634,7 @@ for await (const chunk of stream) {
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
               placeholder="Type test prompt..."
-              className="w-full bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+              className="w-full bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-black dark:focus:border-white"
             />
           </div>
         </div>
@@ -681,7 +681,7 @@ for await (const chunk of stream) {
 
           <button
             onClick={() => setIsCreatingKey(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Generate Key</span>
@@ -696,12 +696,12 @@ for await (const chunk of stream) {
               placeholder="Key Name (e.g. My Phone, Python Script, Open WebUI)"
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
-              className="flex-1 bg-[#13151a] border border-[#23262f] rounded px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="flex-1 bg-[#13151a] border border-[#23262f] rounded px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
               autoFocus
             />
             <button
               type="submit"
-              className="px-4 py-1.5 rounded bg-blue-600 text-white text-xs font-medium hover:bg-blue-500"
+              className="px-4 py-1.5 rounded-lg bg-black dark:bg-white text-white dark:text-black text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-xs"
             >
               Save Key
             </button>
@@ -775,7 +775,7 @@ for await (const chunk of stream) {
                       <td className="py-3 px-4 font-sans font-medium text-zinc-200 flex items-center gap-2">
                         <span>{k.name}</span>
                         {isActive && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-950 text-blue-300 border border-blue-800/60 font-mono">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-mono">
                             DEFAULT
                           </span>
                         )}
@@ -788,10 +788,10 @@ for await (const chunk of stream) {
                               : ((generatedKey && !generatedKey.includes('...')) ? generatedKey : (selectedKeyText || k.prefix));
                             handleCopyRowKey(rawToCopy, k.id);
                           }}
-                          className="flex items-center gap-2 hover:text-blue-300 font-mono transition-colors text-left group"
+                          className="flex items-center gap-2 hover:text-black dark:hover:text-white font-mono transition-colors text-left group"
                           title="Click to copy full key"
                         >
-                          <span className="underline decoration-dotted decoration-zinc-600 group-hover:decoration-blue-400">
+                          <span className="underline decoration-dotted decoration-zinc-600 group-hover:decoration-black dark:group-hover:decoration-white">
                             {k.prefix}
                           </span>
                           {copiedRowKeyId === k.id ? (
@@ -800,7 +800,7 @@ for await (const chunk of stream) {
                               Copied!
                             </span>
                           ) : (
-                            <Copy className="w-3 h-3 text-zinc-500 group-hover:text-blue-400 transition-colors" />
+                            <Copy className="w-3 h-3 text-zinc-500 group-hover:text-black dark:group-hover:text-white transition-colors" />
                           )}
                         </button>
                       </td>
@@ -850,7 +850,7 @@ for await (const chunk of stream) {
           <div className="bg-[#12141a] border border-[#282d3a] rounded-2xl p-6 max-w-sm w-full space-y-5 shadow-2xl text-center">
             <div className="space-y-1">
               <h3 className="text-base font-bold text-zinc-100 flex items-center justify-center gap-2">
-                <Smartphone className="w-5 h-5 text-blue-400" />
+                <Smartphone className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
                 Scan to Open on Mobile
               </h3>
               <p className="text-xs text-zinc-400">
@@ -880,7 +880,7 @@ for await (const chunk of stream) {
                 type="checkbox"
                 checked={includeKeyInQr}
                 onChange={(e) => setIncludeKeyInQr(e.target.checked)}
-                className="rounded border-[#2a2f3d] bg-[#1a1d26] text-blue-500"
+                className="rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white accent-black dark:accent-white"
               />
               <span>Include API Key in QR Link</span>
             </label>

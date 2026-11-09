@@ -170,7 +170,7 @@ export const StudioChatPlaygroundTab: React.FC<StudioChatPlaygroundTabProps> = (
       <div className="p-5 rounded-xl bg-[#101216] border border-[#1e2128] space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-blue-400" />
+            <MessageSquare className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
             <h3 className="text-sm font-semibold text-zinc-100">Side-by-Side Prompt Tester</h3>
           </div>
 
@@ -181,7 +181,7 @@ export const StudioChatPlaygroundTab: React.FC<StudioChatPlaygroundTabProps> = (
               value={selectedAdapterPath}
               onChange={(e) => setSelectedAdapterPath(e.target.value)}
               disabled={isTrainingActive}
-              className="px-2.5 py-1 rounded-lg bg-[#15171d] border border-[#262a34] text-zinc-200 font-mono text-xs focus:outline-none focus:border-blue-500"
+              className="px-2.5 py-1 rounded-lg bg-[#15171d] border border-[#262a34] text-zinc-200 font-mono text-xs focus:outline-none focus:border-black dark:focus:border-white"
             >
               {job.artifactPath && (
                 <option value={job.artifactPath}>Final Adapter (Trained)</option>
@@ -206,7 +206,7 @@ export const StudioChatPlaygroundTab: React.FC<StudioChatPlaygroundTabProps> = (
             disabled={isTrainingActive || isLoading}
             placeholder="Enter a prompt to evaluate base vs fine-tuned responses side-by-side..."
             rows={3}
-            className="w-full p-3 rounded-lg bg-[#14161b] border border-[#20232a] text-zinc-100 text-xs placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none font-sans"
+            className="w-full p-3 rounded-lg bg-[#14161b] border border-[#20232a] text-zinc-100 text-xs placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white resize-none font-sans"
           />
 
           {/* Preset Prompts */}
@@ -239,7 +239,7 @@ export const StudioChatPlaygroundTab: React.FC<StudioChatPlaygroundTabProps> = (
                 value={temperature}
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
                 disabled={isTrainingActive || isLoading}
-                className="w-24 accent-blue-500 cursor-pointer"
+                className="w-24 accent-black dark:accent-white cursor-pointer"
               />
               <span className="font-mono text-zinc-300 w-8 text-right font-medium">
                 {temperature.toFixed(1)}
@@ -257,7 +257,7 @@ export const StudioChatPlaygroundTab: React.FC<StudioChatPlaygroundTabProps> = (
                 value={maxTokens}
                 onChange={(e) => setMaxTokens(parseInt(e.target.value, 10))}
                 disabled={isTrainingActive || isLoading}
-                className="w-24 accent-blue-500 cursor-pointer"
+                className="w-24 accent-black dark:accent-white cursor-pointer"
               />
               <span className="font-mono text-zinc-300 w-10 text-right font-medium">
                 {maxTokens}
@@ -268,7 +268,7 @@ export const StudioChatPlaygroundTab: React.FC<StudioChatPlaygroundTabProps> = (
           <button
             onClick={handleRunTest}
             disabled={isTrainingActive || isLoading || !prompt.trim()}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs font-semibold shadow transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-white dark:text-black text-xs font-semibold shadow transition-colors"
           >
             {isLoading ? (
               <>
@@ -323,31 +323,31 @@ export const StudioChatPlaygroundTab: React.FC<StudioChatPlaygroundTabProps> = (
           </div>
 
           {/* Fine-Tuned Model Column */}
-          <div className="p-4 rounded-xl bg-[#101216] border border-blue-500/30 space-y-3 flex flex-col justify-between shadow-lg shadow-blue-500/5">
+          <div className="p-4 rounded-xl bg-[#101216] border border-[#eaeaea] dark:border-zinc-800 space-y-3 flex flex-col justify-between shadow-sm">
             <div className="space-y-2">
               <div className="flex items-center justify-between border-b border-[#1b1e24] pb-2">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-blue-400" />
-                  <span className="text-xs font-semibold text-blue-300">
+                  <Sparkles className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
                     Fine-Tuned Model (LoRA)
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] font-mono text-blue-400">
-                  <Clock className="w-3 h-3 text-blue-400" />
+                <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-900 dark:text-zinc-100">
+                  <Clock className="w-3 h-3 text-zinc-900 dark:text-zinc-100" />
                   <span>{currentResult.fineTunedDurationMs} ms</span>
                 </div>
               </div>
 
               <div className="text-[11px] text-zinc-400 font-mono">
-                Adapter: <span className="text-blue-300 font-semibold">{job.name}</span>
+                Adapter: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{job.name}</span>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#14161b] border border-blue-500/20 text-xs text-zinc-100 leading-relaxed font-sans whitespace-pre-wrap min-h-[140px]">
+              <div className="p-3 rounded-lg bg-[#14161b] border border-[#eaeaea] dark:border-zinc-800 text-xs text-zinc-100 leading-relaxed font-sans whitespace-pre-wrap min-h-[140px]">
                 {currentResult.fineTunedResponse || '(No response received)'}
               </div>
             </div>
 
-            <div className="text-[10px] text-blue-400/80 font-mono pt-1">
+            <div className="text-[10px] text-zinc-500 font-mono pt-1">
               Active LoRA rank adaptation applied to attention projections.
             </div>
           </div>
@@ -376,8 +376,8 @@ export const StudioChatPlaygroundTab: React.FC<StudioChatPlaygroundTabProps> = (
                     <span className="text-zinc-500 block mb-1">Base:</span>
                     {item.result.baseResponse}
                   </div>
-                  <div className="p-2 rounded bg-[#14161b] border border-blue-500/20 text-zinc-200">
-                    <span className="text-blue-400 block mb-1">Fine-Tuned ({item.adapterLabel}):</span>
+                  <div className="p-2 rounded bg-[#14161b] border border-[#eaeaea] dark:border-zinc-800 text-zinc-200">
+                    <span className="text-zinc-900 dark:text-zinc-100 block mb-1">Fine-Tuned ({item.adapterLabel}):</span>
                     {item.result.fineTunedResponse}
                   </div>
                 </div>

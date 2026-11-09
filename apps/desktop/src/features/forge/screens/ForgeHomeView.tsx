@@ -51,8 +51,8 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
     switch (status) {
       case 'TRAINING':
         return (
-          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping" />
+          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white animate-ping" />
             TRAINING
           </span>
         );
@@ -64,7 +64,7 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
         );
       case 'INITIALIZING':
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700">
             INITIALIZING
           </span>
         );
@@ -141,7 +141,7 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
 
           <button
             onClick={onNewJob}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium shadow-sm transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium shadow-sm transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>New Training Job</span>
@@ -153,10 +153,10 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-blue-400" />
+            <Activity className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
             <h2 className="text-sm font-semibold text-zinc-200">Active Training</h2>
             {activeJobs.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700">
                 {activeJobs.length} active
               </span>
             )}
@@ -174,7 +174,7 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
               onClick={onNewJob}
               className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1b1e24] border border-[#2e323b] text-zinc-300 hover:text-zinc-100 hover:bg-[#252830] text-xs font-medium transition-colors"
             >
-              <Plus className="w-3.5 h-3.5 text-blue-400" />
+              <Plus className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" />
               <span>Configure New Job</span>
             </button>
           </div>
@@ -190,12 +190,12 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
                 <div
                   key={job.id}
                   onClick={() => onOpenJob(job.id)}
-                  className="p-4 rounded-xl bg-[#121418] border border-blue-500/30 hover:border-blue-500/50 cursor-pointer transition-all space-y-3 group"
+                  className="p-4 rounded-xl bg-[#121418] border border-[#eaeaea] dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 cursor-pointer transition-all space-y-3 group"
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-zinc-100 group-hover:text-blue-400 transition-colors">
+                        <span className="font-semibold text-sm text-zinc-100 group-hover:text-black dark:group-hover:text-white transition-colors">
                           {job.name}
                         </span>
                         {getStatusBadge(job.status)}
@@ -209,7 +209,7 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-medium text-blue-400">
+                      <span className="text-xs font-mono font-medium text-zinc-900 dark:text-zinc-100">
                         {progressPct}%
                       </span>
                       <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
@@ -220,7 +220,7 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
                   <div className="space-y-1.5">
                     <div className="h-1.5 w-full bg-[#1e2128] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                        className="h-full bg-black dark:bg-white rounded-full transition-all duration-300"
                         style={{ width: `${progressPct}%` }}
                       />
                     </div>
@@ -282,7 +282,7 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
                     className="hover:bg-[#15171d] transition-colors cursor-pointer group"
                   >
                     <td className="px-4 py-3">
-                      <div className="font-medium text-zinc-200 group-hover:text-blue-400 transition-colors">
+                      <div className="font-medium text-zinc-200 group-hover:text-black dark:group-hover:text-white transition-colors">
                         {job.name}
                       </div>
                       <div className="text-[11px] text-zinc-400 font-mono mt-0.5">
@@ -307,7 +307,7 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
                           e.stopPropagation();
                           onOpenJob(job.id);
                         }}
-                        className="px-2.5 py-1 rounded bg-[#1b1e24] border border-[#2e323b] text-zinc-200 hover:text-white hover:bg-blue-600 hover:border-blue-500 text-[11px] font-medium transition-colors"
+                        className="px-2.5 py-1 rounded bg-[#1b1e24] border border-[#2e323b] text-zinc-200 hover:text-white dark:hover:text-black hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white text-[11px] font-medium transition-colors"
                       >
                         {job.status === 'COMPLETED' ? 'Open Studio' : 'Inspect Studio'}
                       </button>
@@ -336,7 +336,7 @@ export const ForgeHomeView: React.FC<ForgeHomeViewProps> = ({
           {safeArtifacts.length > 0 && (
             <button
               onClick={onOpenLibrary}
-              className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+              className="text-xs text-zinc-900 dark:text-zinc-100 hover:underline flex items-center gap-1 transition-colors"
             >
               <span>Manage Library</span>
               <ArrowRight className="w-3.5 h-3.5" />

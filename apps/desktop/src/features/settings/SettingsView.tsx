@@ -65,7 +65,7 @@ export const SettingsView: React.FC = () => {
       <div className="flex items-center justify-between border-b border-[#202227] pb-4">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-            <Settings className="w-4 h-4 text-blue-400" />
+            <Settings className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
             Server & Runtime Configuration
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
@@ -75,7 +75,7 @@ export const SettingsView: React.FC = () => {
 
         <button
           onClick={handleSave}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-sm"
         >
           {saved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
           <span>{saved ? 'Saved ✓' : 'Save Changes'}</span>
@@ -95,7 +95,7 @@ export const SettingsView: React.FC = () => {
                 Customize your interface with high-contrast Dark theme or clean White theme.
               </p>
             </div>
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-950 text-blue-300 border border-blue-800/60 uppercase">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 uppercase">
               {theme} mode
             </span>
           </div>
@@ -107,17 +107,17 @@ export const SettingsView: React.FC = () => {
               onClick={() => setThemePreference('dark')}
               className={`p-4 rounded-lg border text-left transition-all flex items-start gap-3.5 ${
                 themePreference === 'dark'
-                  ? 'border-blue-500 bg-[#161922] ring-1 ring-blue-500/50'
+                  ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-800/60 ring-1 ring-black/20 dark:ring-white/20'
                   : 'border-[#22252c] bg-[#0c0d10] hover:border-zinc-700'
               }`}
             >
               <div className="p-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 shrink-0">
-                <Moon className="w-4 h-4 text-blue-400" />
+                <Moon className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-zinc-100">Dark Theme</span>
-                  {themePreference === 'dark' && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                  {themePreference === 'dark' && <Check className="w-3.5 h-3.5 text-black dark:text-white" />}
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-tight">
                   High-contrast dark slate palette designed for low-light environments.
@@ -131,7 +131,7 @@ export const SettingsView: React.FC = () => {
               onClick={() => setThemePreference('light')}
               className={`p-4 rounded-lg border text-left transition-all flex items-start gap-3.5 ${
                 themePreference === 'light'
-                  ? 'border-blue-500 bg-white ring-1 ring-blue-500/50 text-zinc-900 shadow-sm'
+                  ? 'border-black dark:border-white bg-white ring-1 ring-black/20 dark:ring-white/20 text-zinc-900 shadow-sm'
                   : 'border-[#22252c] bg-[#0c0d10] hover:border-zinc-700'
               }`}
             >
@@ -141,10 +141,10 @@ export const SettingsView: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-zinc-100">Clean White Theme</span>
-                  {themePreference === 'light' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  {themePreference === 'light' && <Check className="w-3.5 h-3.5 text-black dark:text-white" />}
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-tight">
-                  Crisp pure white surfaces with blue accents matching current interface.
+                  Crisp pure white surfaces with minimalist monochrome design.
                 </p>
               </div>
             </button>
@@ -155,17 +155,17 @@ export const SettingsView: React.FC = () => {
               onClick={() => setThemePreference('system')}
               className={`p-4 rounded-lg border text-left transition-all flex items-start gap-3.5 ${
                 themePreference === 'system'
-                  ? 'border-blue-500 bg-[#161922] ring-1 ring-blue-500/50'
+                  ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-800/60 ring-1 ring-black/20 dark:ring-white/20'
                   : 'border-[#22252c] bg-[#0c0d10] hover:border-zinc-700'
               }`}
             >
               <div className="p-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 shrink-0">
-                <Laptop className="w-4 h-4 text-sky-400" />
+                <Laptop className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-zinc-100">System (Auto)</span>
-                  {themePreference === 'system' && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                  {themePreference === 'system' && <Check className="w-3.5 h-3.5 text-black dark:text-white" />}
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-tight">
                   Automatically sync appearance with your macOS / system dark mode.
@@ -176,14 +176,14 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* 1. Low-Memory Layer Streaming Mode Card */}
-        <div className="p-6 rounded-xl bg-gradient-to-r from-[#12151d] via-[#111318] to-[#121622] border border-blue-900/40 space-y-5 shadow-lg">
+        <div className="p-6 rounded-xl bg-[#111317] border border-zinc-800 space-y-5 shadow-lg">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-blue-400" />
+                <Layers className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
                 <h3 className="text-sm font-bold text-zinc-100">Low-Memory Layer Streaming Mode</h3>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium ${
-                  lowMemoryMode ? 'bg-blue-950 text-blue-300 border border-blue-800/60' : 'bg-zinc-800 text-zinc-400'
+                  lowMemoryMode ? 'bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white' : 'bg-zinc-800 text-zinc-400'
                 }`}>
                   {lowMemoryMode ? 'ACTIVE' : 'STANDARD'}
                 </span>
@@ -200,7 +200,7 @@ export const SettingsView: React.FC = () => {
                 onChange={(e) => setLowMemoryMode(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white"></div>
             </label>
           </div>
 
@@ -215,7 +215,7 @@ export const SettingsView: React.FC = () => {
 
             <div className="p-3 rounded-lg bg-[#0c0e12] border border-[#1e222d] space-y-1">
               <span className="text-zinc-500 text-[10px] block">SPEED CHARACTERISTICS</span>
-              <span className="text-blue-300 font-semibold">Fast on NVMe / Apple Unified Memory</span>
+              <span className="text-zinc-200 font-semibold">Fast on NVMe / Apple Unified Memory</span>
               <p className="text-[11px] text-zinc-400 font-sans mt-0.5">
                 Yields 8–25+ tok/s while preventing out-of-memory crashes.
               </p>
@@ -239,7 +239,7 @@ export const SettingsView: React.FC = () => {
                 max="999"
                 value={gpuLayers}
                 onChange={(e) => setGpuLayers(parseInt(e.target.value, 10))}
-                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
               />
               <span className="text-[11px] text-zinc-500">99 = Offload all layers to GPU</span>
             </div>
@@ -252,7 +252,7 @@ export const SettingsView: React.FC = () => {
                 max="64"
                 value={threads}
                 onChange={(e) => setThreads(parseInt(e.target.value, 10))}
-                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
               />
               <span className="text-[11px] text-zinc-500">Physical cores allocation</span>
             </div>
@@ -266,7 +266,7 @@ export const SettingsView: React.FC = () => {
                 step="512"
                 value={contextLimit}
                 onChange={(e) => setContextLimit(parseInt(e.target.value, 10))}
-                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
               />
               <span className="text-[11px] text-zinc-500">Tokens in context window</span>
             </div>
@@ -287,7 +287,7 @@ export const SettingsView: React.FC = () => {
               type="checkbox"
               checked={flashAttention}
               onChange={(e) => setFlashAttention(e.target.checked)}
-              className="rounded border-[#2a2f3d] bg-[#1a1d26] text-blue-500"
+              className="rounded border-[#2a2f3d] bg-[#1a1d26] accent-black dark:accent-white"
             />
           </div>
         </div>
@@ -304,7 +304,7 @@ export const SettingsView: React.FC = () => {
                 max="65535"
                 value={port}
                 onChange={(e) => setPort(parseInt(e.target.value, 10))}
-                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
               />
               <span className="text-[11px] text-zinc-500">Default: 8080 (Inference API: /v1)</span>
             </div>
@@ -316,7 +316,7 @@ export const SettingsView: React.FC = () => {
                 max="32"
                 value={maxConcurrency}
                 onChange={(e) => setMaxConcurrency(parseInt(e.target.value, 10))}
-                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
               />
               <span className="text-[11px] text-zinc-500">Limits concurrency to prevent memory spikes</span>
             </div>
@@ -326,7 +326,7 @@ export const SettingsView: React.FC = () => {
         {/* 4. File Storage Paths */}
         <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-4">
           <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-            <HardDrive className="w-3.5 h-3.5 text-blue-400" />
+            <HardDrive className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" />
             File Storage Locations
           </h3>
 

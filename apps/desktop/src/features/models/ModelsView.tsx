@@ -136,8 +136,8 @@ export const ModelsView: React.FC = () => {
         );
       case 'Good':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-blue-950/60 text-blue-300 border border-blue-800/50">
-            <CheckCircle2 className="w-3 h-3 text-blue-400" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
+            <CheckCircle2 className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
             {isLowMemoryActive ? 'Good (Streaming)' : 'Good'}
           </span>
         );
@@ -204,21 +204,21 @@ export const ModelsView: React.FC = () => {
             onClick={() => handleToggleLowMemory(!isLowMemoryActive)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
               isLowMemoryActive
-                ? 'bg-blue-950/80 border-blue-700 text-blue-300'
-                : 'bg-[#14161c] border-[#252934] text-zinc-400 hover:text-zinc-200'
+                ? 'bg-zinc-100 dark:bg-zinc-800 border-black dark:border-white text-black dark:text-white'
+                : 'bg-zinc-50 dark:bg-[#14161c] border-zinc-200 dark:border-[#252934] text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200'
             }`}
             title="Enable dynamic disk layer paging & quantized KV cache to run 7B/12B models on low RAM"
           >
-            <Layers className="w-3.5 h-3.5 text-blue-400" />
+            <Layers className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
             <span>Low-Memory Streaming: <strong>{isLowMemoryActive ? 'ON' : 'OFF'}</strong></span>
           </button>
 
           <button
             onClick={handleBrowseAndImport}
             disabled={isImporting}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-[#181a20] hover:bg-[#22252e] border border-[#2d313b] text-zinc-200 hover:text-white text-xs font-medium transition-colors"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white dark:bg-[#181a20] hover:bg-zinc-50 dark:hover:bg-[#22252e] border border-[#eaeaea] dark:border-[#2d313b] text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white text-xs font-medium transition-colors"
           >
-            <FolderOpen className="w-4 h-4 text-blue-400" />
+            <FolderOpen className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             <span>Select Local GGUF File...</span>
           </button>
         </div>
@@ -226,8 +226,8 @@ export const ModelsView: React.FC = () => {
 
       {/* Active Downloads Bar */}
       {Object.values(downloads).length > 0 && (
-        <div className="space-y-3 p-4 rounded-lg bg-[#111317] border border-blue-900/40">
-          <div className="text-xs font-semibold text-blue-400 flex items-center gap-2">
+        <div className="space-y-3 p-4 rounded-lg bg-zinc-50 dark:bg-[#111317] border border-zinc-200 dark:border-zinc-800">
+          <div className="text-xs font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
             <Download className="w-4 h-4 animate-bounce" />
             Active Downloads
           </div>
@@ -257,7 +257,7 @@ export const ModelsView: React.FC = () => {
                   </div>
                 </div>
                 <div className="h-1.5 w-full bg-[#1c1f26] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${pct}%` }} />
+                  <div className="h-full bg-black dark:bg-white transition-all duration-300" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             );
@@ -278,7 +278,7 @@ export const ModelsView: React.FC = () => {
                   onClick={() => setInstalledFilter(filter)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                     installedFilter === filter
-                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40'
+                      ? 'bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border border-black dark:border-white'
                       : 'bg-[#14161a] text-zinc-400 hover:text-zinc-200 border border-[#22252c]'
                   }`}
                 >
@@ -304,7 +304,7 @@ export const ModelsView: React.FC = () => {
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
                   onClick={handleBrowseAndImport}
-                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                 >
                   <FolderOpen className="w-4 h-4" />
                   <span>Select Local GGUF File on Computer</span>
@@ -329,7 +329,7 @@ export const ModelsView: React.FC = () => {
                       key={inst.id}
                       className={`p-5 rounded-lg border flex flex-col justify-between space-y-4 transition-all ${
                         isLoaded
-                          ? 'bg-[#111622] border-blue-600/60 shadow-lg shadow-blue-950/20'
+                          ? 'bg-white dark:bg-[#12141a] border-black dark:border-white shadow-xs'
                           : 'bg-[#111317] border-[#22252c]'
                       }`}
                     >
@@ -348,7 +348,7 @@ export const ModelsView: React.FC = () => {
                                         IMAGE GEN
                                       </span>
                                     ) : inst.mmprojPath || taskType === 'vision' ? (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-300 border border-blue-500/20 font-semibold">
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-semibold">
                                         VISION
                                       </span>
                                     ) : (
@@ -405,7 +405,7 @@ export const ModelsView: React.FC = () => {
                                     setSelectedModel(inst.name || inst.modelId || inst.id);
                                     setNavTab('playground');
                                   }}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-sm"
                                 >
                                   <Sparkles className="w-3.5 h-3.5" />
                                   <span>Open in Playground</span>
@@ -420,7 +420,7 @@ export const ModelsView: React.FC = () => {
                                       setSelectedModel(inst.name || inst.modelId || inst.id);
                                       setNavTab('playground');
                                     }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                                     title="Open in Playground"
                                   >
                                     <MessageSquare className="w-3.5 h-3.5" />
@@ -439,7 +439,7 @@ export const ModelsView: React.FC = () => {
                             return (
                               <button
                                 onClick={() => startServer(inst.modelId, inst.variantId)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                               >
                                 <Play className="w-3.5 h-3.5 fill-current" />
                                 <span>Load & Start</span>
@@ -467,7 +467,7 @@ export const ModelsView: React.FC = () => {
                       key={art.id}
                       className={`p-5 rounded-lg border flex flex-col justify-between space-y-4 transition-all ${
                         isBaseLoaded
-                          ? 'bg-[#111622] border-blue-600/60 shadow-lg shadow-blue-950/20'
+                          ? 'bg-white dark:bg-[#12141a] border-black dark:border-white shadow-xs'
                           : 'bg-[#111317] border-[#22252c] hover:border-[#2e323b]'
                       }`}
                     >
@@ -548,7 +548,7 @@ export const ModelsView: React.FC = () => {
                               setSelectedModel(art.name);
                               setNavTab('playground');
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                             title="Test in Playground"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
@@ -567,7 +567,7 @@ export const ModelsView: React.FC = () => {
                             ) : (
                               <button
                                 onClick={() => startServer(matchingBase.modelId, matchingBase.variantId)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                                 title={`Start ${matchingBase.name} with this adapter`}
                               >
                                 <Play className="w-3.5 h-3.5 fill-current" />
@@ -604,7 +604,7 @@ export const ModelsView: React.FC = () => {
 
             <button
               onClick={() => setNavTab('forge')}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm shrink-0"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-sm shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Train New in Forge</span>
@@ -623,7 +623,7 @@ export const ModelsView: React.FC = () => {
               <div className="pt-2">
                 <button
                   onClick={() => setNavTab('forge')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                 >
                   <Flame className="w-4 h-4 text-amber-400" />
                   <span>Open Forge Studio →</span>
@@ -645,7 +645,7 @@ export const ModelsView: React.FC = () => {
                     key={art.id}
                     className={`p-5 rounded-lg border flex flex-col justify-between space-y-4 transition-all ${
                       isBaseLoaded
-                        ? 'bg-[#111622] border-blue-600/60 shadow-lg shadow-blue-950/20'
+                        ? 'bg-white dark:bg-[#12141a] border-black dark:border-white shadow-xs'
                         : 'bg-[#111317] border-[#22252c] hover:border-[#2e323b]'
                     }`}
                   >
@@ -726,7 +726,7 @@ export const ModelsView: React.FC = () => {
                             setSelectedModel(art.name);
                             setNavTab('playground');
                           }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                           title="Test in Playground"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
@@ -745,7 +745,7 @@ export const ModelsView: React.FC = () => {
                           ) : (
                             <button
                               onClick={() => startServer(matchingBase.modelId, matchingBase.variantId)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                               title={`Start ${matchingBase.name} with this adapter`}
                             >
                               <Play className="w-3.5 h-3.5 fill-current" />
@@ -768,7 +768,7 @@ export const ModelsView: React.FC = () => {
           <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-5">
             <div>
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-                <FolderOpen className="w-4 h-4 text-blue-400" />
+                <FolderOpen className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                 Import Existing Local GGUF Model File
               </h3>
               <p className="text-xs text-zinc-400 mt-1">
@@ -778,12 +778,12 @@ export const ModelsView: React.FC = () => {
 
             {/* Option A: File Picker Dialog */}
             <div className="p-5 rounded-lg bg-[#0d0f12] border border-[#22252c] text-center space-y-3">
-              <FolderOpen className="w-8 h-8 text-blue-400 mx-auto" />
+              <FolderOpen className="w-8 h-8 text-zinc-600 dark:text-zinc-400 mx-auto" />
               <div className="text-xs font-medium text-zinc-200">Browse filesystem for GGUF file</div>
               <button
                 onClick={handleBrowseAndImport}
                 disabled={isImporting}
-                className="px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors inline-flex items-center gap-2"
+                className="px-5 py-2 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors inline-flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>{isImporting ? 'Importing...' : 'Browse & Select File...'}</span>
@@ -806,7 +806,7 @@ export const ModelsView: React.FC = () => {
                   placeholder="/Users/username/models/my-model-q4_k_m.gguf"
                   value={customPath}
                   onChange={(e) => setCustomPath(e.target.value)}
-                  className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-black dark:focus:border-white"
                 />
               </div>
 
@@ -817,14 +817,14 @@ export const ModelsView: React.FC = () => {
                   placeholder="e.g. Caden SQL 1.5B"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-black dark:focus:border-white"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isImporting || !customPath.trim()}
-                className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-md transition-colors disabled:opacity-40"
+                className="w-full py-2 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium rounded-md transition-colors disabled:opacity-40"
               >
                 {isImporting ? 'Importing Model...' : 'Register Local Model'}
               </button>
@@ -838,9 +838,9 @@ export const ModelsView: React.FC = () => {
         <div className="space-y-4">
           {/* Low-Memory Mode Banner */}
           {isLowMemoryActive && (
-            <div className="p-3 rounded-lg bg-blue-950/40 border border-blue-800/40 flex items-center justify-between text-xs text-blue-300">
+            <div className="p-3 rounded-lg bg-zinc-100 dark:bg-[#151720] border border-zinc-200 dark:border-[#272932] flex items-center justify-between text-xs text-zinc-700 dark:text-zinc-300">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-blue-400" />
+                <Layers className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                 <span><strong>Low-Memory Layer Streaming is Active:</strong> 7B and 12B models are evaluated using dynamic disk layer paging & 8-bit quantized KV cache.</span>
               </div>
             </div>
@@ -872,7 +872,7 @@ export const ModelsView: React.FC = () => {
                               IMAGE GEN
                             </span>
                           ) : model.capabilities.includes('VISION') ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-300 border border-blue-500/20 font-semibold">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-semibold">
                               VISION
                             </span>
                           ) : (
@@ -921,8 +921,8 @@ export const ModelsView: React.FC = () => {
                         </button>
                       ) : activeDownload ? (
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-950/70 border border-blue-700/50 text-blue-300 text-xs font-medium font-mono">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-medium font-mono">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600 dark:text-zinc-400" />
                             <span>
                               Downloading {activeDownload.totalBytes > 0 ? `${Math.round((activeDownload.downloadedBytes / activeDownload.totalBytes) * 100)}%` : '...'}
                             </span>
@@ -938,15 +938,15 @@ export const ModelsView: React.FC = () => {
                       ) : isPending ? (
                         <button
                           disabled
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-900/60 text-blue-200 text-xs font-medium cursor-not-allowed opacity-90"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium cursor-not-allowed opacity-90"
                         >
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-300" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600 dark:text-zinc-400" />
                           <span>Starting...</span>
                         </button>
                       ) : (
                         <button
                           onClick={() => handleDownload(model, variant)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                         >
                           <Download className="w-3.5 h-3.5" />
                           <span>Download</span>
@@ -958,7 +958,7 @@ export const ModelsView: React.FC = () => {
                       <div className="space-y-1 pt-1">
                         <div className="h-1.5 w-full bg-[#1b1e26] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-blue-500 transition-all duration-300"
+                            className="h-full bg-black dark:bg-white transition-all duration-300"
                             style={{
                               width: `${
                                 activeDownload.totalBytes > 0
@@ -998,13 +998,13 @@ export const ModelsView: React.FC = () => {
                 placeholder="Search Hugging Face GGUF models (e.g. Qwen, DeepSeek, Gemma, Phi)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#111317] border border-[#22252c] rounded-md pl-9 pr-4 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono"
+                className="w-full bg-[#111317] border border-[#22252c] rounded-md pl-9 pr-4 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white font-mono"
               />
             </div>
             <button
               type="submit"
               disabled={isSearchingHf}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-md transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium rounded-md transition-colors disabled:opacity-50"
             >
               {isSearchingHf ? 'Searching...' : 'Search'}
             </button>
@@ -1045,8 +1045,8 @@ export const ModelsView: React.FC = () => {
                         </button>
                       ) : activeDownload ? (
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-950/70 border border-blue-700/50 text-blue-300 text-xs font-medium font-mono">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-medium font-mono">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600 dark:text-zinc-400" />
                             <span>
                               Downloading {activeDownload.totalBytes > 0 ? `${Math.round((activeDownload.downloadedBytes / activeDownload.totalBytes) * 100)}%` : '...'}
                             </span>
@@ -1062,15 +1062,15 @@ export const ModelsView: React.FC = () => {
                       ) : isPending ? (
                         <button
                           disabled
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-900/60 text-blue-200 text-xs font-medium cursor-not-allowed opacity-90"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium cursor-not-allowed opacity-90"
                         >
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-300" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600 dark:text-zinc-400" />
                           <span>Starting...</span>
                         </button>
                       ) : (
                         <button
                           onClick={() => handleDownload(model, variant)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                         >
                           <Download className="w-3.5 h-3.5" />
                           <span>Download GGUF</span>
@@ -1082,7 +1082,7 @@ export const ModelsView: React.FC = () => {
                       <div className="space-y-1 pt-1">
                         <div className="h-1.5 w-full bg-[#1b1e26] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-blue-500 transition-all duration-300"
+                            className="h-full bg-black dark:bg-white transition-all duration-300"
                             style={{
                               width: `${
                                 activeDownload.totalBytes > 0

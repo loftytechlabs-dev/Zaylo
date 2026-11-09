@@ -49,7 +49,7 @@ export const PreflightReviewScreen: React.FC<PreflightReviewScreenProps> = ({
       {/* Wizard Header */}
       <div className="flex items-center justify-between border-b border-[#202227] pb-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-medium text-blue-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-900 dark:text-zinc-100">
             <span>Step 4 of 4</span>
             <span>•</span>
             <span>Preflight Review</span>
@@ -152,12 +152,12 @@ export const PreflightReviewScreen: React.FC<PreflightReviewScreenProps> = ({
           <div className="p-5 rounded-xl bg-[#121418] border border-[#202227] space-y-3">
             <div className="flex items-center justify-between">
               <div className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
-                <HardDrive className="w-4 h-4 text-blue-400" />
+                <HardDrive className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
                 <span>Job Artifacts Output Directory</span>
               </div>
               <button
                 onClick={onSelectOutputDir}
-                className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                className="text-xs text-zinc-900 dark:text-zinc-100 hover:underline flex items-center gap-1 transition-colors"
               >
                 <FolderOpen className="w-3.5 h-3.5" />
                 <span>Change Directory</span>
@@ -266,7 +266,7 @@ export const PreflightReviewScreen: React.FC<PreflightReviewScreenProps> = ({
               <button
                 onClick={onStartTraining}
                 disabled={!canStart}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-semibold text-xs shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isStarting ? (
                   <>
@@ -275,7 +275,7 @@ export const PreflightReviewScreen: React.FC<PreflightReviewScreenProps> = ({
                   </>
                 ) : (
                   <>
-                    <Play className="w-4 h-4 fill-white" />
+                    <Play className="w-4 h-4 fill-white dark:fill-black" />
                     <span>Start Fine-Tuning</span>
                   </>
                 )}

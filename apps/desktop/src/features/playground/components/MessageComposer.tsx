@@ -1,13 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
 import {
-  Send,
   Square,
-  Image as ImageIcon,
+  Plus,
+  Paperclip,
+  Layers,
   X,
-  BookOpen,
   AlertCircle,
   Play,
   RotateCw,
+  SendHorizonal,
+  FileText,
 } from 'lucide-react';
 import type { ServerState } from '@local-ai/shared';
 
@@ -24,6 +26,9 @@ interface MessageComposerProps {
   onOpenRagModal: () => void;
   onStartServer: () => void;
   isStartingServer: boolean;
+  onToggleRag?: () => void;
+  externalInput?: string;
+  onClearExternalInput?: () => void;
 }
 
 export const MessageComposer: React.FC<MessageComposerProps> = ({
@@ -39,24 +44,47 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   onOpenRagModal,
   onStartServer,
   isStartingServer,
+  onToggleRag,
+  externalInput,
+  onClearExternalInput,
 }) => {
   const [input, setInput] = useState('');
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isServerRunning = serverState === 'RUNNING';
 
+  // Handle external prompt suggestions (e.g. from empty state buttons)
+  useEffect(() => {
+    if (externalInput) {
+      setInput(externalInput);
+      onClearExternalInput?.();
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = `${Math.min(180, textareaRef.current.scrollHeight)}px`;
+        }
+      }, 50);
+    }
+  }, [externalInput, onClearExternalInput]);
+
   // Auto-resize textarea height
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(160, textareaRef.current.scrollHeight)}px`;
+      textareaRef.current.style.height = `${Math.min(180, textareaRef.current.scrollHeight)}px`;
     }
   }, [input]);
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if ((!input.trim() && !pendingImage) || isGenerating || !isServerRunning) return;
+    if (isGenerating) {
+      onStopGeneration();
+      return;
+    }
+    if ((!input.trim() && !pendingImage) || !isServerRunning) return;
     const msg = input;
     setInput('');
     if (textareaRef.current) {
@@ -109,28 +137,28 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   };
 
   return (
-    <div className="p-4 border-t border-[#202227] bg-[#0c0d10] select-none shrink-0">
-      <div className="max-w-3xl mx-auto space-y-2">
+    <div className="w-full px-4 sm:px-6 pb-6 pt-2 select-none shrink-0 z-10 flex flex-col items-center">
+      <div className="w-full max-w-[950px] space-y-2">
         {/* Server Stopped Warning Banner */}
         {!isServerRunning && (
-          <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-300">
+          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-600 dark:text-amber-300">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
               <span>Inference server is currently stopped. Start server to chat with this model.</span>
             </div>
             <button
               onClick={onStartServer}
               disabled={isStartingServer}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-[11px] font-semibold transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-700 dark:text-amber-200 text-xs font-medium transition-colors"
             >
               {isStartingServer ? (
                 <>
-                  <RotateCw className="w-3 h-3 animate-spin" />
+                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
                   <span>Starting...</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-3 h-3" />
+                  <Play className="w-3.5 h-3.5" />
                   <span>Start Server</span>
                 </>
               )}
@@ -141,38 +169,39 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         {/* Pending Image Attachment Pill */}
         {pendingImage && (
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 p-1.5 pl-2 bg-[#171a22] border border-blue-500/40 rounded-lg">
+            <div className="flex items-center gap-2 p-1.5 pl-2 bg-white dark:bg-[#1a1c24] border border-[#eaeaea] dark:border-zinc-700 rounded-xl shadow-xs">
               <img
                 src={pendingImage.dataUrl}
                 alt="Upload preview"
-                className="w-7 h-7 rounded object-cover border border-zinc-700"
+                className="w-7 h-7 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
               />
-              <span className="text-[11px] text-zinc-200 truncate max-w-[180px]">
+              <span className="text-xs text-[#111111] dark:text-zinc-200 truncate max-w-[200px]">
                 {pendingImage.name}
               </span>
               <button
                 type="button"
                 onClick={() => onSetPendingImage(undefined)}
-                className="p-1 text-zinc-400 hover:text-zinc-100 transition-colors"
-                title="Remove image"
+                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-100 transition-colors"
+                title="Remove attachment"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {!isVisionSupported && (
-              <span className="text-[11px] text-amber-300 bg-amber-950/40 border border-amber-800/50 px-2.5 py-1 rounded-md">
-                ⚠️ Active model is text-only. Multimodal images require a vision model (e.g. Qwen 2.5-VL).
+              <span className="text-xs text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 px-2.5 py-1 rounded-lg">
+                ⚠️ Active model is text-only. Multimodal images require a vision model.
               </span>
             )}
           </div>
         )}
 
-        {/* Textarea Input Container */}
-        <div className="relative rounded-xl border border-[#232630] focus-within:border-blue-500 bg-[#12141a] transition-all shadow-sm">
+        {/* Floating Composer Container */}
+        <div className="relative rounded-2xl border border-[#eaeaea] dark:border-[#272932] focus-within:border-zinc-400 dark:focus-within:border-zinc-600 bg-white dark:bg-[#14151a] shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2)] transition-all px-4 pt-3.5 pb-2.5">
+          {/* Textarea */}
           <textarea
             ref={textareaRef}
-            rows={2}
+            rows={1}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -180,85 +209,129 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             placeholder={
               !isServerRunning
                 ? 'Server stopped. Start server to chat...'
-                : ragEnabled
-                ? 'Type prompt (RAG active)... Shift+Enter for newline'
-                : 'Type prompt... Shift+Enter for newline'
+                : 'Ask anything...'
             }
-            disabled={!isServerRunning || isGenerating}
-            className="w-full bg-transparent pl-4 pr-32 pt-3 pb-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none font-sans leading-relaxed select-text"
+            disabled={!isServerRunning}
+            className="w-full bg-transparent pr-12 text-sm text-[#111111] dark:text-[#f4f4f5] placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none resize-none font-sans leading-relaxed select-text min-h-[38px] max-h-[180px]"
           />
 
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileChange}
-            accept="image/*"
+            accept="image/*,.pdf,.txt,.md,.json"
             className="hidden"
           />
 
-          {/* Bottom Toolbar inside Composer */}
-          <div className="absolute right-2.5 bottom-2.5 flex items-center gap-1.5">
-            {/* RAG Knowledge Pill */}
-            <button
-              type="button"
-              onClick={onOpenRagModal}
-              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-colors ${
-                ragEnabled
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                  : 'bg-[#181a22] border-[#262a34] text-zinc-400 hover:text-zinc-200'
-              }`}
-              title="Configure Document Knowledge & RAG"
-            >
-              <BookOpen className="w-3 h-3" />
-              <span>RAG</span>
-              {ragDocsCount > 0 && (
-                <span className="font-mono text-[9px] px-1 rounded bg-zinc-800 text-zinc-300">
-                  {ragDocsCount}
-                </span>
+          {/* Bottom Controls Row inside Composer */}
+          <div className="flex items-center justify-between pt-2 border-t border-transparent select-none">
+            {/* Left Tools: Plus, Paperclip, RAG toggle */}
+            <div className="flex items-center gap-2.5 text-zinc-500 dark:text-zinc-400">
+              {/* Plus Action */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsToolsOpen(!isToolsOpen)}
+                  className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#111111] dark:hover:text-[#f4f4f5] transition-colors"
+                  title="Tools & Prompts"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+
+                {isToolsOpen && (
+                  <div className="absolute bottom-full mb-2 left-0 w-48 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#262934] shadow-xl py-1.5 z-50 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        fileInputRef.current?.click();
+                        setIsToolsOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#181a22] text-zinc-700 dark:text-zinc-300"
+                    >
+                      <Paperclip className="w-3.5 h-3.5" />
+                      <span>Upload Document/Image</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenRagModal();
+                        setIsToolsOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#181a22] text-zinc-700 dark:text-zinc-300"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Manage RAG Library</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* File Attachment */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#111111] dark:hover:text-[#f4f4f5] transition-colors"
+                title="Attach file or image"
+              >
+                <Paperclip className="w-4 h-4" />
+              </button>
+
+              {/* RAG Label & Toggle Switch */}
+              <div className="flex items-center gap-1.5 pl-1">
+                <button
+                  type="button"
+                  onClick={onOpenRagModal}
+                  className="flex items-center gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-[#111111] dark:hover:text-[#f4f4f5] transition-colors"
+                  title="RAG Context Knowledge"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>RAG</span>
+                  {ragDocsCount > 0 && (
+                    <span className="text-[10px] font-mono text-zinc-400">({ragDocsCount})</span>
+                  )}
+                </button>
+
+                {/* Minimal iOS-style Toggle Switch */}
+                <button
+                  type="button"
+                  onClick={() => onToggleRag?.()}
+                  className={`w-8 h-4.5 rounded-full p-0.5 transition-colors focus:outline-none ${
+                    ragEnabled ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700'
+                  }`}
+                  title={ragEnabled ? 'Disable RAG' : 'Enable RAG'}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full transition-transform ${
+                      ragEnabled ? 'translate-x-3.5 bg-white dark:bg-black' : 'translate-x-0 bg-white'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Right Control: Black Send / Stop Button */}
+            <div>
+              {isGenerating ? (
+                <button
+                  type="button"
+                  onClick={onStopGeneration}
+                  className="w-8 h-8 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 flex items-center justify-center transition-transform active:scale-95 shadow-sm"
+                  title="Stop generating"
+                >
+                  <Square className="w-3.5 h-3.5 fill-current" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleSubmit()}
+                  disabled={(!input.trim() && !pendingImage) || !isServerRunning}
+                  className="w-8 h-8 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-30 disabled:hover:bg-black dark:disabled:hover:bg-white flex items-center justify-center transition-transform active:scale-95 shadow-sm"
+                  title="Send prompt (Enter)"
+                >
+                  <SendHorizonal className="w-4 h-4" />
+                </button>
               )}
-            </button>
-
-            {/* Image Attachment Button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={!isServerRunning || isGenerating}
-              className={`p-1.5 rounded-md border transition-colors ${
-                pendingImage
-                  ? 'bg-blue-600/20 text-blue-300 border-blue-500/40'
-                  : 'bg-[#181a22] border-[#262a34] text-zinc-400 hover:text-zinc-200'
-              }`}
-              title={
-                isVisionSupported
-                  ? 'Attach image for vision model'
-                  : 'Attach image (Requires a Vision model)'
-              }
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Send / Stop Generation Button */}
-            {isGenerating ? (
-              <button
-                type="button"
-                onClick={onStopGeneration}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow transition-all animate-pulse"
-                title="Stop generation"
-              >
-                <Square className="w-3 h-3 fill-current" />
-                <span>Stop</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => handleSubmit()}
-                disabled={!isServerRunning || (!input.trim() && !pendingImage)}
-                className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white shadow transition-colors"
-                title="Send message (Enter)"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            )}
+            </div>
           </div>
         </div>
       </div>

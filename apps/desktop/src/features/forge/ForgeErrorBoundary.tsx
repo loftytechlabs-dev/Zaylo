@@ -54,7 +54,7 @@ export class ForgeErrorBoundary extends Component<Props, State> {
           <div className="flex items-center gap-3 pt-2">
             <button
               onClick={this.handleReset}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-semibold shadow-md transition-colors"
             >
               <RotateCw className="w-3.5 h-3.5" />
               <span>Recover & Reload</span>

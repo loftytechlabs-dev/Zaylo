@@ -71,7 +71,7 @@ const ThroughputTrendChart: React.FC<ThroughputChartProps> = ({ samples, serverR
     <div className="overview-chart-box relative w-full rounded-md bg-[#0a0c0f] border border-[#181a20] p-3 overflow-hidden select-none">
       <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 mb-2">
         <span className="flex items-center gap-1.5 uppercase tracking-wider">
-          <Activity className="w-3.5 h-3.5 text-blue-400" />
+          <Activity className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
           Throughput History (tok/s)
         </span>
         <span className="text-zinc-500 font-sans text-[11px]">
@@ -315,25 +315,25 @@ export const OverviewView: React.FC = () => {
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* 1. First Section — Runtime Status Summary */}
-      <section className="rounded-lg bg-[#0e1014] border border-[#1b1e25] p-5 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#1a1d24]">
+      <section className="rounded-xl bg-white dark:bg-[#0e1014] border border-[#eaeaea] dark:border-[#1b1e25] p-5 shadow-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#eaeaea] dark:divide-[#1a1d24]">
           {/* Inference Server Group */}
           <div className="pb-4 md:pb-0 md:pr-6 flex flex-col justify-between">
             <div>
-              <div className="text-[11px] font-mono tracking-wider text-zinc-400 uppercase font-semibold">
+              <div className="text-[11px] font-mono tracking-wider text-zinc-500 uppercase font-semibold">
                 Inference Server
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <span
                   className={`w-2 h-2 rounded-full ${
                     serverState === 'RUNNING'
-                      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]'
+                      ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
                       : serverState === 'STARTING'
                       ? 'bg-amber-400 animate-pulse'
-                      : 'bg-zinc-600'
+                      : 'bg-zinc-400'
                   }`}
                 />
-                <span className="text-base font-semibold text-zinc-100 tracking-tight">
+                <span className="text-base font-semibold text-[#111111] dark:text-zinc-100 tracking-tight">
                   {serverState === 'RUNNING'
                     ? 'Server Active'
                     : serverState === 'STARTING'
@@ -342,9 +342,9 @@ export const OverviewView: React.FC = () => {
                 </span>
               </div>
             </div>
-            <div className="mt-3 text-xs text-zinc-400 flex items-center justify-between">
-              <span className="font-mono text-zinc-400">Port {serverConfig?.port || 8080}</span>
-              <span className="font-mono text-[11px] text-zinc-500">
+            <div className="mt-3 text-xs text-zinc-500 dark:text-zinc-400 flex items-center justify-between">
+              <span className="font-mono text-zinc-600 dark:text-zinc-400">Port {serverConfig?.port || 8080}</span>
+              <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">
                 {serverConfig?.lanEnabled && lanAddress ? `${lanAddress} (LAN)` : '127.0.0.1 (Local)'}
               </span>
             </div>
@@ -353,10 +353,10 @@ export const OverviewView: React.FC = () => {
           {/* Active Model Group */}
           <div className="py-4 md:py-0 md:px-6 flex flex-col justify-between">
             <div>
-              <div className="text-[11px] font-mono tracking-wider text-zinc-400 uppercase font-semibold">
+              <div className="text-[11px] font-mono tracking-wider text-zinc-500 uppercase font-semibold">
                 Active Model
               </div>
-              <div className="text-base font-semibold text-zinc-100 tracking-tight mt-2 truncate">
+              <div className="text-base font-semibold text-[#111111] dark:text-zinc-100 tracking-tight mt-2 truncate">
                 {serverInstance?.modelName || (
                   <span className="text-zinc-500 font-normal">
                     {serverState === 'STARTING' ? 'Loading model...' : 'No model loaded'}
@@ -372,7 +372,7 @@ export const OverviewView: React.FC = () => {
               </span>
               <button
                 onClick={() => setActiveTab('models')}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium ml-2 shrink-0"
+                className="text-xs text-zinc-900 dark:text-zinc-100 hover:underline transition-colors font-medium ml-2 shrink-0"
               >
                 Models →
               </button>
@@ -398,7 +398,7 @@ export const OverviewView: React.FC = () => {
               </span>
               <button
                 onClick={() => setActiveTab('devices')}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium ml-2 shrink-0"
+                className="text-xs text-zinc-900 dark:text-zinc-100 hover:underline transition-colors font-medium ml-2 shrink-0"
               >
                 Devices →
               </button>
@@ -410,10 +410,10 @@ export const OverviewView: React.FC = () => {
       {/* 2. Second Section — Two-Column Monitoring Area */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         {/* Left Column: System Resources */}
-        <div className="rounded-lg bg-[#0e1014] border border-[#1b1e25] p-5 flex flex-col justify-between shadow-sm space-y-5">
-          <div className="flex items-center justify-between border-b border-[#181a20] pb-3">
+        <div className="rounded-xl bg-white dark:bg-[#0e1014] border border-[#eaeaea] dark:border-[#1b1e25] p-5 flex flex-col justify-between shadow-xs space-y-5">
+          <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#181a20] pb-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-semibold">
+              <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-700 dark:text-zinc-300 font-semibold">
                 System Resources
               </h2>
             </div>
@@ -433,7 +433,7 @@ export const OverviewView: React.FC = () => {
               <div className="h-1.5 w-full bg-[#181a20] rounded-full overflow-hidden">
                 <div
                   className={`h-full transition-all duration-500 ${
-                    cpuPercent > 85 ? 'bg-amber-500' : 'bg-blue-500'
+                    cpuPercent > 85 ? 'bg-amber-500' : 'bg-black dark:bg-white'
                   }`}
                   style={{ width: `${Math.min(100, Math.max(0, cpuPercent))}%` }}
                 />
@@ -487,8 +487,8 @@ export const OverviewView: React.FC = () => {
             {/* VRAM / Accelerator Memory Row */}
             <div>
               <div className="flex items-center justify-between text-xs font-mono mb-1.5">
-                <span className="text-zinc-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-zinc-500" />
                   VRAM Allocation
                 </span>
                 <span className="text-zinc-100 font-bold font-mono">
@@ -539,9 +539,9 @@ export const OverviewView: React.FC = () => {
         </div>
 
         {/* Right Column: Inference Performance */}
-        <div className="rounded-lg bg-[#0e1014] border border-[#1b1e25] p-5 flex flex-col justify-between shadow-sm space-y-5">
-          <div className="flex items-center justify-between border-b border-[#181a20] pb-3">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-semibold">
+        <div className="rounded-xl bg-white dark:bg-[#0e1014] border border-[#eaeaea] dark:border-[#1b1e25] p-5 flex flex-col justify-between shadow-xs space-y-5">
+          <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#181a20] pb-3">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-700 dark:text-zinc-300 font-semibold">
               Inference Performance
             </h2>
             <span className="text-[11px] font-mono text-zinc-500">Real-Time Metrics</span>
@@ -596,7 +596,7 @@ export const OverviewView: React.FC = () => {
             </span>
             <button
               onClick={() => setActiveTab('playground')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-sm"
             >
               <span>Open Playground</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -606,16 +606,16 @@ export const OverviewView: React.FC = () => {
       </section>
 
       {/* 3. Third Section — Recent Activity */}
-      <section className="rounded-lg bg-[#0e1014] border border-[#1b1e25] p-5 shadow-sm space-y-3">
-        <div className="flex items-center justify-between border-b border-[#181a20] pb-3">
+      <section className="rounded-xl bg-white dark:bg-[#0e1014] border border-[#eaeaea] dark:border-[#1b1e25] p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#181a20] pb-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-semibold">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-700 dark:text-zinc-300 font-semibold">
               Recent Activity
             </h2>
           </div>
           <button
             onClick={() => setActiveTab('logs')}
-            className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors inline-flex items-center gap-1"
+            className="text-xs text-zinc-900 dark:text-zinc-100 hover:underline font-medium transition-colors inline-flex items-center gap-1"
           >
             <span>View All Activity</span>
             <ArrowRight className="w-3 h-3" />
@@ -667,30 +667,30 @@ export const OverviewView: React.FC = () => {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setActiveTab('playground')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#111317] hover:bg-[#181b22] border border-[#20232b] text-zinc-300 hover:text-zinc-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-[#111317] hover:bg-zinc-200 dark:hover:bg-[#181b22] border border-zinc-200 dark:border-[#20232b] text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-colors"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+            <MessageSquare className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
             <span>Playground</span>
           </button>
           <button
             onClick={() => setActiveTab('models')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#111317] hover:bg-[#181b22] border border-[#20232b] text-zinc-300 hover:text-zinc-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-[#111317] hover:bg-zinc-200 dark:hover:bg-[#181b22] border border-zinc-200 dark:border-[#20232b] text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-colors"
           >
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
+            <Layers className="w-3.5 h-3.5 text-emerald-500" />
             <span>Models</span>
           </button>
           <button
             onClick={() => setActiveTab('forge')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#111317] hover:bg-[#181b22] border border-[#20232b] text-zinc-300 hover:text-zinc-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-[#111317] hover:bg-zinc-200 dark:hover:bg-[#181b22] border border-zinc-200 dark:border-[#20232b] text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-colors"
           >
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <Flame className="w-3.5 h-3.5 text-amber-500" />
             <span>Forge</span>
           </button>
           <button
             onClick={() => setActiveTab('server')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#111317] hover:bg-[#181b22] border border-[#20232b] text-zinc-300 hover:text-zinc-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-[#111317] hover:bg-zinc-200 dark:hover:bg-[#181b22] border border-zinc-200 dark:border-[#20232b] text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-colors"
           >
-            <Terminal className="w-3.5 h-3.5 text-blue-400" />
+            <Terminal className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
             <span>Server & API</span>
           </button>
         </div>

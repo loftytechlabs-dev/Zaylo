@@ -50,16 +50,16 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
   const contextPct = contextLimit > 0 ? Math.min(100, Math.round((totalTokens / contextLimit) * 100)) : 0;
 
   return (
-    <aside className="w-80 border-l border-[#202227] bg-[#0c0d10] p-5 space-y-5 select-none overflow-y-auto shrink-0 z-20">
+    <aside className="w-80 border-l border-[#eaeaea] dark:border-[#202227] bg-white dark:bg-[#0c0d10] p-5 space-y-5 select-none overflow-y-auto shrink-0 z-20">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#1f2228] pb-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-200">
-          <Activity className="w-4 h-4 text-emerald-400" />
+      <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#1f2228] pb-3">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#111111] dark:text-zinc-200">
+          <Activity className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
           <span>Inference Performance</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded text-zinc-500 hover:text-zinc-200 hover:bg-[#1a1d25] transition-colors"
+          className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#1a1d25] transition-colors"
           title="Close Performance Panel"
         >
           <X className="w-4 h-4" />
@@ -68,12 +68,12 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
 
       {isImageModel ? (
         /* Image Generation Telemetry Card */
-        <div className="p-4 rounded-xl bg-[#12141a] border border-[#20232c] space-y-3 shadow-sm">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#20232c] space-y-3 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase text-zinc-400">Diffusion Inference</span>
+            <span className="text-[11px] font-semibold uppercase text-zinc-500">Diffusion Inference</span>
             {isGenerating && (
-              <span className="flex items-center gap-1 text-[10px] font-mono text-blue-400 animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span className="flex items-center gap-1 text-[10px] font-mono text-zinc-700 dark:text-zinc-300 animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-700 dark:bg-zinc-300" />
                 SAMPLING
               </span>
             )}
@@ -81,38 +81,38 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
 
           <div className="flex items-baseline justify-between">
             <div>
-              <div className="text-2xl font-bold font-mono text-zinc-100">
+              <div className="text-2xl font-bold font-mono text-[#111111] dark:text-zinc-100">
                 {lastGeneratedImage ? `${(lastGeneratedImage.durationMs / 1000).toFixed(2)}s` : isGenerating ? 'Running...' : '—'}
               </div>
-              <div className="text-[11px] text-zinc-400">Total Generation Duration</div>
+              <div className="text-[11px] text-zinc-500">Total Generation Duration</div>
             </div>
-            <Sparkles className="w-5 h-5 text-blue-400" />
+            <Sparkles className="w-5 h-5 text-zinc-500" />
           </div>
 
           {lastGeneratedImage && (
-            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-2 border-t border-[#1e212b]">
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-2 border-t border-[#eaeaea] dark:border-[#1e212b]">
               <div>
-                <span className="text-zinc-500 block text-[10px]">Sampling Steps</span>
-                <span className="text-zinc-200 font-semibold">{lastGeneratedImage.steps} steps</span>
+                <span className="text-zinc-400 block text-[10px]">Sampling Steps</span>
+                <span className="text-zinc-700 dark:text-zinc-200 font-semibold">{lastGeneratedImage.steps} steps</span>
               </div>
               <div>
-                <span className="text-zinc-500 block text-[10px]">Resolution</span>
-                <span className="text-zinc-200 font-semibold">{lastGeneratedImage.width} × {lastGeneratedImage.height}</span>
+                <span className="text-zinc-400 block text-[10px]">Resolution</span>
+                <span className="text-zinc-700 dark:text-zinc-200 font-semibold">{lastGeneratedImage.width} × {lastGeneratedImage.height}</span>
               </div>
               <div>
-                <span className="text-zinc-500 block text-[10px]">CFG Guidance</span>
-                <span className="text-zinc-200 font-semibold">{lastGeneratedImage.guidanceScale}</span>
+                <span className="text-zinc-400 block text-[10px]">CFG Guidance</span>
+                <span className="text-zinc-700 dark:text-zinc-200 font-semibold">{lastGeneratedImage.guidanceScale}</span>
               </div>
               <div>
-                <span className="text-zinc-500 block text-[10px]">Device</span>
-                <span className="text-blue-400 font-semibold uppercase">{lastGeneratedImage.device || 'MPS'}</span>
+                <span className="text-zinc-400 block text-[10px]">Device</span>
+                <span className="text-black dark:text-white font-semibold uppercase">{lastGeneratedImage.device || 'MPS'}</span>
               </div>
             </div>
           )}
         </div>
       ) : (
         /* Text Generation Live Inference Telemetry Card */
-        <div className="p-4 rounded-xl bg-[#12141a] border border-[#20232c] space-y-3 shadow-sm">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#20232c] space-y-3 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase text-zinc-400">Response Speed</span>
             {isGenerating && (
@@ -161,10 +161,10 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
               {totalTokens} / {contextLimit}
             </span>
           </div>
-          <div className="h-1.5 w-full bg-[#1b1e26] rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-zinc-100 dark:bg-[#1b1e26] rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-300 ${
-                contextPct > 90 ? 'bg-rose-500' : contextPct > 75 ? 'bg-amber-500' : 'bg-blue-500'
+                contextPct > 90 ? 'bg-rose-500' : contextPct > 75 ? 'bg-amber-500' : 'bg-black dark:bg-white'
               }`}
               style={{ width: `${contextPct}%` }}
             />
@@ -177,10 +177,10 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
       )}
 
       {/* System Hardware Resource Meters */}
-      <div className="p-4 rounded-xl bg-[#12141a] border border-[#20232c] space-y-3.5">
+      <div className="p-4 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#20232c] space-y-3.5">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-zinc-300 font-semibold">Runtime Host Telemetry</span>
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span className="text-zinc-700 dark:text-zinc-300 font-semibold">Runtime Host Telemetry</span>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
             {accelerationEngine}
           </span>
         </div>
@@ -188,14 +188,14 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
         {/* CPU */}
         <div className="space-y-1.5 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400">Host CPU Compute</span>
-            <span className="font-mono font-semibold text-zinc-200">
+            <span className="text-zinc-500 dark:text-zinc-400">Host CPU Compute</span>
+            <span className="font-mono font-semibold text-[#111111] dark:text-zinc-200">
               {formatNumber(systemMetric?.cpuPercent, 1, '%')}
             </span>
           </div>
-          <div className="h-1.5 w-full bg-[#1b1e24] rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-zinc-100 dark:bg-[#1b1e24] rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              className="h-full bg-black dark:bg-white rounded-full transition-all duration-300"
               style={{ width: `${Math.min(100, systemMetric?.cpuPercent || 15)}%` }}
             />
           </div>
@@ -204,14 +204,14 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
         {/* RAM */}
         <div className="space-y-1.5 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400">Memory (RAM)</span>
-            <span className="font-mono font-semibold text-zinc-200">
+            <span className="text-zinc-500 dark:text-zinc-400">Memory (RAM)</span>
+            <span className="font-mono font-semibold text-[#111111] dark:text-zinc-200">
               {systemMetric?.memoryUsedBytes ? formatBytes(systemMetric.memoryUsedBytes) : '—'}
             </span>
           </div>
-          <div className="h-1.5 w-full bg-[#1b1e24] rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-zinc-100 dark:bg-[#1b1e24] rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              className="h-full bg-black dark:bg-white rounded-full transition-all duration-300"
               style={{
                 width: `${Math.min(
                   100,

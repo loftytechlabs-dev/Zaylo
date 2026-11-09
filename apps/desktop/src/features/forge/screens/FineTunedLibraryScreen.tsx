@@ -191,11 +191,11 @@ export const FineTunedLibraryScreen: React.FC<FineTunedLibraryScreenProps> = ({
 
                   {/* LoRA Base Dependency Explainer */}
                   {isLora && (
-                    <div className="p-2.5 rounded-lg bg-blue-500/5 border border-blue-500/15 text-[11px] text-zinc-400 flex items-start gap-2">
-                      <AlertCircle className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                    <div className="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[11px] text-zinc-700 dark:text-zinc-300 flex items-start gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0 mt-0.5" />
                       <span>
                         This LoRA adapter requires base model{' '}
-                        <strong className="text-zinc-300 font-mono">{art.baseModelName}</strong> to load.
+                        <strong className="text-zinc-900 dark:text-zinc-100 font-mono">{art.baseModelName}</strong> to load.
                       </span>
                     </div>
                   )}
@@ -222,7 +222,7 @@ export const FineTunedLibraryScreen: React.FC<FineTunedLibraryScreenProps> = ({
 
                   <button
                     onClick={() => onOpenPlayground(art.baseModelId, art.artifactPath)}
-                    className="py-1.5 px-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-xs font-medium text-center transition-colors"
+                    className="py-1.5 px-3 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 border border-black dark:border-white text-white dark:text-black text-xs font-medium text-center transition-colors"
                   >
                     Open in Playground
                   </button>
@@ -240,7 +240,7 @@ export const FineTunedLibraryScreen: React.FC<FineTunedLibraryScreenProps> = ({
                         </>
                       ) : (
                         <>
-                          <GitMerge className="w-3.5 h-3.5 text-blue-400" />
+                          <GitMerge className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" />
                           <span>Merge Adapter</span>
                         </>
                       )}

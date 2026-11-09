@@ -44,13 +44,13 @@ export const CompareView: React.FC<CompareViewProps> = ({
   return (
     <div className="flex-1 flex flex-col justify-between overflow-hidden p-6 space-y-4">
       {/* Top Info Banner */}
-      <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-between text-xs text-blue-300 select-none shrink-0">
+      <div className="p-3.5 rounded-xl bg-zinc-100 dark:bg-[#151720] border border-zinc-200 dark:border-[#272932] flex items-center justify-between text-xs text-zinc-700 dark:text-zinc-300 select-none shrink-0">
         <div className="flex items-center gap-2">
-          <Scale className="w-4 h-4 text-blue-400 shrink-0" />
+          <Scale className="w-4 h-4 text-zinc-700 dark:text-zinc-300 shrink-0" />
           <span>
             <strong>Comparative Inference Mode:</strong> Evaluating{' '}
-            <strong className="text-zinc-200">{baseModel?.name || 'Base Model'}</strong> vs.{' '}
-            <strong className="text-blue-300 font-semibold">{fineTunedModel?.name || 'Fine-Tuned Adapter'}</strong>{' '}
+            <strong className="text-black dark:text-white">{baseModel?.name || 'Base Model'}</strong> vs.{' '}
+            <strong className="text-black dark:text-white font-semibold">{fineTunedModel?.name || 'Fine-Tuned Adapter'}</strong>{' '}
             with equivalent generation parameters.
           </span>
         </div>
@@ -111,41 +111,41 @@ export const CompareView: React.FC<CompareViewProps> = ({
               </div>
 
               {/* Fine-Tuned Model Output Column */}
-              <div className="p-4 rounded-xl bg-[#101217] border border-blue-500/30 space-y-3 flex flex-col justify-between shadow-sm">
+              <div className="p-4 rounded-xl bg-white dark:bg-[#101217] border border-[#eaeaea] dark:border-[#22252e] space-y-3 flex flex-col justify-between shadow-xs">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between border-b border-blue-500/20 pb-2">
+                  <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#1c1f28] pb-2">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-blue-400" />
-                      <span className="text-xs font-semibold text-blue-300">
+                      <Sparkles className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                      <span className="text-xs font-semibold text-[#111111] dark:text-zinc-100">
                         {fineTunedModel?.name || 'Fine-Tuned Adapter'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-blue-300">
-                      <Clock className="w-3 h-3 text-blue-400" />
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-500">
+                      <Clock className="w-3 h-3 text-zinc-400" />
                       <span>{latestResult.ftLatencyMs} ms</span>
                     </div>
                   </div>
 
-                  <div className="text-[10px] font-mono text-blue-400/80">
+                  <div className="text-[10px] font-mono text-zinc-400">
                     LoRA adapter specialization
                   </div>
 
-                  <div className="text-xs text-zinc-100 leading-relaxed font-sans min-h-[160px] whitespace-pre-wrap select-text">
+                  <div className="text-xs text-[#111111] dark:text-zinc-100 leading-relaxed font-sans min-h-[160px] whitespace-pre-wrap select-text">
                     <MarkdownRenderer content={latestResult.ftResponse} />
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-blue-500/20 flex justify-end">
+                <div className="pt-2 border-t border-[#eaeaea] dark:border-[#1c1f28] flex justify-end">
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(latestResult.ftResponse);
                       setCopiedFt(true);
                       setTimeout(() => setCopiedFt(false), 2000);
                     }}
-                    className="p-1.5 rounded hover:bg-blue-950/30 text-blue-400 hover:text-blue-200 transition-colors"
+                    className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
                     title="Copy fine-tuned response"
                   >
-                    {copiedFt ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedFt ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
@@ -154,7 +154,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
         ) : (
           <div className="h-full flex flex-col items-center justify-center max-w-md mx-auto text-center space-y-3 text-zinc-500 select-none">
             <Scale className="w-10 h-10 opacity-30" />
-            <h3 className="text-sm font-semibold text-zinc-300">No Comparison Run Yet</h3>
+            <h3 className="text-sm font-semibold text-[#111111] dark:text-zinc-300">No Comparison Run Yet</h3>
             <p className="text-xs">
               Enter a prompt below to execute inference concurrently across both models and compare
               stylistic adaptation, task alignment, and generation latency.
@@ -171,13 +171,13 @@ export const CompareView: React.FC<CompareViewProps> = ({
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Enter a prompt to compare base model vs fine-tuned responses..."
           disabled={isComparing}
-          className="w-full bg-[#12141a] border border-[#232630] rounded-xl pl-4 pr-24 py-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-sans shadow-sm"
+          className="w-full bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#232630] rounded-xl pl-4 pr-24 py-3 text-xs text-[#111111] dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white font-sans shadow-xs"
         />
 
         <button
           type="submit"
           disabled={isComparing || !prompt.trim()}
-          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs font-semibold shadow transition-colors"
+          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 text-white dark:text-black text-xs font-semibold shadow-xs transition-colors"
         >
           {isComparing ? (
             <>

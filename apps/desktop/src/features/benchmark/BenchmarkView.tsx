@@ -55,12 +55,12 @@ export const BenchmarkView: React.FC = () => {
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* Header */}
-      <div className="border-b border-[#202227] pb-4">
-        <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-          <Gauge className="w-4 h-4 text-blue-400" />
+      <div className="border-b border-[#eaeaea] dark:border-[#202227] pb-4">
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
+          <Gauge className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
           Hardware & Model Inference Benchmark
         </h2>
-        <p className="text-xs text-zinc-400 mt-0.5">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
           Execute real automated benchmark passes measuring true prompt ingestion speed, token generation throughput, and first-token latency on your host machine.
         </p>
       </div>
@@ -91,7 +91,7 @@ export const BenchmarkView: React.FC = () => {
           <button
             onClick={handleRunBenchmark}
             disabled={isRunning || installedModels.length === 0}
-            className="flex items-center gap-2 px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors disabled:opacity-50 shadow-xs"
           >
             {isRunning ? (
               <>
@@ -108,8 +108,8 @@ export const BenchmarkView: React.FC = () => {
         </div>
 
         {isRunning && (
-          <div className="p-4 rounded bg-[#0d0f12] border border-blue-900/40 text-xs text-blue-300 flex items-center gap-3">
-            <RotateCw className="w-4 h-4 animate-spin shrink-0 text-blue-400" />
+          <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#0d0f12] border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-200 flex items-center gap-3">
+            <RotateCw className="w-4 h-4 animate-spin shrink-0 text-zinc-600 dark:text-zinc-400" />
             <div>
               <span className="font-semibold block">Executing real multi-stage benchmark:</span>
               1. Warmup pass → 2. Prompt processing token ingestion → 3. Generation throughput timing

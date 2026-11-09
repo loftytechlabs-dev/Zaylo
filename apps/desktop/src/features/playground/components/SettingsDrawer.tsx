@@ -36,11 +36,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   };
 
   return (
-    <aside className="w-80 border-l border-[#202227] bg-[#0c0d10] p-5 space-y-5 select-none overflow-y-auto shrink-0 z-20">
+    <aside className="w-80 border-l border-[#eaeaea] dark:border-[#202227] bg-white dark:bg-[#0c0d10] p-5 space-y-5 select-none overflow-y-auto shrink-0 z-20">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#1f2228] pb-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-200">
-          <Sliders className="w-4 h-4 text-blue-400" />
+      <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#1f2228] pb-3">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#111111] dark:text-zinc-200">
+          <Sliders className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
           <span>Generation Settings</span>
         </div>
         <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           value={settings.systemPrompt}
           onChange={(e) => onChange({ systemPrompt: e.target.value })}
           placeholder="You are a helpful local assistant..."
-          className="w-full p-2.5 rounded-lg bg-[#12141a] border border-[#22252f] text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-sans resize-none leading-relaxed select-text"
+          className="w-full p-2.5 rounded-lg bg-[#12141a] border border-[#22252f] text-xs text-zinc-200 focus:outline-none focus:border-black dark:focus:border-white font-sans resize-none leading-relaxed select-text"
         />
         <p className="text-[10px] text-zinc-500 leading-normal">
           Defines persona, behavioral guidelines, and formatting style for assistant responses.
@@ -94,7 +94,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             step="0.05"
             value={settings.temperature}
             onChange={(e) => onChange({ temperature: parseFloat(e.target.value) })}
-            className="w-full accent-blue-500 bg-zinc-800 cursor-pointer"
+            className="w-full accent-black dark:accent-white bg-zinc-800 cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
             <span>0.0 (Deterministic)</span>
@@ -115,7 +115,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             step="0.05"
             value={settings.topP}
             onChange={(e) => onChange({ topP: parseFloat(e.target.value) })}
-            className="w-full accent-blue-500 bg-zinc-800 cursor-pointer"
+            className="w-full accent-black dark:accent-white bg-zinc-800 cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
             <span>0.05 (Focused)</span>
@@ -136,7 +136,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             step="64"
             value={settings.maxTokens}
             onChange={(e) => onChange({ maxTokens: parseInt(e.target.value, 10) })}
-            className="w-full accent-blue-500 bg-zinc-800 cursor-pointer"
+            className="w-full accent-black dark:accent-white bg-zinc-800 cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
             <span>64 tokens</span>
@@ -176,7 +176,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 step="0.1"
                 value={settings.frequencyPenalty}
                 onChange={(e) => onChange({ frequencyPenalty: parseFloat(e.target.value) })}
-                className="w-full accent-blue-500 bg-zinc-800 cursor-pointer"
+                className="w-full accent-black dark:accent-white bg-zinc-800 cursor-pointer"
               />
               <p className="text-[10px] text-zinc-500 leading-normal">
                 Penalizes tokens based on their existing frequency in the text, reducing verbatim repetition.
@@ -198,7 +198,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 step="0.1"
                 value={settings.presencePenalty}
                 onChange={(e) => onChange({ presencePenalty: parseFloat(e.target.value) })}
-                className="w-full accent-blue-500 bg-zinc-800 cursor-pointer"
+                className="w-full accent-black dark:accent-white bg-zinc-800 cursor-pointer"
               />
               <p className="text-[10px] text-zinc-500 leading-normal">
                 Encourages introducing new concepts by penalizing repeated tokens regardless of exact count.
@@ -213,7 +213,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 value={stopInput}
                 onChange={(e) => handleStopChange(e.target.value)}
                 placeholder="###, User:, EndOfText"
-                className="w-full p-2 rounded-lg bg-[#12141a] border border-[#22252f] text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono select-text"
+                className="w-full p-2 rounded-lg bg-[#12141a] border border-[#22252f] text-xs text-zinc-200 focus:outline-none focus:border-black dark:focus:border-white font-mono select-text"
               />
               <p className="text-[10px] text-zinc-500">
                 Comma-separated strings that will immediately halt generation when emitted.

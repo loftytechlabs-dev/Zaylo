@@ -11,7 +11,6 @@ import type {
 import { PersonaResolver, PersonaPromptAdapter } from '@local-ai/inference';
 import { ModelCapabilityRegistry } from '@local-ai/capabilities';
 import type {
-  PlaygroundConversation,
   GenerationSettings,
   UnifiedModelOption,
   InferenceGenerationStats,
@@ -76,7 +75,14 @@ export const PlaygroundView: React.FC = () => {
     defaultPersonaId,
     setActivePersonaId,
     setActiveTab,
+    conversations,
+    activeConvId,
+    setConversations,
+    setActiveConvId,
+    createNewChat,
   } = useAppStore();
+
+  const [externalInput, setExternalInput] = useState<string>('');
 
   // Fine-Tuned Models from Forge
   const [forgeArtifacts, setForgeArtifacts] = useState<FineTunedModelArtifact[]>([]);
@@ -97,33 +103,6 @@ export const PlaygroundView: React.FC = () => {
     }
     return DEFAULT_SETTINGS;
   });
-
-  // Conversations State
-  const [conversations, setConversations] = useState<PlaygroundConversation[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // Ignored
-    }
-    const initialId = `conv_${Date.now()}`;
-    return [
-      {
-        id: initialId,
-        title: 'New Chat',
-        modelId: '',
-        modelName: '',
-        messages: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      },
-    ];
-  });
-
-  const [activeConvId, setActiveConvId] = useState<string>(() => conversations[0]?.id || `conv_${Date.now()}`);
 
   // Selected Model ID
   const [selectedModelId, setSelectedModelId] = useState<string>('');
@@ -415,27 +394,7 @@ export const PlaygroundView: React.FC = () => {
       return;
     }
 
-    const newId = `conv_${Date.now()}`;
-    const initialPersona = PersonaResolver.resolve(activePersonaId, personas, defaultPersonaId);
-    const initialMessages: ChatMessage[] = initialPersona?.greetingMessage
-      ? [{ role: 'assistant', content: initialPersona.greetingMessage }]
-      : [];
-
-    const newConv: PlaygroundConversation = {
-      id: newId,
-      title: 'New Chat',
-      modelId: activeModel?.id || '',
-      modelName: activeModel?.name || '',
-      isAdapter: activeModel?.type === 'adapter',
-      adapterPath: activeModel?.adapterPath,
-      messages: initialMessages,
-      personaId: initialPersona?.id,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    setConversations((prev) => [newConv, ...prev]);
-    setActiveConvId(newId);
+    createNewChat();
     setIsHistoryOpen(false);
   };
 
@@ -769,9 +728,9 @@ export const PlaygroundView: React.FC = () => {
   const isVisionSupported = Boolean(activeModel?.isVisionSupported);
 
   return (
-    <div className="flex h-full w-full bg-[#090a0c] text-zinc-100 overflow-hidden relative font-sans">
+    <div className="flex h-full w-full bg-white dark:bg-[#0c0d10] text-[#111111] dark:text-[#f4f4f5] overflow-hidden relative font-sans">
       {/* Main Workspace Column */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#090a0c]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[#0c0d10]">
         {/* Top Toolbar */}
         <PlaygroundToolbar
           models={unifiedModels}
@@ -786,6 +745,7 @@ export const PlaygroundView: React.FC = () => {
           onSelectPersona={handleSelectPersona}
           onOpenPersonaManagement={() => setActiveTab('personas')}
           onCreatePersona={() => setActiveTab('personas')}
+          onClearConversation={handleClearConversation}
           onToggleHistory={() => {
             setIsHistoryOpen(!isHistoryOpen);
             setIsPerformanceOpen(false);
@@ -863,7 +823,7 @@ export const PlaygroundView: React.FC = () => {
               isGenerating={isGenerating}
               selectedModel={activeModel}
               generationStats={activeConv?.lastStats}
-              onSelectSuggestion={(prompt) => handleSendMessage(prompt)}
+              onSelectSuggestion={(prompt) => setExternalInput(prompt)}
               onRegenerate={handleRegenerate}
               onRetry={handleRegenerate}
               onClearConversation={handleClearConversation}
@@ -881,8 +841,11 @@ export const PlaygroundView: React.FC = () => {
               ragEnabled={ragEnabled}
               ragDocsCount={ragDocuments.length}
               onOpenRagModal={() => setIsRagModalOpen(true)}
+              onToggleRag={() => setRagEnabled(!ragEnabled)}
               onStartServer={handleStartServer}
               isStartingServer={isStartingServer}
+              externalInput={externalInput}
+              onClearExternalInput={() => setExternalInput('')}
             />
           </>
         )}

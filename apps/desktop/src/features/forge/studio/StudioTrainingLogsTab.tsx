@@ -178,7 +178,7 @@ export const StudioTrainingLogsTab: React.FC<StudioTrainingLogsTabProps> = ({ jo
         );
       case 'METRIC':
         return (
-          <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700">
             STEP
           </span>
         );
@@ -204,7 +204,7 @@ export const StudioTrainingLogsTab: React.FC<StudioTrainingLogsTabProps> = ({ jo
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search logs by keyword, step, error, or timestamp..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#14161b] border border-[#20232a] text-zinc-200 text-xs placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-sans"
+              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#14161b] border border-[#20232a] text-zinc-200 text-xs placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white font-sans"
             />
           </div>
 
@@ -215,7 +215,7 @@ export const StudioTrainingLogsTab: React.FC<StudioTrainingLogsTabProps> = ({ jo
               onClick={() => setAutoScroll(!autoScroll)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors ${
                 autoScroll
-                  ? 'bg-blue-600/10 text-blue-400 border-blue-500/30'
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-black dark:border-white'
                   : 'bg-[#14161b] text-zinc-400 border-[#20232a] hover:text-zinc-200'
               }`}
             >
@@ -255,7 +255,7 @@ export const StudioTrainingLogsTab: React.FC<StudioTrainingLogsTabProps> = ({ jo
                 onClick={() => setSelectedSeverity(sev)}
                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono transition-colors border ${
                   isSelected
-                    ? 'bg-blue-600 text-white border-blue-500 font-semibold shadow-sm'
+                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white font-semibold shadow-sm'
                     : 'bg-[#14161b] text-zinc-400 border-[#20232a] hover:text-zinc-200'
                 }`}
               >

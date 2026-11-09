@@ -64,8 +64,8 @@ export const PerformanceView: React.FC = () => {
     <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* Header */}
       <div className="border-b border-[#202227] pb-4">
-        <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-blue-400" />
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
           Real-Time Performance & Telemetry
         </h2>
         <p className="text-xs text-zinc-400 mt-0.5">
@@ -79,7 +79,7 @@ export const PerformanceView: React.FC = () => {
         <div className="p-5 rounded-lg bg-[#111317] border border-[#22252c] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-              <Cpu className="w-4 h-4 text-blue-400" />
+              <Cpu className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
               <span>CPU UTILIZATION</span>
             </div>
             <span className="text-sm font-mono font-bold text-zinc-100">{cpuPercent}%</span>

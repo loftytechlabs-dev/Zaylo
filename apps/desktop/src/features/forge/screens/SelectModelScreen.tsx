@@ -98,7 +98,7 @@ export const SelectModelScreen: React.FC<SelectModelScreenProps> = ({
       {/* Wizard Header */}
       <div className="flex items-center justify-between border-b border-[#202227] pb-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-medium text-blue-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-900 dark:text-zinc-100">
             <span>Step 1 of 4</span>
             <span>•</span>
             <span>Model Selection</span>
@@ -129,7 +129,7 @@ export const SelectModelScreen: React.FC<SelectModelScreenProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search installed models..."
-            className="w-full bg-[#121418] border border-[#202227] rounded-lg pl-9 pr-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-[#121418] border border-[#202227] rounded-lg pl-9 pr-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
           />
         </div>
 
@@ -172,7 +172,7 @@ export const SelectModelScreen: React.FC<SelectModelScreenProps> = ({
                   onClick={() => onSelectModel(model)}
                   className={`p-4 rounded-xl border transition-all cursor-pointer space-y-3 ${
                     isSelected
-                      ? 'bg-[#151922] border-blue-500/60 shadow-[0_0_15px_rgba(59,130,246,0.15)]'
+                      ? 'bg-zinc-800/40 border-black dark:border-white ring-1 ring-black/20 dark:ring-white/20'
                       : 'bg-[#121418] border-[#202227] hover:border-[#2e323b]'
                   }`}
                 >
@@ -222,7 +222,7 @@ export const SelectModelScreen: React.FC<SelectModelScreenProps> = ({
               {/* Status Explanation */}
               <div className="p-3.5 rounded-lg bg-[#0e1013] border border-[#1d2026] space-y-2 text-xs">
                 <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                  <Info className="w-4 h-4 text-zinc-900 dark:text-zinc-100 shrink-0 mt-0.5" />
                   <p className="text-zinc-300 leading-relaxed">
                     {selectedModel.statusReason ||
                       'Model inspected and verified for fine-tuning.'}
@@ -314,7 +314,7 @@ export const SelectModelScreen: React.FC<SelectModelScreenProps> = ({
                 <button
                   onClick={onContinue}
                   disabled={selectedModel.status !== 'READY'}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-medium text-xs shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <span>Continue to Dataset Import</span>
                   <ArrowRight className="w-4 h-4" />

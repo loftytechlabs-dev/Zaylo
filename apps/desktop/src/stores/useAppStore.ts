@@ -23,6 +23,7 @@ import type {
   ImageGenerationProgress,
   Persona,
 } from '@local-ai/shared';
+import type { PlaygroundConversation } from '../features/playground/types';
 import {
   PersonaManager,
   PersonaResolver,
@@ -160,6 +161,18 @@ interface AppStore {
   sendChatMessage: (content: string) => Promise<void>;
   stopGeneration: () => void;
 
+  // Conversations & History State
+  conversations: PlaygroundConversation[];
+  activeConvId: string;
+  isSidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  setConversations: (updater: PlaygroundConversation[] | ((prev: PlaygroundConversation[]) => PlaygroundConversation[])) => void;
+  setActiveConvId: (id: string) => void;
+  createNewChat: () => string;
+  selectChat: (id: string) => void;
+  deleteChat: (id: string) => void;
+  renameChat: (id: string, newTitle: string) => void;
+
   // Personas Management State
   personas: Persona[];
   activePersonaId: string;
@@ -222,9 +235,173 @@ const getInitialTheme = (): 'dark' | 'light' => {
   return 'dark';
 };
 
+const PLAYGROUND_STORAGE_KEY = 'zaylo_playground_conversations_v3';
+
+function loadStoredConversations(initialPersonaId?: string): { conversations: PlaygroundConversation[]; activeConvId: string } {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const saved = localStorage.getItem(PLAYGROUND_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return {
+            conversations: parsed,
+            activeConvId: parsed[0].id,
+          };
+        }
+      }
+    } catch {
+      // Ignored
+    }
+  }
+  const initialId = `conv_${Date.now()}`;
+  const initialConv: PlaygroundConversation = {
+    id: initialId,
+    title: 'New Chat',
+    modelId: '',
+    modelName: '',
+    messages: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    personaId: initialPersonaId || 'persona_general',
+  };
+  const sample1: PlaygroundConversation = {
+    id: 'conv_sample_sql',
+    title: 'SQL Optimization',
+    modelId: '',
+    modelName: '',
+    messages: [
+      { role: 'user', content: 'How do I optimize complex SQLite joins with indexing?' },
+      { role: 'assistant', content: 'To optimize complex SQLite joins with indexing, follow these key strategies:\n\n1. **Create Composite Indexes**: Index foreign keys used in `JOIN ON` conditions.\n2. **Run `EXPLAIN QUERY PLAN`**: Verify whether SQLite is using an indexed search or table scan.\n3. **Analyze Statistics**: Run `ANALYZE;` periodically to populate `sqlite_stat1` for the query optimizer.' }
+    ],
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 3500000,
+    personaId: 'persona_developer',
+  };
+  const sample2: PlaygroundConversation = {
+    id: 'conv_sample_db',
+    title: 'SQLite vs PostgreSQL',
+    modelId: '',
+    modelName: '',
+    messages: [
+      { role: 'user', content: 'What are the architectural trade-offs between embedded SQLite and PostgreSQL for local AI apps?' },
+      { role: 'assistant', content: 'When comparing SQLite and PostgreSQL for local AI applications:\n\n- **SQLite**: Zero configuration, single-file storage, extremely low latency for single-process embedded apps. Perfect for local vector stores with `sqlite-vec`.\n- **PostgreSQL**: Robust concurrency, rich data types (`pgvector`), and advanced connection pooling. Ideal for multi-user local network deployments.' }
+    ],
+    createdAt: Date.now() - 7200000,
+    updatedAt: Date.now() - 7100000,
+    personaId: 'persona_analyst',
+  };
+  const sample3: PlaygroundConversation = {
+    id: 'conv_sample_rag',
+    title: 'Local RAG Setup',
+    modelId: '',
+    modelName: '',
+    messages: [
+      { role: 'user', content: 'How does Zaylo index local markdown files for RAG retrieval?' },
+      { role: 'assistant', content: 'Zaylo processes local markdown documents through a 3-stage pipeline:\n\n1. **Chunking**: Text is split into semantic paragraphs with configurable chunk overlap.\n2. **Embedding**: Chunks are embedded locally using the integrated embedding model.\n3. **Cosine Similarity Search**: At query time, top-$k$ nearest chunks are injected directly into the persona prompt context.' }
+    ],
+    createdAt: Date.now() - 10800000,
+    updatedAt: Date.now() - 10700000,
+    personaId: 'persona_researcher',
+  };
+  return {
+    conversations: [initialConv, sample1, sample2, sample3],
+    activeConvId: initialId,
+  };
+}
+
+const initialConvsData = loadStoredConversations();
+
 export const useAppStore = create<AppStore>((set, get) => ({
-  activeTab: 'overview',
+  activeTab: 'playground',
   setActiveTab: (tab) => set({ activeTab: tab }),
+
+  // Conversations State & Actions
+  conversations: initialConvsData.conversations,
+  activeConvId: initialConvsData.activeConvId,
+  isSidebarCollapsed: false,
+  toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+  setConversations: (updater) => {
+    set((state) => {
+      const next = typeof updater === 'function' ? updater(state.conversations) : updater;
+      try {
+        localStorage.setItem(PLAYGROUND_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return { conversations: next };
+    });
+  },
+  setActiveConvId: (id) => set({ activeConvId: id }),
+  createNewChat: () => {
+    const state = get();
+    const newId = `conv_${Date.now()}`;
+    const initialPersona = PersonaResolver.resolve(state.activePersonaId, state.personas, state.defaultPersonaId);
+    const initialMessages: ChatMessage[] = initialPersona?.greetingMessage
+      ? [{ role: 'assistant', content: initialPersona.greetingMessage }]
+      : [];
+    const newConv: PlaygroundConversation = {
+      id: newId,
+      title: 'New Chat',
+      modelId: state.selectedModel || '',
+      modelName: state.selectedModel || '',
+      messages: initialMessages,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      personaId: initialPersona?.id,
+    };
+    const nextConvs = [newConv, ...state.conversations];
+    try {
+      localStorage.setItem(PLAYGROUND_STORAGE_KEY, JSON.stringify(nextConvs));
+    } catch {}
+    set({
+      conversations: nextConvs,
+      activeConvId: newId,
+      activeTab: 'playground',
+    });
+    return newId;
+  },
+  selectChat: (id) => {
+    set({ activeConvId: id, activeTab: 'playground' });
+  },
+  deleteChat: (id) => {
+    set((state) => {
+      const remaining = state.conversations.filter((c) => c.id !== id);
+      let nextActive = state.activeConvId;
+      if (state.activeConvId === id) {
+        nextActive = remaining[0]?.id || `conv_${Date.now()}`;
+        if (remaining.length === 0) {
+          const freshConv: PlaygroundConversation = {
+            id: nextActive,
+            title: 'New Chat',
+            modelId: state.selectedModel || '',
+            modelName: state.selectedModel || '',
+            messages: [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            personaId: state.activePersonaId,
+          };
+          remaining.push(freshConv);
+        }
+      }
+      try {
+        localStorage.setItem(PLAYGROUND_STORAGE_KEY, JSON.stringify(remaining));
+      } catch {}
+      return {
+        conversations: remaining,
+        activeConvId: nextActive,
+      };
+    });
+  },
+  renameChat: (id, newTitle) => {
+    set((state) => {
+      const updated = state.conversations.map((c) =>
+        c.id === id ? { ...c, title: newTitle, updatedAt: Date.now() } : c
+      );
+      try {
+        localStorage.setItem(PLAYGROUND_STORAGE_KEY, JSON.stringify(updated));
+      } catch {}
+      return { conversations: updated };
+    });
+  },
 
   theme: getInitialTheme(),
   themePreference: getInitialThemePreference(),

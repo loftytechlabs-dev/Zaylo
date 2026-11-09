@@ -38,16 +38,15 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
   const getStyleBadgeColor = (style: string) => {
     switch (style.toLowerCase()) {
       case 'technical':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
       case 'academic':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
-      case 'creative':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-      case 'concise':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
       case 'professional':
+        return 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700';
+      case 'creative':
+        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
+      case 'concise':
+        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
       default:
-        return 'bg-zinc-800 text-zinc-300 border-zinc-700/50';
+        return 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700';
     }
   };
 
@@ -55,8 +54,8 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
     <div
       className={`group relative rounded-xl p-5 border transition-all duration-200 flex flex-col justify-between ${
         isActive
-          ? 'bg-[#12151d] border-blue-500/60 shadow-[0_0_16px_rgba(37,99,235,0.12)]'
-          : 'bg-[#111317] border-[#22252c] hover:border-[#333742]'
+          ? 'bg-white dark:bg-[#12141a] border-black dark:border-white shadow-xs'
+          : 'bg-white dark:bg-[#111317] border-[#eaeaea] dark:border-[#22252c] hover:border-zinc-400 dark:hover:border-[#333742]'
       }`}
     >
       <div>
@@ -65,10 +64,10 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
           <div className="flex items-center gap-3 min-w-0">
             {/* Avatar / Icon Badge */}
             <div
-              className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-sm transition-transform duration-200 group-hover:scale-105 ${
+              className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-xs transition-transform duration-200 group-hover:scale-105 ${
                 isActive
-                  ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400'
-                  : 'bg-[#171922] border border-[#262934] text-zinc-200'
+                  ? 'bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 text-black dark:text-white'
+                  : 'bg-zinc-50 dark:bg-[#171922] border border-[#eaeaea] dark:border-[#262934] text-zinc-700 dark:text-zinc-200'
               }`}
             >
               <span>{persona.avatar || '🤖'}</span>
@@ -76,7 +75,7 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-bold text-zinc-100 truncate tracking-tight">
+                <h3 className="text-sm font-bold text-[#111111] dark:text-zinc-100 truncate tracking-tight">
                   {persona.name}
                 </h3>
 
@@ -151,7 +150,7 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
                     }}
                     className="w-full text-left px-3 py-1.5 text-zinc-300 hover:bg-[#1f222d] flex items-center gap-2"
                   >
-                    <Zap className="w-3.5 h-3.5 text-blue-400" />
+                    <Zap className="w-3.5 h-3.5 text-zinc-500" />
                     <span>{isActive ? 'Currently Active' : 'Set as Active'}</span>
                   </button>
 
@@ -220,10 +219,10 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
             <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">
               Core Directives
             </span>
-            <ul className="text-[11px] text-zinc-400 space-y-0.5">
+            <ul className="text-[11px] text-zinc-500 dark:text-zinc-400 space-y-0.5">
               {persona.behavioralRules.slice(0, 2).map((rule, rIdx) => (
                 <li key={rIdx} className="truncate flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-blue-500/60 shrink-0" />
+                  <span className="w-1 h-1 rounded-full bg-zinc-400 dark:bg-zinc-500 shrink-0" />
                   <span className="truncate">{rule}</span>
                 </li>
               ))}
@@ -233,32 +232,32 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
       </div>
 
       {/* Card Footer: Quick Actions */}
-      <div className="mt-4 pt-3 border-t border-[#1d2027] flex items-center justify-between gap-2">
+      <div className="mt-4 pt-3 border-t border-[#eaeaea] dark:border-[#1d2027] flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
           {isActive ? (
-            <span className="inline-flex items-center gap-1 text-emerald-400 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>ACTIVE</span>
             </span>
           ) : (
-            <span className="text-zinc-500 font-mono text-[10px]">STANDBY</span>
+            <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px]">STANDBY</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={onEdit}
-            className="px-2.5 py-1 rounded-md bg-[#16181f] hover:bg-[#1f222d] border border-[#252834] text-xs font-medium text-zinc-300 transition-colors"
+            className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#16181f] hover:bg-zinc-50 dark:hover:bg-[#1f222d] border border-[#eaeaea] dark:border-[#252834] text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors"
           >
             {persona.isBuiltIn ? 'View' : 'Edit'}
           </button>
 
           <button
             onClick={onActivate}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
               isActive
-                ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40 cursor-default'
-                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm'
+                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 cursor-default'
+                : 'bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black shadow-xs'
             }`}
           >
             {isActive ? (

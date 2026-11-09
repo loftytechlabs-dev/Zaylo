@@ -62,7 +62,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
       {/* Wizard Header */}
       <div className="flex items-center justify-between border-b border-[#202227] pb-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-medium text-blue-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-900 dark:text-zinc-100">
             <span>Step 2 of 4</span>
             <span>•</span>
             <span>Dataset Preparation</span>
@@ -89,9 +89,9 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
         {/* File Picker Box */}
         <div
           onClick={onSelectFile}
-          className="md:col-span-2 p-6 rounded-xl border border-dashed border-[#2e323b] hover:border-blue-500/50 bg-[#101216] hover:bg-[#13161c] transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+          className="md:col-span-2 p-6 rounded-xl border border-dashed border-[#2e323b] hover:border-zinc-400 dark:hover:border-zinc-500 bg-[#101216] hover:bg-[#13161c] transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
         >
-          <div className="p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform">
+          <div className="p-3 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 group-hover:scale-110 transition-transform">
             <Upload className="w-6 h-6" />
           </div>
           <div className="text-sm font-semibold text-zinc-200">
@@ -118,7 +118,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
           <div className="space-y-2 pt-1">
             <button
               onClick={() => onLoadSample('instruction')}
-              className="w-full text-left p-2.5 rounded-lg bg-[#16181f] hover:bg-[#1e222a] border border-[#22252e] hover:border-blue-500/30 text-xs transition-colors"
+              className="w-full text-left p-2.5 rounded-lg bg-[#16181f] hover:bg-[#1e222a] border border-[#22252e] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs transition-colors"
             >
               <div className="font-medium text-zinc-200">System Instruction Tuning</div>
               <div className="text-[11px] text-zinc-400 font-mono mt-0.5">5 instruction / output pairs</div>
@@ -126,7 +126,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
 
             <button
               onClick={() => onLoadSample('conversational')}
-              className="w-full text-left p-2.5 rounded-lg bg-[#16181f] hover:bg-[#1e222a] border border-[#22252e] hover:border-blue-500/30 text-xs transition-colors"
+              className="w-full text-left p-2.5 rounded-lg bg-[#16181f] hover:bg-[#1e222a] border border-[#22252e] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs transition-colors"
             >
               <div className="font-medium text-zinc-200">Customer Support Turns</div>
               <div className="text-[11px] text-zinc-400 font-mono mt-0.5">5 multi-turn dialogues</div>
@@ -158,7 +158,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
 
             <div className="p-4 rounded-xl bg-[#121418] border border-[#202227] space-y-1">
               <div className="text-[11px] text-zinc-400">Detected Format</div>
-              <div className="font-semibold text-sm text-blue-400 font-mono capitalize">
+              <div className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 font-mono capitalize">
                 {dataset.detectedFormat.replace('_', ' ')}
               </div>
               <div className="text-xs text-zinc-500 font-mono">
@@ -168,7 +168,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
 
             <div className="p-4 rounded-xl bg-[#121418] border border-[#202227] space-y-1">
               <div className="text-[11px] text-zinc-400">Token Distribution (p95)</div>
-              <div className="font-semibold text-sm text-blue-400 font-mono">
+              <div className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 font-mono">
                 ~{dataset.tokenLengthDistribution.p95} tokens
               </div>
               <div className="text-xs text-zinc-500 font-mono">
@@ -201,7 +201,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
                 </div>
                 <button
                   onClick={() => setShowMapping(!showMapping)}
-                  className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                  className="text-xs text-zinc-900 dark:text-zinc-100 hover:underline font-medium"
                 >
                   {showMapping ? 'Hide Mapping' : 'Configure Columns'}
                 </button>
@@ -248,7 +248,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
                   <div className="md:col-span-2 flex justify-end">
                     <button
                       onClick={handleApplyMapping}
-                      className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
                     >
                       Apply Column Mapping
                     </button>
@@ -263,7 +263,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
             <div className="p-5 rounded-xl bg-[#121418] border border-[#202227] space-y-3">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
-                  <Table className="w-4 h-4 text-blue-400" />
+                  <Table className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
                   <span>
                     Example Record Preview ({exampleIndex + 1} of {dataset.exampleRecords.length})
                   </span>
@@ -317,7 +317,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
                   onClick={() => onObjectiveChange('instruction')}
                   className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                     objective === 'instruction'
-                      ? 'bg-[#171a22] border-blue-500/50 text-zinc-100'
+                      ? 'bg-[#171a22] border-black dark:border-white text-zinc-100'
                       : 'bg-[#101216] border-[#202227] text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
@@ -326,7 +326,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
                     name="objective"
                     checked={objective === 'instruction'}
                     onChange={() => onObjectiveChange('instruction')}
-                    className="mt-0.5"
+                    className="mt-0.5 accent-black dark:accent-white"
                   />
                   <div>
                     <div className="text-xs font-medium">Instruction Fine-Tuning</div>
@@ -340,7 +340,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
                   onClick={() => onObjectiveChange('conversational')}
                   className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                     objective === 'conversational'
-                      ? 'bg-[#171a22] border-blue-500/50 text-zinc-100'
+                      ? 'bg-[#171a22] border-black dark:border-white text-zinc-100'
                       : 'bg-[#101216] border-[#202227] text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
@@ -349,7 +349,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
                     name="objective"
                     checked={objective === 'conversational'}
                     onChange={() => onObjectiveChange('conversational')}
-                    className="mt-0.5"
+                    className="mt-0.5 accent-black dark:accent-white"
                   />
                   <div>
                     <div className="text-xs font-medium">Conversational Fine-Tuning</div>
@@ -365,7 +365,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
             <div className="p-5 rounded-xl bg-[#121418] border border-[#202227] space-y-4">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold text-zinc-200">Validation Split</div>
-                <div className="text-xs font-mono font-medium text-blue-400">
+                <div className="text-xs font-mono font-medium text-zinc-900 dark:text-zinc-100">
                   {Math.round((1 - trainValSplit) * 100)}% Train / {Math.round(trainValSplit * 100)}% Val
                 </div>
               </div>
@@ -377,7 +377,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
                 step="0.05"
                 value={trainValSplit}
                 onChange={(e) => onTrainValSplitChange(parseFloat(e.target.value))}
-                className="w-full accent-blue-500 cursor-pointer"
+                className="w-full accent-black dark:accent-white cursor-pointer"
               />
 
               <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
@@ -410,7 +410,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
         <button
           onClick={onContinue}
           disabled={!canProceed}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-medium text-xs shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <span>Continue to Auto Configuration</span>
           <ArrowRight className="w-4 h-4" />

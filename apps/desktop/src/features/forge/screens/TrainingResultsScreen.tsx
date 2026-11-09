@@ -147,7 +147,7 @@ export const TrainingResultsScreen: React.FC<TrainingResultsScreenProps> = ({
 
         <div className="p-4 rounded-xl bg-[#121418] border border-[#202227] space-y-1">
           <div className="text-[11px] text-zinc-400">Adapter Artifact Size</div>
-          <div className="text-base font-bold font-mono text-blue-400">
+          <div className="text-base font-bold font-mono text-zinc-900 dark:text-zinc-100">
             {formatBytes(job?.artifactSizeBytes)}
           </div>
           <div className="text-xs text-zinc-500 font-mono">
@@ -168,14 +168,14 @@ export const TrainingResultsScreen: React.FC<TrainingResultsScreenProps> = ({
       <div className="p-5 rounded-xl bg-[#121418] border border-[#202227] space-y-4">
         <div className="flex items-center justify-between border-b border-[#1f2228] pb-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-400" />
+            <Sparkles className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
             <h2 className="text-sm font-semibold text-zinc-200">
               Side-by-Side Model Comparison
             </h2>
           </div>
           <div className="text-xs text-zinc-400">
             Base: <span className="text-zinc-200">{job.modelName}</span> vs{' '}
-            <span className="text-blue-400 font-medium">Base + LoRA Adapter</span>
+            <span className="text-zinc-900 dark:text-zinc-100 font-medium">Base + LoRA Adapter</span>
           </div>
         </div>
 
@@ -191,13 +191,13 @@ export const TrainingResultsScreen: React.FC<TrainingResultsScreenProps> = ({
                 value={testPrompt}
                 onChange={(e) => setTestPrompt(e.target.value)}
                 placeholder="Enter a prompt to compare generation behavior..."
-                className="flex-1 bg-[#101216] border border-[#202227] rounded-lg px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono"
+                className="flex-1 bg-[#101216] border border-[#202227] rounded-lg px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white font-mono"
               />
 
               <button
                 onClick={handleRunComparison}
                 disabled={isComparing || !testPrompt.trim()}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-medium text-xs shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isComparing ? (
                   <>
@@ -206,7 +206,7 @@ export const TrainingResultsScreen: React.FC<TrainingResultsScreenProps> = ({
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5 fill-white" />
+                    <Play className="w-3.5 h-3.5 fill-white dark:fill-black" />
                     <span>Run Comparison</span>
                   </>
                 )}
@@ -288,14 +288,14 @@ export const TrainingResultsScreen: React.FC<TrainingResultsScreenProps> = ({
           </div>
 
           {/* Fine-Tuned Model Output */}
-          <div className="p-4 rounded-xl bg-[#0e1013] border border-blue-500/30 space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold text-blue-400 border-b border-[#1a1c22] pb-2">
+          <div className="p-4 rounded-xl bg-[#0e1013] border border-[#eaeaea] dark:border-zinc-800 space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-zinc-900 dark:text-zinc-100 border-b border-[#1a1c22] pb-2">
               <span className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Fine-Tuned Model (LoRA Adapter)</span>
               </span>
               {comparisonResult && (
-                <span className="font-mono text-[11px] text-blue-400">
+                <span className="font-mono text-[11px] text-zinc-900 dark:text-zinc-100">
                   {comparisonResult.fineTunedDurationMs} ms
                 </span>
               )}

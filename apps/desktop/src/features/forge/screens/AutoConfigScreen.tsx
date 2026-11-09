@@ -56,7 +56,7 @@ export const AutoConfigScreen: React.FC<AutoConfigScreenProps> = ({
       {/* Wizard Header */}
       <div className="flex items-center justify-between border-b border-[#202227] pb-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-medium text-blue-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-900 dark:text-zinc-100">
             <span>Step 3 of 4</span>
             <span>•</span>
             <span>Automatic Configuration</span>
@@ -79,15 +79,15 @@ export const AutoConfigScreen: React.FC<AutoConfigScreenProps> = ({
       </div>
 
       {/* Auto Configure Master Banner */}
-      <div className="p-5 rounded-xl bg-[#121418] border border-blue-500/30 flex items-center justify-between">
+      <div className="p-5 rounded-xl bg-[#121418] border border-[#eaeaea] dark:border-zinc-800 flex items-center justify-between">
         <div className="flex items-center gap-3.5">
-          <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+          <div className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-sm text-zinc-100">Auto Configure</span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700">
                 RECOMMENDED
               </span>
             </div>
@@ -105,7 +105,7 @@ export const AutoConfigScreen: React.FC<AutoConfigScreenProps> = ({
               onChange={(e) => onToggleAutoConfig(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white"></div>
           </label>
 
           {!isAutoConfig && (
@@ -127,7 +127,7 @@ export const AutoConfigScreen: React.FC<AutoConfigScreenProps> = ({
         <div className="p-4 rounded-xl bg-[#121418] border border-[#202227] space-y-1.5">
           <div className="text-[11px] text-zinc-400">Model & Method</div>
           <div className="font-semibold text-xs text-zinc-100 truncate">{config.modelName}</div>
-          <div className="text-xs font-mono text-blue-400">
+          <div className="text-xs font-mono text-zinc-900 dark:text-zinc-100">
             LoRA (Rank {config.loraRank}, Alpha {config.loraAlpha})
           </div>
         </div>
@@ -138,7 +138,7 @@ export const AutoConfigScreen: React.FC<AutoConfigScreenProps> = ({
           <div className="font-semibold text-xs text-zinc-100 font-mono">
             PyTorch + PEFT
           </div>
-          <div className="text-xs font-mono text-blue-400">
+          <div className="text-xs font-mono text-zinc-900 dark:text-zinc-100">
             Device: {estimates.acceleration.toUpperCase()} ({config.precision})
           </div>
         </div>
@@ -191,7 +191,7 @@ export const AutoConfigScreen: React.FC<AutoConfigScreenProps> = ({
             <Sliders className="w-4 h-4 text-zinc-400" />
             <span>Advanced Training Hyperparameters</span>
             {!isAutoConfig && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700">
                 Customized
               </span>
             )}
@@ -353,7 +353,7 @@ export const AutoConfigScreen: React.FC<AutoConfigScreenProps> = ({
         <button
           onClick={onContinue}
           disabled={!estimates.isFeasible}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-medium text-xs shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <span>Continue to Preflight Review</span>
           <ArrowRight className="w-4 h-4" />

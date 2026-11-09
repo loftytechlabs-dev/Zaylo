@@ -60,7 +60,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
           );
         } else if (keywordMatch) {
           tokens.push(
-            <span key={keyCounter++} className="text-blue-400 font-semibold">
+            <span key={keyCounter++} className="text-purple-400 font-semibold">
               {keywordMatch}
             </span>
           );
@@ -257,7 +257,7 @@ const FormattedParagraph: React.FC<{ text: string }> = ({ text }) => {
       elements.push(
         <blockquote
           key={idx}
-          className="border-l-2 border-blue-500/50 pl-3 py-0.5 my-1.5 text-zinc-400 italic text-xs bg-blue-500/5 rounded-r"
+          className="border-l-2 border-zinc-400 dark:border-zinc-600 pl-3 py-0.5 my-1.5 text-zinc-600 dark:text-zinc-400 italic text-xs bg-zinc-50 dark:bg-zinc-900/40 rounded-r"
         >
           {renderInlineMarkdown(trimmed.substring(2))}
         </blockquote>
@@ -306,7 +306,7 @@ function renderInlineMarkdown(str: string): React.ReactNode {
       parts.push(
         <code
           key={keyCounter++}
-          className="px-1.5 py-0.5 rounded bg-[#171922] border border-[#262937] text-blue-300 font-mono text-[11px]"
+          className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-[#171922] border border-zinc-200 dark:border-[#262937] text-[#111111] dark:text-zinc-200 font-mono text-[11px]"
         >
           {token.substring(1, token.length - 1)}
         </code>

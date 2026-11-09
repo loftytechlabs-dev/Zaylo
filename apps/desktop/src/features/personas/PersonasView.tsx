@@ -109,22 +109,22 @@ export const PersonasView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#202227] pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-base font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-400" />
+            <h1 className="text-base font-bold tracking-tight text-[#111111] dark:text-zinc-100 flex items-center gap-2">
+              <Users className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
               Personas
             </h1>
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/30">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
               One AI Engine · Multiple Personalities
             </span>
           </div>
-          <p className="text-xs text-zinc-400 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-2xl leading-relaxed">
             Configure specialized behavioral and instruction profiles that adapt how your local models respond, reason, and communicate without requiring separate model weights.
           </p>
         </div>
 
         <button
           onClick={handleOpenCreateModal}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-all shadow-sm shrink-0"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-all shadow-xs shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Create Persona</span>
@@ -133,27 +133,27 @@ export const PersonasView: React.FC = () => {
 
       {/* Active Persona Banner */}
       {activePersona && (
-        <div className="p-4 rounded-xl bg-gradient-to-r from-[#12151f] via-[#101218] to-[#121622] border border-blue-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#272932] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-xl shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-xl shrink-0">
               {activePersona.avatar || '🤖'}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-mono text-zinc-400">Current Global Active Persona:</span>
-                <span className="text-xs font-bold text-zinc-100">{activePersona.name}</span>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-mono text-zinc-500">Current Global Active Persona:</span>
+                <span className="text-xs font-bold text-[#111111] dark:text-zinc-100">{activePersona.name}</span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>ACTIVE</span>
                 </span>
                 {activePersona.id === defaultPersona?.id && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                     <Star className="w-2.5 h-2.5 fill-current" />
                     <span>DEFAULT</span>
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-zinc-400 truncate mt-0.5 max-w-xl">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5 max-w-xl">
                 {activePersona.description || 'Instruction profile applied to new conversations.'}
               </p>
             </div>
@@ -162,7 +162,7 @@ export const PersonasView: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setActiveTab('playground')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-xs font-medium text-white dark:text-black transition-colors shadow-xs"
               title="Open Playground with this active persona"
             >
               <MessageSquare className="w-3.5 h-3.5" />
@@ -170,7 +170,7 @@ export const PersonasView: React.FC = () => {
             </button>
             <button
               onClick={() => handleOpenEditModal(activePersona)}
-              className="px-3 py-1.5 rounded-md bg-[#171922] hover:bg-[#202430] border border-[#2b3040] text-xs font-medium text-zinc-300 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-[#171922] hover:bg-zinc-50 dark:hover:bg-[#202430] border border-[#eaeaea] dark:border-[#2b3040] text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors"
             >
               {activePersona.isBuiltIn ? 'View Directives' : 'Edit Profile'}
             </button>
@@ -182,13 +182,13 @@ export const PersonasView: React.FC = () => {
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search personas by name, purpose, or traits..."
-            className="w-full pl-9 pr-4 py-1.5 rounded-lg bg-[#111317] border border-[#22252c] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full pl-9 pr-4 py-1.5 rounded-lg bg-white dark:bg-[#111317] border border-[#eaeaea] dark:border-[#22252c] text-xs text-[#111111] dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
           />
         </div>
 
@@ -202,10 +202,10 @@ export const PersonasView: React.FC = () => {
             <button
               key={style}
               onClick={() => setSelectedStyleFilter(style)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                 selectedStyleFilter === style
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-[#14161c] border border-[#22252e] text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-black dark:bg-white text-white dark:text-black'
+                  : 'bg-zinc-100 dark:bg-[#14161c] border border-zinc-200 dark:border-[#22252e] text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
               }`}
             >
               {style}
@@ -218,8 +218,8 @@ export const PersonasView: React.FC = () => {
       <div className="space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-blue-400" />
-            <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-400">
+            <ShieldCheck className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+            <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
               Built-in Protected Presets ({builtInPersonas.length})
             </h2>
           </div>
@@ -248,8 +248,8 @@ export const PersonasView: React.FC = () => {
       <div className="space-y-3.5 pt-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-sky-400" />
-            <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-400">
+            <Sparkles className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+            <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
               Custom Personas ({customPersonas.length})
             </h2>
           </div>
@@ -259,19 +259,19 @@ export const PersonasView: React.FC = () => {
         </div>
 
         {customPersonas.length === 0 ? (
-          <div className="p-8 rounded-xl border border-dashed border-[#262934] bg-[#0c0d10] text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-[#161822] text-zinc-400 flex items-center justify-center mx-auto text-lg">
+          <div className="p-8 rounded-xl border border-dashed border-[#eaeaea] dark:border-[#262934] bg-white dark:bg-[#0c0d10] text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-[#161822] text-zinc-600 dark:text-zinc-400 flex items-center justify-center mx-auto text-lg">
               ✨
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-zinc-200">No custom personas yet</h3>
+              <h3 className="text-sm font-semibold text-[#111111] dark:text-zinc-200">No custom personas yet</h3>
               <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
                 Create tailored AI profiles for specialized workflows, unique domain expertise, or distinct reasoning styles.
               </p>
             </div>
             <button
               onClick={handleOpenCreateModal}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181a24] hover:bg-[#222534] border border-[#2c3144] text-xs font-medium text-blue-400 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Custom Persona</span>

@@ -536,7 +536,7 @@ export const ForgeView: React.FC = () => {
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full p-8 space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-black dark:text-white" />
               <p className="text-sm text-zinc-400">Loading fine-tuning session...</p>
               <button
                 onClick={() => setScreen('home')}

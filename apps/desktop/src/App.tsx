@@ -140,15 +140,15 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div data-theme={theme} className="app-root flex h-screen w-screen bg-[#090a0b] text-zinc-100 overflow-hidden select-none font-sans">
+    <div data-theme={theme} className="app-root flex h-screen w-screen bg-white dark:bg-[#090a0b] text-[#111111] dark:text-zinc-100 overflow-hidden select-none font-sans">
       {/* Sidebar Navigation */}
       <Sidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header />
+        {activeTab !== 'playground' && <Header />}
 
-        <main className="flex-1 overflow-hidden bg-[#090a0b]">
+        <main className="flex-1 overflow-hidden bg-white dark:bg-[#090a0b]">
           {activeTab === 'overview' && <OverviewView />}
           {activeTab === 'models' && <ModelsView />}
           {activeTab === 'forge' && <ForgeView />}

@@ -209,14 +209,14 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
         </div>
 
         {/* Tab Controls: Editor vs Prompt Preview */}
-        <div className="px-6 pt-3 border-b border-[#1c1f26] flex items-center gap-2 bg-[#0d0e12]">
+        <div className="px-6 pt-3 border-b border-[#eaeaea] dark:border-[#1c1f26] flex items-center gap-2 bg-zinc-50 dark:bg-[#0d0e12]">
           <button
             type="button"
             onClick={() => setActiveTab('editor')}
             className={`flex items-center gap-1.5 px-3 py-1.5 border-b-2 text-xs font-medium transition-colors ${
               activeTab === 'editor'
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? 'border-black dark:border-white text-black dark:text-white'
+                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
@@ -227,8 +227,8 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
             onClick={() => setActiveTab('preview')}
             className={`flex items-center gap-1.5 px-3 py-1.5 border-b-2 text-xs font-medium transition-colors ${
               activeTab === 'preview'
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? 'border-black dark:border-white text-black dark:text-white'
+                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
@@ -268,7 +268,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Senior Backend Architect"
                     required
-                    className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
                   />
                 </div>
 
@@ -282,7 +282,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                       value={avatar}
                       onChange={(e) => setAvatar(e.target.value)}
                       maxLength={4}
-                      className="w-14 px-2 py-2 text-center rounded-lg bg-[#14161c] border border-[#242732] text-sm text-zinc-100 focus:outline-none focus:border-blue-500"
+                      className="w-14 px-2 py-2 text-center rounded-lg bg-[#14161c] border border-[#242732] text-sm text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
                     />
                     <div className="flex gap-1 overflow-x-auto py-1">
                       {POPULAR_AVATARS.slice(0, 4).map((em) => (
@@ -310,7 +310,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Specialized in system design, distributed consensus, and concurrency."
-                  className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
                 />
               </div>
 
@@ -323,7 +323,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                   <select
                     value={communicationStyle}
                     onChange={(e) => setCommunicationStyle(e.target.value as PersonaCommunicationStyle)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
                   >
                     {COMMUNICATION_STYLES.map((style) => (
                       <option key={style} value={style}>
@@ -342,7 +342,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                     value={responseStructure}
                     onChange={(e) => setResponseStructure(e.target.value)}
                     placeholder="e.g. Direct solution first, then rationale and edge cases."
-                    className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
                   />
                 </div>
               </div>
@@ -357,7 +357,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                   value={personalityTraitsText}
                   onChange={(e) => setPersonalityTraitsText(e.target.value)}
                   placeholder="e.g. Technical, Rigorous, Solution-Oriented"
-                  className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
                 />
               </div>
 
@@ -371,7 +371,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                   onChange={(e) => setBehavioralRulesText(e.target.value)}
                   rows={3}
                   placeholder={`- Always provide production-ready code with error checks\n- Cite assumptions explicitly\n- Avoid unnecessary conversational filler`}
-                  className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white font-mono"
                 />
               </div>
 
@@ -386,7 +386,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                     value={reasoningStyle}
                     onChange={(e) => setReasoningStyle(e.target.value)}
                     placeholder="e.g. First-principles"
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
                   />
                 </div>
 
@@ -399,7 +399,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                     value={codeFormatting}
                     onChange={(e) => setCodeFormatting(e.target.value)}
                     placeholder="e.g. Typed snippets"
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
                   />
                 </div>
 
@@ -412,7 +412,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                     value={formatPreference}
                     onChange={(e) => setFormatPreference(e.target.value)}
                     placeholder="e.g. Markdown tables"
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
                   />
                 </div>
               </div>
@@ -427,7 +427,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                   value={greetingMessage}
                   onChange={(e) => setGreetingMessage(e.target.value)}
                   placeholder="e.g. Ready to architect your distributed system. Where shall we start?"
-                  className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
                 />
               </div>
 
@@ -447,7 +447,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
                   rows={5}
                   required
                   placeholder="Define the primary personality, depth, analytical rigor, and core behavior of this persona..."
-                  className="w-full px-3 py-2.5 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono leading-relaxed"
+                  className="w-full px-3 py-2.5 rounded-lg bg-[#14161c] border border-[#242732] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white font-mono leading-relaxed"
                 />
               </div>
             </form>
@@ -484,7 +484,7 @@ export const PersonaEditorModal: React.FC<PersonaEditorModalProps> = ({
             <button
               type="submit"
               form="persona-form"
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{isBuiltIn ? 'Save as Custom Persona' : isEditing ? 'Save Changes' : 'Create Persona'}</span>

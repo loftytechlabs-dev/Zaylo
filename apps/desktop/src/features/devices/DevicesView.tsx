@@ -44,24 +44,24 @@ export const DevicesView: React.FC = () => {
   const getDeviceIcon = (name: string, ua?: string) => {
     const text = ((name || '') + ' ' + (ua || '')).toLowerCase();
     if (text.includes('iphone') || text.includes('android') || text.includes('phone') || text.includes('mobile')) {
-      return <Smartphone className="w-4 h-4 text-blue-400 shrink-0" />;
+      return <Smartphone className="w-4 h-4 text-zinc-600 dark:text-zinc-400 shrink-0" />;
     }
     if (text.includes('ipad') || text.includes('tablet')) {
-      return <Tablet className="w-4 h-4 text-blue-400 shrink-0" />;
+      return <Tablet className="w-4 h-4 text-zinc-600 dark:text-zinc-400 shrink-0" />;
     }
-    return <Laptop className="w-4 h-4 text-emerald-400 shrink-0" />;
+    return <Laptop className="w-4 h-4 text-zinc-600 dark:text-zinc-400 shrink-0" />;
   };
 
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* Header & Action */}
-      <div className="flex items-center justify-between border-b border-[#202227] pb-4">
+      <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#202227] pb-4">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-blue-400" />
+          <h2 className="text-sm font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
             Connected & Paired Devices
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
             Manage physical computers, phones, and tablets that have accessed or paired with this inference server.
           </p>
         </div>
@@ -69,14 +69,14 @@ export const DevicesView: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => fetchDevicesAndKeys()}
-            className="p-1.5 rounded-md bg-[#16181f] hover:bg-[#20242e] text-zinc-400 hover:text-white border border-[#242834] transition-colors"
+            className="p-1.5 rounded-lg bg-white dark:bg-[#16181f] hover:bg-zinc-50 dark:hover:bg-[#20242e] text-zinc-500 hover:text-black dark:hover:text-white border border-[#eaeaea] dark:border-[#242834] transition-colors"
             title="Refresh devices"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
             onClick={handleOpenPairing}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
           >
             <QrCode className="w-4 h-4" />
             <span>Pair New Device</span>
@@ -191,7 +191,7 @@ export const DevicesView: React.FC = () => {
 
             <div>
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-blue-400" />
+                <QrCode className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                 Pair Mobile Device or Tablet
               </h3>
               <p className="text-xs text-zinc-400 mt-1">

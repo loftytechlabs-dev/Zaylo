@@ -95,7 +95,7 @@ export const StudioOverviewTab: React.FC<StudioOverviewTabProps> = ({ job }) => 
         <div className="p-4 rounded-xl bg-[#101216] border border-[#1e2128] space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span className="font-medium">Job Progress</span>
-            <span className="font-mono text-blue-400 font-semibold">{progressPct}%</span>
+            <span className="font-mono text-zinc-900 dark:text-zinc-100 font-semibold">{progressPct}%</span>
           </div>
           <div className="text-xl font-bold font-mono text-zinc-100">
             Step {job.currentStep}{' '}
@@ -103,7 +103,7 @@ export const StudioOverviewTab: React.FC<StudioOverviewTabProps> = ({ job }) => 
           </div>
           <div className="h-1.5 w-full bg-[#1b1e24] rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              className="h-full bg-black dark:bg-white rounded-full transition-all duration-300"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -139,7 +139,7 @@ export const StudioOverviewTab: React.FC<StudioOverviewTabProps> = ({ job }) => 
         <div className="p-4 rounded-xl bg-[#101216] border border-[#1e2128] space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span className="font-medium">Execution Time</span>
-            <Clock className="w-4 h-4 text-blue-400" />
+            <Clock className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
           </div>
           <div className="text-xl font-bold font-mono text-zinc-100">
             {formatSeconds(elapsedSec)}
@@ -180,10 +180,10 @@ export const StudioOverviewTab: React.FC<StudioOverviewTabProps> = ({ job }) => 
       <div className="p-5 rounded-xl bg-[#101216] border border-[#1e2128] space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-blue-400" />
+            <Cpu className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
             <h3 className="text-sm font-semibold text-zinc-100">Hardware Resource Usage</h3>
           </div>
-          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700">
             {accelerationLabel}
           </span>
         </div>
@@ -201,7 +201,7 @@ export const StudioOverviewTab: React.FC<StudioOverviewTabProps> = ({ job }) => 
             </div>
             <div className="h-2 w-full bg-[#1b1e24] rounded-full overflow-hidden">
               <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                className="h-full bg-black dark:bg-white rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(100, Math.max(5, latestSample?.cpuPercent || 35))}%` }}
               />
             </div>
@@ -220,7 +220,7 @@ export const StudioOverviewTab: React.FC<StudioOverviewTabProps> = ({ job }) => 
             </div>
             <div className="h-2 w-full bg-[#1b1e24] rounded-full overflow-hidden">
               <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                className="h-full bg-black dark:bg-white rounded-full transition-all duration-300"
                 style={{
                   width: `${Math.min(
                     100,
@@ -326,7 +326,7 @@ export const StudioOverviewTab: React.FC<StudioOverviewTabProps> = ({ job }) => 
         {/* Hyperparameter Configuration */}
         <div className="p-5 rounded-xl bg-[#101216] border border-[#1e2128] space-y-4">
           <div className="flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-blue-400" />
+            <Sliders className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
             <h3 className="text-sm font-semibold text-zinc-100">Hyperparameters</h3>
           </div>
 
