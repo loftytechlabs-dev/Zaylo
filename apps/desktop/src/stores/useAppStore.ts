@@ -21,13 +21,20 @@ import type {
   ImageGenerationJob,
   ImageGenerationParams,
   ImageGenerationProgress,
+  Persona,
 } from '@local-ai/shared';
+import {
+  PersonaManager,
+  PersonaResolver,
+  PersonaPromptAdapter,
+} from '@local-ai/inference';
 
 export type NavTab =
   | 'overview'
   | 'models'
   | 'forge'
   | 'playground'
+  | 'personas'
   | 'server'
   | 'devices'
   | 'performance'
@@ -41,7 +48,9 @@ interface AppStore {
 
   // Theme
   theme: 'dark' | 'light';
+  themePreference: 'dark' | 'light' | 'system';
   setTheme: (theme: 'dark' | 'light') => void;
+  setThemePreference: (pref: 'dark' | 'light' | 'system') => void;
   toggleTheme: () => void;
 
   // Onboarding
@@ -150,17 +159,62 @@ interface AppStore {
   clearPlayground: () => void;
   sendChatMessage: (content: string) => Promise<void>;
   stopGeneration: () => void;
+
+  // Personas Management State
+  personas: Persona[];
+  activePersonaId: string;
+  defaultPersonaId: string;
+  fetchPersonas: () => void;
+  setActivePersonaId: (id: string) => void;
+  setDefaultPersonaId: (id: string) => void;
+  savePersona: (personaData: {
+    id?: string;
+    name: string;
+    description: string;
+    avatar?: string;
+    systemInstructions: string;
+    personalityTraits?: string[];
+    communicationStyle?: Persona['communicationStyle'];
+    responsePreferences?: Persona['responsePreferences'];
+    behavioralRules?: string[];
+    responseStructure?: string;
+    greetingMessage?: string;
+  }) => Persona;
+  duplicatePersona: (id: string, newName?: string) => Persona;
+  deletePersona: (id: string) => boolean;
 }
 
-const getInitialTheme = (): 'dark' | 'light' => {
+const personaManager = new PersonaManager();
+
+const getInitialThemePreference = (): 'dark' | 'light' | 'system' => {
   if (typeof window !== 'undefined' && window.localStorage) {
-    const saved = localStorage.getItem('zaylo_theme');
-    if (saved === 'light' || saved === 'dark') {
-      if (typeof document !== 'undefined') {
-        document.documentElement.setAttribute('data-theme', saved);
-      }
-      return saved;
+    const savedPref = localStorage.getItem('zaylo_theme_preference');
+    if (savedPref === 'light' || savedPref === 'dark' || savedPref === 'system') {
+      return savedPref;
     }
+    const savedTheme = localStorage.getItem('zaylo_theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+  }
+  return 'dark';
+};
+
+const getInitialTheme = (): 'dark' | 'light' => {
+  const pref = getInitialThemePreference();
+  if (pref === 'system' && typeof window !== 'undefined' && window.matchMedia) {
+    const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const resolved = systemIsDark ? 'dark' : 'light';
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', resolved);
+    }
+    return resolved;
+  }
+  if (pref === 'light' || pref === 'dark') {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', pref);
+    }
+    return pref;
   }
   if (typeof document !== 'undefined') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -173,6 +227,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   theme: getInitialTheme(),
+  themePreference: getInitialThemePreference(),
   setTheme: (theme) => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('zaylo_theme', theme);
@@ -182,9 +237,25 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
     set({ theme });
   },
+  setThemePreference: (pref) => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('zaylo_theme_preference', pref);
+    }
+    let resolvedTheme: 'dark' | 'light' = 'dark';
+    if (pref === 'system') {
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+    } else {
+      resolvedTheme = pref;
+    }
+    get().setTheme(resolvedTheme);
+    set({ themePreference: pref });
+  },
   toggleTheme: () => {
     const next = get().theme === 'dark' ? 'light' : 'dark';
     get().setTheme(next);
+    set({ themePreference: next });
   },
 
   showOnboarding: false,
@@ -200,6 +271,83 @@ export const useAppStore = create<AppStore>((set, get) => ({
   logs: [],
   devices: [],
   apiKeys: [],
+
+  // Personas State & Actions
+  personas: personaManager.getAllPersonas(),
+  activePersonaId: personaManager.getActivePersona().id,
+  defaultPersonaId: personaManager.getDefaultPersona().id,
+
+  fetchPersonas: () => {
+    personaManager.reload();
+    set({
+      personas: personaManager.getAllPersonas(),
+      activePersonaId: personaManager.getActivePersona().id,
+      defaultPersonaId: personaManager.getDefaultPersona().id,
+    });
+  },
+
+  setActivePersonaId: (id) => {
+    personaManager.setActivePersona(id);
+    set({ activePersonaId: id });
+    try {
+      const saved = localStorage.getItem('zaylo_playground_conversations_v3');
+      if (saved) {
+        const convs = JSON.parse(saved);
+        if (Array.isArray(convs) && convs.length > 0) {
+          convs[0].personaId = id;
+          localStorage.setItem('zaylo_playground_conversations_v3', JSON.stringify(convs));
+        }
+      }
+    } catch {
+      // Ignored
+    }
+  },
+
+  setDefaultPersonaId: (id) => {
+    personaManager.setDefaultPersona(id);
+    set({
+      defaultPersonaId: id,
+      personas: personaManager.getAllPersonas(),
+    });
+  },
+
+  savePersona: (personaData) => {
+    let saved: Persona;
+    if (personaData.id && personaManager.getPersona(personaData.id)) {
+      const existing = personaManager.getPersona(personaData.id)!;
+      if (existing.isBuiltIn) {
+        // Built-ins are protected presets; clone changes into a new custom persona
+        saved = personaManager.createPersona({
+          ...personaData,
+          name: personaData.name || `Custom ${existing.name}`,
+        });
+      } else {
+        saved = personaManager.updatePersona(personaData.id, personaData);
+      }
+    } else {
+      saved = personaManager.createPersona(personaData);
+    }
+    set({ personas: personaManager.getAllPersonas() });
+    return saved;
+  },
+
+  duplicatePersona: (id, newName) => {
+    const dup = personaManager.duplicatePersona(id, newName);
+    set({ personas: personaManager.getAllPersonas() });
+    return dup;
+  },
+
+  deletePersona: (id) => {
+    const ok = personaManager.deletePersona(id);
+    if (ok) {
+      set({
+        personas: personaManager.getAllPersonas(),
+        activePersonaId: personaManager.getActivePersona().id,
+        defaultPersonaId: personaManager.getDefaultPersona().id,
+      });
+    }
+    return ok;
+  },
 
   // Playground Defaults
   playgroundMessages: [
@@ -574,11 +722,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
         }
       : { role: 'user', content: content.trim() };
 
-    const allMsgs: ChatMessage[] = [];
-    if (state.systemPrompt.trim()) {
-      allMsgs.push({ role: 'system', content: state.systemPrompt.trim() });
-    }
-    allMsgs.push(...state.playgroundMessages, userMsg);
+    const activePersona = PersonaResolver.resolve(
+      state.activePersonaId,
+      state.personas,
+      state.defaultPersonaId
+    );
+
+    const rawMsgs = [...state.playgroundMessages, userMsg];
+    const allMsgs = PersonaPromptAdapter.augmentMessages(
+      rawMsgs,
+      activePersona,
+      state.systemPrompt.trim() || undefined
+    );
 
     set((s) => ({
       playgroundMessages: [...s.playgroundMessages, userMsg, { role: 'assistant', content: '' }],
@@ -598,6 +753,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         top_p: state.topP,
         stream: false,
         rag: state.ragEnabled,
+        personaId: activePersona?.id,
       });
 
       const endTime = Date.now();

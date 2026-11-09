@@ -10,6 +10,7 @@ import {
   Terminal,
   Gauge,
   Settings,
+  Users,
 } from 'lucide-react';
 import { useAppStore, NavTab } from '../../stores/useAppStore';
 import logoUrl from '../../assets/logo.png';
@@ -29,6 +30,7 @@ export const Sidebar: React.FC = () => {
     { id: 'models', label: 'Models', icon: Boxes, badge: installedModels.length },
     { id: 'forge', label: 'Forge', icon: Flame },
     { id: 'playground', label: 'Playground', icon: MessageSquare },
+    { id: 'personas', label: 'Personas', icon: Users },
     { id: 'server', label: 'Server & API', icon: Server },
     { id: 'devices', label: 'Devices', icon: Smartphone, badge: devices.length > 0 ? devices.length : undefined },
     { id: 'performance', label: 'Performance', icon: Activity },

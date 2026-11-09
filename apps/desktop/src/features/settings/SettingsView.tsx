@@ -9,12 +9,13 @@ import {
   HardDrive,
   Sun,
   Moon,
+  Laptop,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore';
 import { api } from '../../api/client';
 
 export const SettingsView: React.FC = () => {
-  const { serverConfig, updateServerConfig, theme, setTheme } = useAppStore();
+  const { serverConfig, updateServerConfig, theme, themePreference, setThemePreference } = useAppStore();
 
   const [port, setPort] = useState(serverConfig?.port || 8080);
   const [maxConcurrency, setMaxConcurrency] = useState(serverConfig?.maxConcurrentRequests || 4);
@@ -99,13 +100,13 @@ export const SettingsView: React.FC = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             {/* Dark Theme Option */}
             <button
               type="button"
-              onClick={() => setTheme('dark')}
+              onClick={() => setThemePreference('dark')}
               className={`p-4 rounded-lg border text-left transition-all flex items-start gap-3.5 ${
-                theme === 'dark'
+                themePreference === 'dark'
                   ? 'border-blue-500 bg-[#161922] ring-1 ring-blue-500/50'
                   : 'border-[#22252c] bg-[#0c0d10] hover:border-zinc-700'
               }`}
@@ -116,7 +117,7 @@ export const SettingsView: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-zinc-100">Dark Theme</span>
-                  {theme === 'dark' && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                  {themePreference === 'dark' && <Check className="w-3.5 h-3.5 text-blue-400" />}
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-tight">
                   High-contrast dark slate palette designed for low-light environments.
@@ -127,9 +128,9 @@ export const SettingsView: React.FC = () => {
             {/* White / Light Theme Option */}
             <button
               type="button"
-              onClick={() => setTheme('light')}
+              onClick={() => setThemePreference('light')}
               className={`p-4 rounded-lg border text-left transition-all flex items-start gap-3.5 ${
-                theme === 'light'
+                themePreference === 'light'
                   ? 'border-blue-500 bg-white ring-1 ring-blue-500/50 text-zinc-900 shadow-sm'
                   : 'border-[#22252c] bg-[#0c0d10] hover:border-zinc-700'
               }`}
@@ -140,10 +141,34 @@ export const SettingsView: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-zinc-100">Clean White Theme</span>
-                  {theme === 'light' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  {themePreference === 'light' && <Check className="w-3.5 h-3.5 text-blue-600" />}
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-tight">
-                  Crisp pure white surfaces with blue accents and zero purple or violet tint.
+                  Crisp pure white surfaces with blue accents matching current interface.
+                </p>
+              </div>
+            </button>
+
+            {/* System / Auto Option */}
+            <button
+              type="button"
+              onClick={() => setThemePreference('system')}
+              className={`p-4 rounded-lg border text-left transition-all flex items-start gap-3.5 ${
+                themePreference === 'system'
+                  ? 'border-blue-500 bg-[#161922] ring-1 ring-blue-500/50'
+                  : 'border-[#22252c] bg-[#0c0d10] hover:border-zinc-700'
+              }`}
+            >
+              <div className="p-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 shrink-0">
+                <Laptop className="w-4 h-4 text-sky-400" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-zinc-100">System (Auto)</span>
+                  {themePreference === 'system' && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                </div>
+                <p className="text-[11px] text-zinc-400 leading-tight">
+                  Automatically sync appearance with your macOS / system dark mode.
                 </p>
               </div>
             </button>

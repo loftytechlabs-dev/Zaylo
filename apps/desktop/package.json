@@ -1,6 +1,6 @@
 {
   "name": "@local-ai/desktop",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Zaylo High-Performance Local AI Server Desktop App",
   "author": "Lofty Tech Labs <contact@loftytechlabs.com>",
   "homepage": "https://github.com/akhileshg1124/Zaylo",
@@ -33,6 +33,11 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
+    ],
+    "asarUnpack": [
+      "dist-electron/main/scripts/**/*",
+      "dist-electron/forge/scripts/**/*",
+      "dist-electron/image/scripts/**/*"
     ],
     "icon": "build/icon.png",
     "mac": {

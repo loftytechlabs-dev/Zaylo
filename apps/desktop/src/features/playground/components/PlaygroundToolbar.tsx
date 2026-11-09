@@ -11,7 +11,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import type { UnifiedModelOption } from '../types';
-import type { ServerState } from '@local-ai/shared';
+import type { ServerState, Persona } from '@local-ai/shared';
+import { PlaygroundPersonaSelector } from '../../personas/components/PlaygroundPersonaSelector';
 
 interface PlaygroundToolbarProps {
   models: UnifiedModelOption[];
@@ -30,6 +31,11 @@ interface PlaygroundToolbarProps {
   isSettingsOpen: boolean;
   isCompareMode: boolean;
   conversationCount: number;
+  activePersona?: Persona;
+  personas?: Persona[];
+  onSelectPersona?: (personaId: string) => void;
+  onOpenPersonaManagement?: () => void;
+  onCreatePersona?: () => void;
 }
 
 export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
@@ -49,6 +55,11 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
   isSettingsOpen,
   isCompareMode,
   conversationCount,
+  activePersona,
+  personas,
+  onSelectPersona,
+  onOpenPersonaManagement,
+  onCreatePersona,
 }) => {
   const selectedModel = models.find((m) => m.id === selectedModelId) || models[0];
 
@@ -105,20 +116,20 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
   };
 
   return (
-    <div className="h-14 border-b border-[#202227] px-6 flex flex-wrap items-center justify-between gap-3 bg-[#0d0e12] select-none shrink-0">
+    <div className="h-14 border-b border-[#202227] px-4 sm:px-6 flex items-center justify-between gap-3 bg-[#0d0e12] select-none shrink-0 relative z-10">
       {/* Left: Title & Model Selector */}
-      <div className="flex items-center gap-3.5">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
+        <div className="flex items-center gap-2 shrink-0">
           <span className="text-sm font-bold text-zinc-100 tracking-tight">Playground</span>
         </div>
 
         {/* Model Selector Dropdown */}
-        <div className="relative flex items-center">
+        <div className="relative flex items-center min-w-0">
           <select
             value={selectedModelId}
             onChange={(e) => onSelectModel(e.target.value)}
             disabled={isLoadingModel}
-            className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-[#14161c] border border-[#262934] hover:border-[#383d4e] text-xs font-mono text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer max-w-[280px] truncate"
+            className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-[#14161c] border border-[#262934] hover:border-[#383d4e] text-xs font-mono text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer w-full max-w-[160px] sm:max-w-[210px] md:max-w-[260px] lg:max-w-[300px] truncate"
           >
             {models.length === 0 ? (
               <option value="">No models installed</option>
@@ -141,53 +152,67 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
               })
             )}
           </select>
-          <ChevronDown className="w-3.5 h-3.5 text-zinc-500 absolute right-2.5 pointer-events-none" />
+          <ChevronDown className="w-3.5 h-3.5 text-zinc-500 absolute right-2.5 pointer-events-none shrink-0" />
         </div>
+
+        {/* Compact Persona Selector for Text & Multimodal Chat */}
+        {!selectedModel?.isImageModel && activePersona && personas && onSelectPersona && (
+          <PlaygroundPersonaSelector
+            activePersona={activePersona}
+            personas={personas}
+            onSelectPersona={onSelectPersona}
+            onOpenManagement={onOpenPersonaManagement || (() => {})}
+            onCreatePersona={onCreatePersona || (() => {})}
+          />
+        )}
 
         {/* Task / Capability pill */}
         {selectedModel?.isImageModel || selectedModel?.taskType === 'image-generation' ? (
-          <span className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-400 border border-sky-500/20">
+          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
             <Sparkles className="w-3 h-3" />
             <span>IMAGE GEN</span>
           </span>
         ) : selectedModel?.isVisionSupported || selectedModel?.taskType === 'vision' ? (
-          <span className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-300 border border-blue-500/20">
+          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-300 border border-blue-500/20 shrink-0">
             <Eye className="w-3 h-3" />
             <span>VISION</span>
           </span>
         ) : (
-          <span className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/40">
+          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/40 shrink-0">
             <span>TEXT</span>
           </span>
         )}
 
         {/* Status Badge */}
-        {getStatusBadge()}
+        <div className="shrink-0">
+          {getStatusBadge()}
+        </div>
       </div>
 
       {/* Right: Actions and Drawer Controls */}
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-1.5 sm:gap-2 text-xs shrink-0">
         {/* New Chat / Canvas Button */}
         <button
           onClick={onNewChat}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-colors"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-colors shrink-0"
+          title={selectedModel?.isImageModel ? 'New Canvas' : 'New Chat'}
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span>{selectedModel?.isImageModel ? 'New Canvas' : 'New Chat'}</span>
+          <Plus className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden sm:inline">{selectedModel?.isImageModel ? 'New Canvas' : 'New Chat'}</span>
         </button>
 
         {/* Compare Models Toggle (for text models) */}
         {!selectedModel?.isImageModel && (
           <button
             onClick={onToggleCompare}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors shrink-0 ${
               isCompareMode
                 ? 'bg-blue-600/15 border-blue-500/40 text-blue-300'
                 : 'bg-[#14161c] border-[#22252e] text-zinc-400 hover:text-zinc-200'
             }`}
             title="Compare Base Model vs. Fine-Tuned Model side-by-side"
           >
-            <Scale className="w-3.5 h-3.5" />
+            <Scale className="w-3.5 h-3.5 shrink-0" />
             <span className="hidden md:inline">Compare</span>
           </button>
         )}
@@ -195,15 +220,15 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
         {/* History Drawer Toggle */}
         <button
           onClick={onToggleHistory}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors ${
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors shrink-0 ${
             isHistoryOpen
               ? 'bg-blue-600/15 border-blue-500/40 text-blue-400'
               : 'bg-[#14161c] border-[#22252e] text-zinc-400 hover:text-zinc-200'
           }`}
           title="Conversation history"
         >
-          <History className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">History</span>
+          <History className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden lg:inline">History</span>
           {conversationCount > 0 && (
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-400">
               {conversationCount}
@@ -214,28 +239,28 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
         {/* Performance Drawer Toggle */}
         <button
           onClick={onTogglePerformance}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors ${
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors shrink-0 ${
             isPerformanceOpen
               ? 'bg-emerald-600/15 border-emerald-500/40 text-emerald-300'
               : 'bg-[#14161c] border-[#22252e] text-zinc-400 hover:text-zinc-200'
           }`}
           title="Live inference performance metrics"
         >
-          <Activity className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Performance</span>
+          <Activity className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden xl:inline">Performance</span>
         </button>
 
         {/* Settings Drawer Toggle */}
         <button
           onClick={onToggleSettings}
-          className={`p-1.5 rounded-lg border transition-colors ${
+          className={`p-1.5 rounded-lg border transition-colors shrink-0 ${
             isSettingsOpen
               ? 'bg-[#22252e] text-blue-400 border-[#2f3342]'
               : 'bg-[#14161c] border-[#22252e] text-zinc-400 hover:text-zinc-200'
           }`}
           title="Generation settings"
         >
-          <Sliders className="w-4 h-4" />
+          <Sliders className="w-4 h-4 shrink-0" />
         </button>
       </div>
     </div>

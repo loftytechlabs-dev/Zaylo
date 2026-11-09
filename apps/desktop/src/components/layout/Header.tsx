@@ -87,6 +87,13 @@ export const Header: React.FC = () => {
               Your local AI environment at a glance.
             </p>
           </div>
+        ) : activeTab === 'personas' ? (
+          <div>
+            <h1 className="text-sm font-semibold tracking-tight text-zinc-100">Personas</h1>
+            <p className="text-[11px] text-zinc-400 font-normal leading-none mt-1">
+              One AI engine. Multiple personalities.
+            </p>
+          </div>
         ) : (
           <>
             <h1 className="text-sm font-semibold capitalize tracking-wide text-zinc-100">{activeTab}</h1>

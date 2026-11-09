@@ -26,6 +26,7 @@ export interface PlaygroundConversation {
   createdAt: number;
   updatedAt: number;
   lastStats?: InferenceGenerationStats;
+  personaId?: string;
 }
 
 export interface GenerationSettings {

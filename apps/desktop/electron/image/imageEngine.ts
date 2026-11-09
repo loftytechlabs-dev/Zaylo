@@ -11,6 +11,7 @@ import type {
 } from '@local-ai/shared';
 import { PythonDetector } from '../forge/pythonDetector.js';
 import { ModelCapabilityRegistry } from '@local-ai/capabilities';
+import { resolvePythonScript } from '../utils/scriptResolver.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -174,8 +175,10 @@ export class ImageEngine {
       path.resolve(__dirname, '../../../../electron/image/scripts/generate_image.py'),
       path.join(process.resourcesPath || '', 'scripts', 'generate_image.py'),
       path.join(process.resourcesPath || '', 'electron/image/scripts', 'generate_image.py'),
+      path.join(process.resourcesPath || '', 'app.asar.unpacked/dist-electron/main/scripts', 'generate_image.py'),
+      path.join(process.resourcesPath || '', 'app.asar.unpacked/dist-electron/image/scripts', 'generate_image.py'),
     ];
-    const resolvedScript = candidates.find((c) => fs.existsSync(c)) || candidates[0];
+    const resolvedScript = resolvePythonScript('generate_image.py', candidates);
 
     if (!fs.existsSync(resolvedScript)) {
       const err = `Image worker script not found at ${resolvedScript}`;

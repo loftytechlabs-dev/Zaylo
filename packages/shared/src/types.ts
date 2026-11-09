@@ -82,9 +82,22 @@ export type ModelCapability =
   | 'VISION'
   | 'AUDIO'
   | 'SPEECH_TO_TEXT'
-  | 'IMAGE_GENERATION';
+  | 'SPEECH_RECOGNITION'
+  | 'SPEECH_GENERATION'
+  | 'IMAGE_GENERATION'
+  | 'AUDIO_INPUT'
+  | 'AUDIO_OUTPUT'
+  | 'REALTIME_AUDIO'
+  | 'VOICE_ACTIVITY_DETECTION';
 
-export type ModelTaskType = 'text-generation' | 'image-generation' | 'vision' | 'multimodal';
+export type ModelTaskType =
+  | 'text-generation'
+  | 'image-generation'
+  | 'vision'
+  | 'multimodal'
+  | 'speech-recognition'
+  | 'speech-generation'
+  | 'voice-assistant';
 
 export interface ModelVariant {
   id: string;
@@ -199,8 +212,18 @@ export interface ModelCapabilityProfile {
   name: string;
   taskType: ModelTaskType;
   architecture: string;
-  supportedRuntimes: ('llama-cpp' | 'diffusers' | 'stable-diffusion-cpp' | 'mlx')[];
-  fileFormats: ('gguf' | 'safetensors' | 'onnx' | 'diffusers')[];
+  supportedRuntimes: (
+    | 'llama-cpp'
+    | 'diffusers'
+    | 'stable-diffusion-cpp'
+    | 'mlx'
+    | 'whisper-local'
+    | 'transformers'
+    | 'native-tts'
+    | 'speech-dispatcher'
+    | 'sapi'
+  )[];
+  fileFormats: ('gguf' | 'safetensors' | 'onnx' | 'diffusers' | 'bin')[];
   supportedPlatforms: ('darwin' | 'win32' | 'linux')[];
   accelerationOptions: ('mps' | 'cuda' | 'vulkan' | 'cpu')[];
   minMemoryBytes: number;
@@ -309,6 +332,40 @@ export interface ChatMessage {
   name?: string;
 }
 
+export type PersonaCommunicationStyle =
+  | 'Professional'
+  | 'Casual'
+  | 'Technical'
+  | 'Concise'
+  | 'Detailed'
+  | 'Friendly'
+  | 'Academic'
+  | 'Creative';
+
+export interface PersonaResponsePreferences {
+  codeFormatting?: string;
+  reasoningStyle?: string;
+  formatPreference?: string;
+}
+
+export interface Persona {
+  id: string;
+  name: string;
+  description: string;
+  avatar: string;
+  systemInstructions: string;
+  personalityTraits: string[];
+  communicationStyle: PersonaCommunicationStyle;
+  responsePreferences?: PersonaResponsePreferences;
+  behavioralRules: string[];
+  responseStructure: string;
+  greetingMessage?: string;
+  isBuiltIn: boolean;
+  isDefault?: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface ChatCompletionRequest {
   model: string;
   messages: ChatMessage[];
@@ -322,6 +379,8 @@ export interface ChatCompletionRequest {
   user?: string;
   rag?: boolean;
   ragDocumentIds?: string[];
+  personaId?: string;
+  personaInstructions?: string;
 }
 
 export type DocumentType = 'pdf' | 'md' | 'txt' | 'code' | 'json' | 'csv' | 'other';
@@ -728,4 +787,63 @@ export type LiveStudioTab =
   | 'logs'
   | 'checkpoints'
   | 'evaluation';
+
+// Zaylo Voice Architecture Types
+export type VoiceState =
+  | 'idle'
+  | 'requesting_permission'
+  | 'loading_model'
+  | 'listening'
+  | 'processing'
+  | 'thinking'
+  | 'speaking'
+  | 'interrupted'
+  | 'error';
+
+export interface VoiceProfile {
+  id: string;
+  name: string;
+  lang: string;
+  gender?: string;
+  provider?: string;
+  description?: string;
+}
+
+export interface VoiceConfig {
+  assistantName: string;
+  systemPersonality: string;
+  responseStyle: 'concise' | 'balanced' | 'detailed';
+  selectedLanguageModel: string;
+  selectedAsrModel: string;
+  selectedTtsModel: string;
+  voiceId: string;
+  speakingRate: number;
+  pitch: number;
+  language: string;
+  silenceTimeoutMs: number;
+  autoListen: boolean;
+  audioInputDeviceId?: string;
+  audioOutputDeviceId?: string;
+}
+
+export interface VoiceTranscriptTurn {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  timestamp: number;
+  durationMs?: number;
+}
+
+export interface VoiceStatus {
+  ready: boolean;
+  micPermission: boolean;
+  asrReady: boolean;
+  llmReady: boolean;
+  ttsReady: boolean;
+  activeModel?: string;
+  availableVoices: VoiceProfile[];
+  installedModels: string[];
+  missingComponents: string[];
+}
+
 

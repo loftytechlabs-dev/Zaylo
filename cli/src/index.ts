@@ -16,7 +16,7 @@ const program = new Command();
 program
   .name('zaylo')
   .description('Zaylo AI Server Platform CLI — Turn your computer into a private AI inference server')
-  .version('1.0.0');
+  .version('3.1.0');
 
 async function initCore() {
   const dbConn = await createDatabaseAsync(getDefaultDatabasePath());
@@ -166,7 +166,7 @@ program
     const installed = modelManager.getInstalledModels();
     let targetInstallation = opts.model
       ? installed.find((i) => i.modelId === opts.model || i.id === opts.model)
-      : installed[0];
+      : installed.find((i) => i.isLoaded) || installed.find((i) => i.format === 'gguf') || installed[0];
 
     if (!targetInstallation) {
       console.log('No model installed. Installing SmolLM2 135M as default...');

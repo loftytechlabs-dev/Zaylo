@@ -19,8 +19,39 @@ export const ChatMessageSchema = z.object({
   name: z.string().optional(),
 });
 
+export const PersonaSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  description: z.string(),
+  avatar: z.string(),
+  systemInstructions: z.string(),
+  personalityTraits: z.array(z.string()),
+  communicationStyle: z.enum([
+    'Professional',
+    'Casual',
+    'Technical',
+    'Concise',
+    'Detailed',
+    'Friendly',
+    'Academic',
+    'Creative',
+  ]),
+  responsePreferences: z.object({
+    codeFormatting: z.string().optional(),
+    reasoningStyle: z.string().optional(),
+    formatPreference: z.string().optional(),
+  }).optional(),
+  behavioralRules: z.array(z.string()),
+  responseStructure: z.string(),
+  greetingMessage: z.string().optional(),
+  isBuiltIn: z.boolean(),
+  isDefault: z.boolean().optional(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
 export const ChatCompletionRequestSchema = z.object({
-  model: z.string().min(1),
+  model: z.string().min(1).optional().default('default'),
   messages: z.array(ChatMessageSchema).min(1),
   temperature: z.number().min(0).max(2).optional().default(0.7),
   top_p: z.number().min(0).max(1).optional().default(0.9),
@@ -32,6 +63,8 @@ export const ChatCompletionRequestSchema = z.object({
   user: z.string().optional(),
   rag: z.boolean().optional().default(false),
   ragDocumentIds: z.array(z.string()).optional(),
+  personaId: z.string().optional(),
+  personaInstructions: z.string().optional(),
 });
 
 export const EmbeddingRequestSchema = z.object({

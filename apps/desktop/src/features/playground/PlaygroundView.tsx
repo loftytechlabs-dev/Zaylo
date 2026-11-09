@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAppStore } from '../../stores/useAppStore';
 import { api } from '../../api/client';
 import type {
@@ -8,6 +8,7 @@ import type {
   GeneratedImage,
   ImageGenerationParams,
 } from '@local-ai/shared';
+import { PersonaResolver, PersonaPromptAdapter } from '@local-ai/inference';
 import { ModelCapabilityRegistry } from '@local-ai/capabilities';
 import type {
   PlaygroundConversation,
@@ -70,6 +71,11 @@ export const PlaygroundView: React.FC = () => {
     fetchImageHistory,
     selectedModel,
     setSelectedModel,
+    personas,
+    activePersonaId,
+    defaultPersonaId,
+    setActivePersonaId,
+    setActiveTab,
   } = useAppStore();
 
   // Fine-Tuned Models from Forge
@@ -290,6 +296,35 @@ export const PlaygroundView: React.FC = () => {
   const activeConv = conversations.find((c) => c.id === activeConvId) || conversations[0];
   const activeModel = unifiedModels.find((m) => m.id === selectedModelId) || unifiedModels[0];
 
+  // Resolve persona for active conversation
+  const activeConvPersona = useMemo(() => {
+    const targetId = activeConv?.personaId || activePersonaId;
+    return PersonaResolver.resolve(targetId, personas, activePersonaId || defaultPersonaId);
+  }, [activeConv?.personaId, activePersonaId, personas, defaultPersonaId]);
+
+  // Synchronize when the user activates a persona in the Personas section
+  useEffect(() => {
+    if (!activePersonaId) return;
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === activeConvId && c.personaId !== activePersonaId
+          ? { ...c, personaId: activePersonaId, updatedAt: Date.now() }
+          : c
+      )
+    );
+  }, [activePersonaId, activeConvId]);
+
+  const handleSelectPersona = (personaId: string) => {
+    setActivePersonaId(personaId);
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === activeConvId
+          ? { ...c, personaId, updatedAt: Date.now() }
+          : c
+      )
+    );
+  };
+
   // Handle Model Switching
   const handleSelectModel = async (modelId: string) => {
     setSelectedModelId(modelId);
@@ -381,6 +416,11 @@ export const PlaygroundView: React.FC = () => {
     }
 
     const newId = `conv_${Date.now()}`;
+    const initialPersona = PersonaResolver.resolve(activePersonaId, personas, defaultPersonaId);
+    const initialMessages: ChatMessage[] = initialPersona?.greetingMessage
+      ? [{ role: 'assistant', content: initialPersona.greetingMessage }]
+      : [];
+
     const newConv: PlaygroundConversation = {
       id: newId,
       title: 'New Chat',
@@ -388,7 +428,8 @@ export const PlaygroundView: React.FC = () => {
       modelName: activeModel?.name || '',
       isAdapter: activeModel?.type === 'adapter',
       adapterPath: activeModel?.adapterPath,
-      messages: [],
+      messages: initialMessages,
+      personaId: initialPersona?.id,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -404,6 +445,9 @@ export const PlaygroundView: React.FC = () => {
       setActiveConvId(id);
       if (conv.modelId && unifiedModels.some((m) => m.id === conv.modelId)) {
         setSelectedModelId(conv.modelId);
+      }
+      if (conv.personaId) {
+        setActivePersonaId(conv.personaId);
       }
     }
     setIsHistoryOpen(false);
@@ -469,12 +513,14 @@ export const PlaygroundView: React.FC = () => {
 
     // Build message payload
     const existingMsgs = activeConv?.messages || [];
-    const payloadMessages: ChatMessage[] = [];
-
-    if (settings.systemPrompt.trim()) {
-      payloadMessages.push({ role: 'system', content: settings.systemPrompt.trim() });
-    }
-    payloadMessages.push(...existingMsgs, userMsg);
+    const targetPersonaId = activeConv?.personaId || activePersonaId;
+    const resolvedPersona = PersonaResolver.resolve(targetPersonaId, personas, activePersonaId || defaultPersonaId);
+    const rawMsgs = [...existingMsgs, userMsg];
+    const payloadMessages = PersonaPromptAdapter.augmentMessages(
+      rawMsgs,
+      resolvedPersona,
+      settings.systemPrompt.trim() || undefined
+    );
 
     // Append user message + blank assistant message to conversation
     const updatedMessages: ChatMessage[] = [
@@ -495,6 +541,7 @@ export const PlaygroundView: React.FC = () => {
           ? {
               ...c,
               title: newTitle,
+              personaId: resolvedPersona?.id,
               messages: updatedMessages,
               updatedAt: Date.now(),
             }
@@ -568,6 +615,7 @@ export const PlaygroundView: React.FC = () => {
         stream: true,
         rag: ragEnabled,
         ragDocumentIds: selectedRagDocIds.length > 0 ? selectedRagDocIds : undefined,
+        personaId: resolvedPersona?.id,
       });
 
       const endTime = performance.now();
@@ -723,7 +771,7 @@ export const PlaygroundView: React.FC = () => {
   return (
     <div className="flex h-full w-full bg-[#090a0c] text-zinc-100 overflow-hidden relative font-sans">
       {/* Main Workspace Column */}
-      <div className="flex-1 flex flex-col min-w-0 justify-between overflow-hidden bg-[#090a0c]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#090a0c]">
         {/* Top Toolbar */}
         <PlaygroundToolbar
           models={unifiedModels}
@@ -733,6 +781,11 @@ export const PlaygroundView: React.FC = () => {
           isLoadingModel={isLoadingModel}
           isGeneratingImage={isGeneratingImage}
           onNewChat={handleNewChat}
+          activePersona={activeConvPersona}
+          personas={personas}
+          onSelectPersona={handleSelectPersona}
+          onOpenPersonaManagement={() => setActiveTab('personas')}
+          onCreatePersona={() => setActiveTab('personas')}
           onToggleHistory={() => {
             setIsHistoryOpen(!isHistoryOpen);
             setIsPerformanceOpen(false);

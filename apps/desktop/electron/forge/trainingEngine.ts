@@ -16,6 +16,7 @@ import type {
 import type { TrainingJobRepository, FineTunedModelRepository } from '@local-ai/database';
 import { PythonDetector } from './pythonDetector.js';
 import { DatasetParser } from './datasetParser.js';
+import { resolvePythonScript } from '../utils/scriptResolver.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,11 +50,13 @@ export class ForgeTrainingEngine {
       path.join(__dirname, 'scripts', scriptName),
       path.join(__dirname, '../forge/scripts', scriptName),
       path.resolve(process.cwd(), 'apps/desktop/electron/forge/scripts', scriptName),
+      path.resolve(process.cwd(), 'electron/forge/scripts', scriptName),
+      path.join(process.resourcesPath || '', 'scripts', scriptName),
+      path.join(process.resourcesPath || '', 'electron/forge/scripts', scriptName),
+      path.join(process.resourcesPath || '', 'app.asar.unpacked/dist-electron/main/scripts', scriptName),
+      path.join(process.resourcesPath || '', 'app.asar.unpacked/dist-electron/forge/scripts', scriptName),
     ];
-    for (const c of candidates) {
-      if (fs.existsSync(c)) return c;
-    }
-    return candidates[0];
+    return resolvePythonScript(scriptName, candidates);
   }
 
   public async startTraining(

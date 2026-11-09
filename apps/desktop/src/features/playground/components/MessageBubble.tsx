@@ -65,7 +65,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
       {/* Message Body Container */}
       <div
-        className={`relative max-w-[82%] rounded-xl px-4 py-3 text-xs leading-relaxed ${
+        className={`relative max-w-[85%] sm:max-w-[82%] rounded-xl px-4 py-3 text-xs leading-relaxed break-words ${
           isUser
             ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
             : isError

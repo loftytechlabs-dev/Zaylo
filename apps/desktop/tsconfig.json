@@ -20,5 +20,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "electron"]
+  "include": ["src", "electron"],
+  "exclude": ["src/features/voice"]
 }

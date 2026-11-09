@@ -104,7 +104,7 @@ export const ConversationArea: React.FC<ConversationAreaProps> = ({
   const suggestions = getSuggestions();
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col justify-between">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 flex flex-col">
       {/* Empty State Welcome Screen */}
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto text-center space-y-6 my-auto select-none">

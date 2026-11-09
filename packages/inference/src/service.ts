@@ -122,6 +122,33 @@ export class InferenceService {
 
       // Automatically augment messages with local document context if RAG is requested
       let effectiveRequest = { ...request };
+
+      // Layer persona instructions if passed in request and not already present
+      if (request.personaInstructions && request.personaInstructions.trim()) {
+        const hasInstructions = effectiveRequest.messages.some((m) =>
+          typeof m.content === 'string' && m.content.includes(request.personaInstructions!.trim())
+        );
+        if (!hasInstructions) {
+          const sysIdx = effectiveRequest.messages.findIndex((m) => m.role === 'system');
+          if (sysIdx >= 0) {
+            const existing = typeof effectiveRequest.messages[sysIdx].content === 'string'
+              ? (effectiveRequest.messages[sysIdx].content as string)
+              : '';
+            const updated = existing
+              ? `${existing}\n\n---\n\n${request.personaInstructions.trim()}`
+              : request.personaInstructions.trim();
+            effectiveRequest.messages = effectiveRequest.messages.map((m, idx) =>
+              idx === sysIdx ? { ...m, content: updated } : m
+            );
+          } else {
+            effectiveRequest.messages = [
+              { role: 'system', content: request.personaInstructions.trim() },
+              ...effectiveRequest.messages,
+            ];
+          }
+        }
+      }
+
       if (request.rag && this.ragEngine) {
         const userMessages = request.messages.filter((m) => m.role === 'user');
         const lastUserMsg = userMessages[userMessages.length - 1];

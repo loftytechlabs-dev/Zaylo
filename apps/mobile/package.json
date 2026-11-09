@@ -1,6 +1,6 @@
 {
   "name": "@local-ai/mobile",
-  "version": "2.0.0",
+  "version": "3.1.0",
   "description": "Zaylo Mobile - Hybrid On-Device & Desktop AI Inference App",
   "main": "index.js",
   "private": true,

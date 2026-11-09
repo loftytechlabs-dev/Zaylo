@@ -8,6 +8,7 @@ import { OverviewView } from './features/overview/OverviewView';
 import { ModelsView } from './features/models/ModelsView';
 import { ForgeView } from './features/forge/ForgeView';
 import { PlaygroundView } from './features/playground/PlaygroundView';
+import { PersonasView } from './features/personas/PersonasView';
 import { ServerApiView } from './features/server-api/ServerApiView';
 import { DevicesView } from './features/devices/DevicesView';
 import { PerformanceView } from './features/performance/PerformanceView';
@@ -33,6 +34,19 @@ export const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      const state = useAppStore.getState();
+      if (state.themePreference === 'system') {
+        state.setTheme(e.matches ? 'dark' : 'light');
+      }
+    };
+    media.addEventListener('change', handleMediaChange);
+    return () => media.removeEventListener('change', handleMediaChange);
+  }, []);
 
   useEffect(() => {
     // Initial data fetch
@@ -139,6 +153,7 @@ export const App: React.FC = () => {
           {activeTab === 'models' && <ModelsView />}
           {activeTab === 'forge' && <ForgeView />}
           {activeTab === 'playground' && <PlaygroundView />}
+          {activeTab === 'personas' && <PersonasView />}
           {activeTab === 'server' && <ServerApiView />}
           {activeTab === 'devices' && <DevicesView />}
           {activeTab === 'performance' && <PerformanceView />}

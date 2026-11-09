@@ -134,8 +134,8 @@ export class ApiServer {
       const host = (req.headers.host as string) || '';
       const isFromWebChat = Boolean(referer && host && (referer.includes(host) || referer.includes(`:${this.config.port}`)));
 
-      // If LAN mode is disabled and request is strictly from loopback, allow without key
-      if ((!this.config.lanEnabled && isLoopback) || isFromWebChat) {
+      // Requests strictly from loopback or internal web chat are always allowed without key
+      if (isLoopback || isFromWebChat) {
         isAuthed = true;
       }
 
