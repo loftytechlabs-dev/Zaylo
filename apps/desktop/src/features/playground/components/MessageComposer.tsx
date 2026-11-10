@@ -10,6 +10,11 @@ import {
   RotateCw,
   SendHorizonal,
   FileText,
+  BarChart2,
+  Presentation,
+  TrendingUp,
+  Palette,
+  Brain,
 } from 'lucide-react';
 import type { ServerState } from '@local-ai/shared';
 
@@ -27,8 +32,15 @@ interface MessageComposerProps {
   onStartServer: () => void;
   isStartingServer: boolean;
   onToggleRag?: () => void;
+  memoryEnabled?: boolean;
+  memoryCount?: number;
+  loftyDbConnected?: boolean;
+  onToggleMemory?: () => void;
+  onOpenMemorySection?: () => void;
   externalInput?: string;
   onClearExternalInput?: () => void;
+  onOpenChartModal?: () => void;
+  onOpenPresentationModal?: () => void;
 }
 
 export const MessageComposer: React.FC<MessageComposerProps> = ({
@@ -45,8 +57,15 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   onStartServer,
   isStartingServer,
   onToggleRag,
+  memoryEnabled = true,
+  memoryCount = 0,
+  loftyDbConnected = false,
+  onToggleMemory,
+  onOpenMemorySection,
   externalInput,
   onClearExternalInput,
+  onOpenChartModal,
+  onOpenPresentationModal,
 }) => {
   const [input, setInput] = useState('');
   const [isToolsOpen, setIsToolsOpen] = useState(false);
@@ -169,19 +188,19 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         {/* Pending Image Attachment Pill */}
         {pendingImage && (
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 p-1.5 pl-2 bg-white dark:bg-[#1a1c24] border border-[#eaeaea] dark:border-zinc-700 rounded-xl shadow-xs">
+            <div className="flex items-center gap-2 p-1.5 pl-2 bg-white dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] rounded-xl shadow-xs">
               <img
                 src={pendingImage.dataUrl}
                 alt="Upload preview"
-                className="w-7 h-7 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
+                className="w-7 h-7 rounded-lg object-cover border border-zinc-200 dark:border-[#262626]"
               />
-              <span className="text-xs text-[#111111] dark:text-zinc-200 truncate max-w-[200px]">
+              <span className="text-xs text-[#111111] dark:text-[#F5F5F5] truncate max-w-[200px]">
                 {pendingImage.name}
               </span>
               <button
                 type="button"
                 onClick={() => onSetPendingImage(undefined)}
-                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-100 transition-colors"
+                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-[#F5F5F5] transition-colors"
                 title="Remove attachment"
               >
                 <X className="w-3.5 h-3.5" />
@@ -197,7 +216,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         )}
 
         {/* Floating Composer Container */}
-        <div className="relative rounded-2xl border border-[#eaeaea] dark:border-[#272932] focus-within:border-zinc-400 dark:focus-within:border-zinc-600 bg-white dark:bg-[#14151a] shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2)] transition-all px-4 pt-3.5 pb-2.5">
+        <div className="relative rounded-2xl border border-[#eaeaea] dark:border-[#262626] focus-within:border-zinc-400 dark:focus-within:border-[#737373] bg-white dark:bg-[#141414] shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.3)] transition-all px-4 pt-3.5 pb-2.5">
           {/* Textarea */}
           <textarea
             ref={textareaRef}
@@ -212,7 +231,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                 : 'Ask anything...'
             }
             disabled={!isServerRunning}
-            className="w-full bg-transparent pr-12 text-sm text-[#111111] dark:text-[#f4f4f5] placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none resize-none font-sans leading-relaxed select-text min-h-[38px] max-h-[180px]"
+            className="w-full bg-transparent pr-12 text-sm text-[#111111] dark:text-[#F5F5F5] placeholder-zinc-400 dark:placeholder-[#737373] focus:outline-none resize-none font-sans leading-relaxed select-text min-h-[38px] max-h-[180px]"
           />
 
           <input
@@ -226,27 +245,74 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           {/* Bottom Controls Row inside Composer */}
           <div className="flex items-center justify-between pt-2 border-t border-transparent select-none">
             {/* Left Tools: Plus, Paperclip, RAG toggle */}
-            <div className="flex items-center gap-2.5 text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center gap-2.5 text-zinc-500 dark:text-[#A1A1AA]">
               {/* Plus Action */}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setIsToolsOpen(!isToolsOpen)}
-                  className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#111111] dark:hover:text-[#f4f4f5] transition-colors"
+                  className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-[#202020] hover:text-[#111111] dark:hover:text-[#F5F5F5] transition-colors"
                   title="Tools & Prompts"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
 
                 {isToolsOpen && (
-                  <div className="absolute bottom-full mb-2 left-0 w-48 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#262934] shadow-xl py-1.5 z-50 text-xs">
+                  <div className="absolute bottom-full mb-2 left-0 w-56 rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] shadow-xl py-1.5 z-50 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenChartModal?.();
+                        setIsToolsOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#202020] text-zinc-700 dark:text-[#A1A1AA] hover:text-[#111111] dark:hover:text-[#F5F5F5]"
+                    >
+                      <BarChart2 className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Generate AI Chart</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenPresentationModal?.();
+                        setIsToolsOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#202020] text-zinc-700 dark:text-[#A1A1AA] hover:text-[#111111] dark:hover:text-[#F5F5F5]"
+                    >
+                      <Presentation className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Create Presentation (.pptx)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInput('Analyze this dataset and generate a comparative visualization: ');
+                        setIsToolsOpen(false);
+                        textareaRef.current?.focus();
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#202020] text-zinc-700 dark:text-[#A1A1AA] hover:text-[#111111] dark:hover:text-[#F5F5F5]"
+                    >
+                      <TrendingUp className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Analyze Dataset</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        fileInputRef.current?.click();
+                        setInput('Extract the design theme, color palette, and layout from this reference image: ');
+                        setIsToolsOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#202020] text-zinc-700 dark:text-[#A1A1AA] hover:text-[#111111] dark:hover:text-[#F5F5F5]"
+                    >
+                      <Palette className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Use Reference Design</span>
+                    </button>
+                    <div className="my-1 border-t border-[#eaeaea] dark:border-[#262626]" />
                     <button
                       type="button"
                       onClick={() => {
                         fileInputRef.current?.click();
                         setIsToolsOpen(false);
                       }}
-                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#181a22] text-zinc-700 dark:text-zinc-300"
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#202020] text-zinc-700 dark:text-[#A1A1AA] hover:text-[#111111] dark:hover:text-[#F5F5F5]"
                     >
                       <Paperclip className="w-3.5 h-3.5" />
                       <span>Upload Document/Image</span>
@@ -257,7 +323,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                         onOpenRagModal();
                         setIsToolsOpen(false);
                       }}
-                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#181a22] text-zinc-700 dark:text-zinc-300"
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-[#202020] text-zinc-700 dark:text-[#A1A1AA] hover:text-[#111111] dark:hover:text-[#F5F5F5]"
                     >
                       <FileText className="w-3.5 h-3.5" />
                       <span>Manage RAG Library</span>
@@ -270,7 +336,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#111111] dark:hover:text-[#f4f4f5] transition-colors"
+                className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-[#202020] hover:text-[#111111] dark:hover:text-[#F5F5F5] transition-colors"
                 title="Attach file or image"
               >
                 <Paperclip className="w-4 h-4" />
@@ -281,13 +347,13 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                 <button
                   type="button"
                   onClick={onOpenRagModal}
-                  className="flex items-center gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-[#111111] dark:hover:text-[#f4f4f5] transition-colors"
+                  className="flex items-center gap-1 text-xs font-medium text-zinc-600 dark:text-[#A1A1AA] hover:text-[#111111] dark:hover:text-[#F5F5F5] transition-colors"
                   title="RAG Context Knowledge"
                 >
                   <Layers className="w-3.5 h-3.5" />
                   <span>RAG</span>
                   {ragDocsCount > 0 && (
-                    <span className="text-[10px] font-mono text-zinc-400">({ragDocsCount})</span>
+                    <span className="text-[10px] font-mono text-zinc-400 dark:text-[#737373]">({ragDocsCount})</span>
                   )}
                 </button>
 
@@ -296,26 +362,69 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                   type="button"
                   onClick={() => onToggleRag?.()}
                   className={`w-8 h-4.5 rounded-full p-0.5 transition-colors focus:outline-none ${
-                    ragEnabled ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700'
+                    ragEnabled ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-[#262626]'
                   }`}
                   title={ragEnabled ? 'Disable RAG' : 'Enable RAG'}
                 >
                   <div
                     className={`w-3.5 h-3.5 rounded-full transition-transform ${
-                      ragEnabled ? 'translate-x-3.5 bg-white dark:bg-black' : 'translate-x-0 bg-white'
+                      ragEnabled ? 'translate-x-3.5 bg-white dark:bg-black' : 'translate-x-0 bg-white dark:bg-[#A1A1AA]'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* LoftyDB Memory Label & Toggle Switch */}
+              <div className="flex items-center gap-1.5 pl-1">
+                <button
+                  type="button"
+                  onClick={() => onOpenMemorySection?.()}
+                  className="flex items-center gap-1 text-xs font-medium text-zinc-600 dark:text-[#A1A1AA] hover:text-[#111111] dark:hover:text-[#F5F5F5] transition-colors"
+                  title={
+                    loftyDbConnected
+                      ? 'Open LoftyDB Memory Studio'
+                      : 'LoftyDB offline — click to configure or start'
+                  }
+                >
+                  <Brain className={`w-3.5 h-3.5 ${loftyDbConnected && memoryEnabled ? 'text-emerald-500' : ''}`} />
+                  <span>Memory</span>
+                  {memoryCount > 0 && (
+                    <span className="text-[10px] font-mono text-zinc-400 dark:text-[#737373]">({memoryCount})</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onToggleMemory?.()}
+                  className={`w-8 h-4.5 rounded-full p-0.5 transition-colors focus:outline-none ${
+                    memoryEnabled && loftyDbConnected ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-[#262626]'
+                  }`}
+                  title={
+                    !loftyDbConnected
+                      ? 'LoftyDB is offline'
+                      : memoryEnabled
+                      ? 'Disable LoftyDB Memory Recall'
+                      : 'Enable LoftyDB Memory Recall'
+                  }
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full transition-transform ${
+                      memoryEnabled && loftyDbConnected
+                        ? 'translate-x-3.5 bg-white dark:bg-black'
+                        : 'translate-x-0 bg-white dark:bg-[#A1A1AA]'
                     }`}
                   />
                 </button>
               </div>
             </div>
 
-            {/* Right Control: Black Send / Stop Button */}
+            {/* Right Control: Black/White Send / Stop Button */}
             <div>
               {isGenerating ? (
                 <button
                   type="button"
                   onClick={onStopGeneration}
-                  className="w-8 h-8 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 flex items-center justify-center transition-transform active:scale-95 shadow-sm"
+                  className="w-8 h-8 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 flex items-center justify-center transition-transform active:scale-95 shadow-sm"
                   title="Stop generating"
                 >
                   <Square className="w-3.5 h-3.5 fill-current" />
@@ -325,7 +434,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                   type="button"
                   onClick={() => handleSubmit()}
                   disabled={(!input.trim() && !pendingImage) || !isServerRunning}
-                  className="w-8 h-8 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-30 disabled:hover:bg-black dark:disabled:hover:bg-white flex items-center justify-center transition-transform active:scale-95 shadow-sm"
+                  className="w-8 h-8 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-30 disabled:hover:bg-black dark:disabled:hover:bg-white flex items-center justify-center transition-transform active:scale-95 shadow-sm"
                   title="Send prompt (Enter)"
                 >
                   <SendHorizonal className="w-4 h-4" />

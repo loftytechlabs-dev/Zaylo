@@ -315,8 +315,8 @@ export const OverviewView: React.FC = () => {
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* 1. First Section — Runtime Status Summary */}
-      <section className="rounded-xl bg-white dark:bg-[#0e1014] border border-[#eaeaea] dark:border-[#1b1e25] p-5 shadow-xs">
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#eaeaea] dark:divide-[#1a1d24]">
+      <section className="rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] p-5 shadow-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#eaeaea] dark:divide-[#222222]">
           {/* Inference Server Group */}
           <div className="pb-4 md:pb-0 md:pr-6 flex flex-col justify-between">
             <div>
@@ -410,8 +410,8 @@ export const OverviewView: React.FC = () => {
       {/* 2. Second Section — Two-Column Monitoring Area */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         {/* Left Column: System Resources */}
-        <div className="rounded-xl bg-white dark:bg-[#0e1014] border border-[#eaeaea] dark:border-[#1b1e25] p-5 flex flex-col justify-between shadow-xs space-y-5">
-          <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#181a20] pb-3">
+        <div className="rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] p-5 flex flex-col justify-between shadow-xs space-y-5">
+          <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#222222] pb-3">
             <div className="flex items-center gap-2">
               <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-700 dark:text-zinc-300 font-semibold">
                 System Resources
@@ -539,9 +539,9 @@ export const OverviewView: React.FC = () => {
         </div>
 
         {/* Right Column: Inference Performance */}
-        <div className="rounded-xl bg-white dark:bg-[#0e1014] border border-[#eaeaea] dark:border-[#1b1e25] p-5 flex flex-col justify-between shadow-xs space-y-5">
-          <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#181a20] pb-3">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-700 dark:text-zinc-300 font-semibold">
+        <div className="rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] p-5 flex flex-col justify-between shadow-xs space-y-5">
+          <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#222222] pb-3">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-700 dark:text-[#A1A1AA] font-semibold">
               Inference Performance
             </h2>
             <span className="text-[11px] font-mono text-zinc-500">Real-Time Metrics</span>
@@ -606,8 +606,8 @@ export const OverviewView: React.FC = () => {
       </section>
 
       {/* 3. Third Section — Recent Activity */}
-      <section className="rounded-xl bg-white dark:bg-[#0e1014] border border-[#eaeaea] dark:border-[#1b1e25] p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#181a20] pb-3">
+      <section className="rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#222222] pb-3">
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-700 dark:text-zinc-300 font-semibold">
               Recent Activity

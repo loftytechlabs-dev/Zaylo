@@ -63,12 +63,12 @@ export const PerformanceView: React.FC = () => {
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* Header */}
-      <div className="border-b border-[#202227] pb-4">
-        <h2 className="text-sm font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+      <div className="border-b border-[#eaeaea] dark:border-[#222222] pb-4">
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
+          <Activity className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
           Real-Time Performance & Telemetry
         </h2>
-        <p className="text-xs text-zinc-400 mt-0.5">
+        <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-0.5">
           Live streaming hardware utilization and inference engine throughput updated every second.
         </p>
       </div>
@@ -76,57 +76,57 @@ export const PerformanceView: React.FC = () => {
       {/* 4 Performance Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* 1. CPU Utilization */}
-        <div className="p-5 rounded-lg bg-[#111317] border border-[#22252c] space-y-3">
+        <div className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-              <Cpu className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <div className="flex items-center gap-2 text-xs font-mono text-[#666666] dark:text-[#a1a1aa]">
+              <Cpu className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
               <span>CPU UTILIZATION</span>
             </div>
-            <span className="text-sm font-mono font-bold text-zinc-100">{cpuPercent}%</span>
+            <span className="text-sm font-mono font-bold text-[#111111] dark:text-[#f5f5f5]">{cpuPercent}%</span>
           </div>
           {renderSparkline(cpuSeries, '#3b82f6', 100)}
-          <div className="text-[11px] text-zinc-500 font-mono text-right">Last 60 seconds</div>
+          <div className="text-[11px] text-[#888888] dark:text-[#737373] font-mono text-right">Last 60 seconds</div>
         </div>
 
         {/* 2. Memory Utilization */}
-        <div className="p-5 rounded-lg bg-[#111317] border border-[#22252c] space-y-3">
+        <div className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-              <HardDrive className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center gap-2 text-xs font-mono text-[#666666] dark:text-[#a1a1aa]">
+              <HardDrive className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
               <span>SYSTEM MEMORY (RAM)</span>
             </div>
-            <span className="text-sm font-mono font-bold text-zinc-100">
+            <span className="text-sm font-mono font-bold text-[#111111] dark:text-[#f5f5f5]">
               {usedRamGb} / {totalRamGb} GB
             </span>
           </div>
           {renderSparkline(ramSeries, '#10b981', parseFloat(totalRamGb) || 16)}
-          <div className="text-[11px] text-zinc-500 font-mono text-right">Last 60 seconds</div>
+          <div className="text-[11px] text-[#888888] dark:text-[#737373] font-mono text-right">Last 60 seconds</div>
         </div>
 
         {/* 3. Tokens Per Second */}
-        <div className="p-5 rounded-lg bg-[#111317] border border-[#22252c] space-y-3">
+        <div className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-              <Zap className="w-4 h-4 text-amber-400" />
+            <div className="flex items-center gap-2 text-xs font-mono text-[#666666] dark:text-[#a1a1aa]">
+              <Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               <span>GENERATION THROUGHPUT</span>
             </div>
-            <span className="text-sm font-mono font-bold text-zinc-100">{tokPerSec} tok/s</span>
+            <span className="text-sm font-mono font-bold text-[#111111] dark:text-[#f5f5f5]">{tokPerSec} tok/s</span>
           </div>
           {renderSparkline(tokSeries, '#f59e0b', 50)}
-          <div className="text-[11px] text-zinc-500 font-mono text-right">Last 60 seconds</div>
+          <div className="text-[11px] text-[#888888] dark:text-[#737373] font-mono text-right">Last 60 seconds</div>
         </div>
 
         {/* 4. Inference Latency */}
-        <div className="p-5 rounded-lg bg-[#111317] border border-[#22252c] space-y-3">
+        <div className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-              <Clock className="w-4 h-4 text-cyan-400" />
+            <div className="flex items-center gap-2 text-xs font-mono text-[#666666] dark:text-[#a1a1aa]">
+              <Clock className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
               <span>INFERENCE LATENCY</span>
             </div>
-            <span className="text-sm font-mono font-bold text-zinc-100">{latencyMs} ms</span>
+            <span className="text-sm font-mono font-bold text-[#111111] dark:text-[#f5f5f5]">{latencyMs} ms</span>
           </div>
           {renderSparkline(latSeries, '#06b6d4', 1000)}
-          <div className="text-[11px] text-zinc-500 font-mono text-right">Last 60 seconds</div>
+          <div className="text-[11px] text-[#888888] dark:text-[#737373] font-mono text-right">Last 60 seconds</div>
         </div>
       </div>
     </div>

@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepository, DeviceRepository, MetricsRepository, LogsRepository } from '@local-ai/database';
+import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepository, DeviceRepository, MetricsRepository, LogsRepository, SettingsRepository } from '@local-ai/database';
 import { HardwareScanner } from '@local-ai/hardware';
 import { CapabilityEngine } from '@local-ai/capabilities';
 import { ModelManager } from '@local-ai/models';
 import { KeyManager } from '@local-ai/security';
 import { NetworkScanner, DevicePairingManager } from '@local-ai/network';
 import { LlamaRuntime } from '@local-ai/runtime-llama';
-import { InferenceService } from '@local-ai/inference';
+import { InferenceService, LoftyDbClient, LoftyDbProcessManager, MemoryEngine, getDefaultLoftyDbConfig } from '@local-ai/inference';
 import { ApiServer } from '@local-ai/server';
 import { SystemMonitor } from '@local-ai/monitoring';
-import { getDefaultDatabasePath, getDefaultModelsDir, getDefaultRuntimeDir } from '@local-ai/shared';
+import { getDefaultDatabasePath, getDefaultModelsDir, getDefaultRuntimeDir, type LoftyDbConfig } from '@local-ai/shared';
 
 const program = new Command();
 program
   .name('zaylo')
   .description('Zaylo AI Server Platform CLI — Turn your computer into a private AI inference server')
-  .version('3.1.0');
+  .version('3.2.0');
 
 async function initCore() {
   const dbConn = await createDatabaseAsync(getDefaultDatabasePath());
@@ -26,6 +26,7 @@ async function initCore() {
   const deviceRepo = new DeviceRepository(dbConn.raw);
   const metricsRepo = new MetricsRepository(dbConn.raw);
   const logsRepo = new LogsRepository(dbConn.raw);
+  const settingsRepo = new SettingsRepository(dbConn.raw);
 
   const config = serverRepo.getConfig();
   const modelManager = new ModelManager(modelRepo, config.modelsDirectory || getDefaultModelsDir());
@@ -43,6 +44,7 @@ async function initCore() {
     deviceRepo,
     metricsRepo,
     logsRepo,
+    settingsRepo,
     config,
     modelManager,
     keyManager,
@@ -147,7 +149,30 @@ program
   .option('-m, --model <id>', 'Model ID to load')
   .option('--lan', 'Enable LAN access')
   .action(async (opts) => {
-    const { config, modelManager, keyManager, deviceRepo, pairingManager, runtime, inferenceService, logsRepo } = await initCore();
+    const { config, modelManager, keyManager, deviceRepo, pairingManager, runtime, inferenceService, logsRepo, settingsRepo } = await initCore();
+
+    const loftyConfig: LoftyDbConfig = {
+      ...getDefaultLoftyDbConfig(),
+      ...(settingsRepo.get<Partial<LoftyDbConfig>>('loftydb_config') || {}),
+    };
+    const loftyClient = new LoftyDbClient(
+      loftyConfig.mode === 'external' ? loftyConfig.baseUrl : `http://127.0.0.1:${loftyConfig.port}`
+    );
+    const loftyManager = new LoftyDbProcessManager(loftyClient);
+    let memoryActive = false;
+    if (loftyConfig.enabled && loftyConfig.memoryEnabled) {
+      const st = loftyConfig.autoStart ? await loftyManager.start(loftyConfig) : await loftyManager.getStatus(loftyConfig);
+      if (st.connected) {
+        const memEngine = new MemoryEngine(loftyClient, {
+          autoRecallEnabled: loftyConfig.memoryEnabled,
+          autoExtractEnabled: loftyConfig.autoExtractMemories,
+          defaultRecallLimit: loftyConfig.recallLimit,
+          defaultMinSimilarity: loftyConfig.minSimilarity,
+        });
+        inferenceService.setMemoryEngine(memEngine);
+        memoryActive = true;
+      }
+    }
 
     if (opts.port) config.port = opts.port;
     if (opts.lan) config.lanEnabled = true;
@@ -216,6 +241,7 @@ program
     console.log(`Base URL:        ${baseUrl}`);
     console.log(`OpenAI API:      ${baseUrl}/chat/completions`);
     console.log(`LAN Mode:        ${config.lanEnabled ? 'Enabled' : 'Disabled'}`);
+    console.log(`LoftyDB Memory:  ${memoryActive ? `Active (${loftyClient.getBaseUrl()})` : 'Inactive'}`);
     console.log(`======================================================\n`);
     console.log('Press Ctrl+C to stop server.\n');
 
@@ -223,6 +249,7 @@ program
       console.log('\nStopping server...');
       await server.stop();
       await runtime.stop();
+      await loftyManager.stop();
       process.exit(0);
     });
   });

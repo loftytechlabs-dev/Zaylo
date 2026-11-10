@@ -379,6 +379,9 @@ export interface ChatCompletionRequest {
   user?: string;
   rag?: boolean;
   ragDocumentIds?: string[];
+  memory?: boolean;
+  memoryScope?: 'all' | 'global' | 'persona' | 'conversation';
+  conversationId?: string;
   personaId?: string;
   personaInstructions?: string;
 }
@@ -845,5 +848,532 @@ export interface VoiceStatus {
   installedModels: string[];
   missingComponents: string[];
 }
+
+// ==========================================
+// AI Chart & Visualization Types
+// ==========================================
+
+export type ChartType =
+  | 'bar'
+  | 'horizontal-bar'
+  | 'line'
+  | 'area'
+  | 'pie'
+  | 'donut'
+  | 'scatter'
+  | 'bubble'
+  | 'radar'
+  | 'stacked-bar'
+  | 'grouped-bar'
+  | 'histogram'
+  | 'heatmap'
+  | 'waterfall'
+  | 'funnel'
+  | 'treemap'
+  | 'combo';
+
+export type ChartThemeName =
+  | 'minimal-white'
+  | 'premium-black'
+  | 'apple-inspired'
+  | 'corporate'
+  | 'editorial'
+  | 'financial'
+  | 'scientific'
+  | 'colorful'
+  | 'monochrome'
+  | 'custom';
+
+export interface ChartDataPoint {
+  label: string;
+  value: number;
+  value2?: number;
+  category?: string;
+  color?: string;
+  tooltip?: string;
+  x?: number;
+  y?: number;
+  size?: number;
+  change?: string;
+  [key: string]: any;
+}
+
+export interface ChartSeries {
+  name: string;
+  data: (number | ChartDataPoint)[];
+  color?: string;
+  type?: 'bar' | 'line' | 'area';
+}
+
+export interface ChartAnnotation {
+  text: string;
+  pointIndex?: number;
+  value?: number;
+  type?: 'highlight' | 'threshold' | 'callout';
+}
+
+export interface ChartAxisConfig {
+  title?: string;
+  categories?: string[];
+  format?: 'text' | 'date' | 'number' | 'currency' | 'percent';
+  unit?: string;
+  min?: number;
+  max?: number;
+  grid?: boolean;
+}
+
+export interface ChartSpec {
+  id?: string;
+  type: ChartType;
+  title: string;
+  subtitle?: string;
+  theme: ChartThemeName;
+  customTheme?: {
+    background?: string;
+    text?: string;
+    palette?: string[];
+    grid?: string;
+  };
+  xAxis?: ChartAxisConfig;
+  yAxis?: ChartAxisConfig;
+  series: ChartSeries[];
+  labels?: string[];
+  annotations?: ChartAnnotation[];
+  aspectRatio?: '16:9' | '4:3' | '1:1' | 'auto';
+  height?: number;
+  showLegend?: boolean;
+  showGrid?: boolean;
+  showValues?: boolean;
+  stacked?: boolean;
+  source?: string;
+  caption?: string;
+}
+
+// ==========================================
+// AI Professional Presentation (.pptx) Types
+// ==========================================
+
+export type PresentationThemeName =
+  | 'minimal-monochrome'
+  | 'midnight-executive'
+  | 'apple-keynote'
+  | 'modern-saas'
+  | 'financial-investor'
+  | 'consulting-mckinsey'
+  | 'bold-editorial'
+  | 'scientific-research'
+  | 'creative-pitch'
+  | 'cyberpunk-dark'
+  | 'clean-corporate'
+  | 'custom-brand';
+
+export type SlideLayoutType =
+  | 'title'
+  | 'executive-summary'
+  | 'agenda'
+  | 'columns-2'
+  | 'columns-3'
+  | 'columns-4'
+  | 'metrics-stats'
+  | 'architecture-flow'
+  | 'timeline-roadmap'
+  | 'process-steps'
+  | 'swot'
+  | 'chart-data'
+  | 'quote'
+  | 'team'
+  | 'conclusion';
+
+export interface SlideStatItem {
+  value: string;
+  label: string;
+  change?: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
+
+export interface SlideCardItem {
+  title: string;
+  subtitle?: string;
+  description: string;
+  tag?: string;
+  icon?: string;
+}
+
+export interface SlideStepItem {
+  stepNumber: number;
+  title: string;
+  description: string;
+}
+
+export interface SlideMilestoneItem {
+  date: string;
+  title: string;
+  description: string;
+  status?: 'completed' | 'current' | 'upcoming';
+}
+
+export interface SlideSwotData {
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+}
+
+export interface SlideQuoteData {
+  quote: string;
+  author: string;
+  role?: string;
+}
+
+export interface SlideArchitectureNode {
+  label: string;
+  role: string;
+  layer?: string;
+}
+
+export type SlideElementType =
+  | 'text'
+  | 'shape'
+  | 'image'
+  | 'icon'
+  | 'chart'
+  | 'table';
+
+export interface SlideElementTransform {
+  x: number; // percentage (0-100) or pixel
+  y: number; // percentage (0-100) or pixel
+  width: number; // percentage or pixel
+  height: number;
+  rotation?: number; // degrees
+  zIndex?: number;
+}
+
+export interface SlideTextStyle {
+  fontFamily?: string;
+  fontSize?: number;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  color?: string;
+  align?: 'left' | 'center' | 'right' | 'justify';
+  lineHeight?: number;
+  letterSpacing?: number;
+  backgroundColor?: string;
+  opacity?: number;
+}
+
+export interface SlideShapeStyle {
+  shapeType: 'rect' | 'roundRect' | 'circle' | 'line' | 'arrow' | 'callout' | 'star';
+  fillColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  opacity?: number;
+}
+
+export interface SlideTableData {
+  rows: string[][];
+  headers?: string[];
+  hasHeaderRow?: boolean;
+}
+
+export interface SlideVisualElement {
+  id: string;
+  name?: string;
+  type: SlideElementType;
+  transform: SlideElementTransform;
+  locked?: boolean;
+  hidden?: boolean;
+  text?: {
+    content: string;
+    style?: SlideTextStyle;
+  };
+  shape?: SlideShapeStyle;
+  image?: {
+    url: string;
+    alt?: string;
+    fit?: 'cover' | 'contain' | 'fill';
+    opacity?: number;
+  };
+  icon?: {
+    name: string;
+    color?: string;
+    size?: number;
+  };
+  chart?: ChartSpec;
+  table?: SlideTableData;
+}
+
+export interface SlideSpec {
+  id: string;
+  layout: SlideLayoutType;
+  title: string;
+  subtitle?: string;
+  kicker?: string;
+  bullets?: string[];
+  stats?: SlideStatItem[];
+  cards?: SlideCardItem[];
+  steps?: SlideStepItem[];
+  milestones?: SlideMilestoneItem[];
+  swot?: SlideSwotData;
+  quote?: SlideQuoteData;
+  chart?: ChartSpec;
+  architectureNodes?: SlideArchitectureNode[];
+  notes?: string;
+  footerText?: string;
+  backgroundColor?: string;
+  customElements?: SlideVisualElement[];
+}
+
+export interface PresentationPalette {
+  background: string;
+  cardBackground: string;
+  textPrimary: string;
+  textSecondary: string;
+  accent: string;
+  accentSecondary: string;
+  border: string;
+}
+
+export interface PresentationSpec {
+  id: string;
+  title: string;
+  subtitle?: string;
+  author?: string;
+  theme: PresentationThemeName;
+  aspectRatio?: '16:9' | '4:3';
+  palette?: PresentationPalette;
+  slides: SlideSpec[];
+}
+
+// ==================== LOFTYDB & LONG-TERM MEMORY TYPES ====================
+
+export type LoftyDbConnectionMode = 'managed' | 'external';
+
+export interface LoftyDbConfig {
+  enabled: boolean;
+  autoStart: boolean;
+  mode: LoftyDbConnectionMode;
+  port: number;
+  baseUrl: string;
+  dataDir: string;
+  binaryPath?: string;
+  memoryEnabled: boolean;
+  autoExtractMemories: boolean;
+  recallLimit: number;
+  minSimilarity: number;
+}
+
+export interface LoftyDbStats {
+  total_size: number;
+  doc_count: number;
+  col_count: number;
+  tx_count: number;
+  cols: Record<string, number>;
+}
+
+export interface LoftyDbStatus {
+  connected: boolean;
+  runningManaged: boolean;
+  managedPid?: number;
+  binaryFound: boolean;
+  binaryPath?: string;
+  baseUrl: string;
+  port: number;
+  dataDir: string;
+  stats?: LoftyDbStats;
+  error?: string;
+  logs: string[];
+}
+
+export interface LoftyDbDocument extends Record<string, unknown> {
+  _id: string;
+  _version?: number;
+  _updated_at?: number;
+  _similarity?: number;
+  _vector_source?: string;
+}
+
+export interface LoftyDbHistoryEntry {
+  version: number;
+  timestamp: number;
+  timestampNs?: string;
+  is_deleted: boolean;
+  tx_id: number;
+  payload: Record<string, unknown>;
+}
+
+export interface LoftyDbDiffResult {
+  added: Record<string, unknown>;
+  removed: Record<string, unknown>;
+  changed: Record<string, { from: unknown; to: unknown }>;
+}
+
+export interface LoftyDbSqlResult {
+  collection: string;
+  fields: string[];
+  documents: Array<Record<string, unknown>>;
+}
+
+export interface LoftyDbSubscriptionEvent {
+  collection: string;
+  type: 'insert' | 'update' | 'delete' | 'connected' | 'error';
+  doc_id?: string;
+  document?: Record<string, unknown>;
+  timestamp: number;
+  subscription_id?: string;
+  message?: string;
+}
+
+export type MemoryCategory = 'fact' | 'preference' | 'instruction' | 'project' | 'episode' | 'context';
+export type MemoryScope = 'global' | 'persona' | 'conversation';
+export type KnowledgeNodeKind = 'memory' | 'entity' | 'conversation' | 'document';
+
+export type MemoryRelationshipType =
+  | 'RELATED_TO'
+  | 'ABOUT'
+  | 'BUILT_WITH'
+  | 'PART_OF'
+  | 'DEPENDS_ON'
+  | 'CREATED_BY'
+  | 'OCCURRED_DURING'
+  | 'SUPERSEDES'
+  | 'CONTRADICTS'
+  | 'DERIVED_FROM';
+
+export interface MemoryEntry {
+  id: string;
+  title?: string;
+  content: string;
+  category: MemoryCategory;
+  scope: MemoryScope;
+  personaId?: string;
+  conversationId?: string;
+  importance: number;
+  confidence?: number;
+  accessCount?: number;
+  lastAccessedAt?: number;
+  pinned: boolean;
+  tags: string[];
+  source: 'auto' | 'manual' | 'chat';
+  collection?: string;
+  embeddingModel?: string;
+  vectorDim?: number;
+  createdAt: number;
+  updatedAt: number;
+  version?: number;
+  updatedAtNs?: string;
+  similarity?: number;
+}
+
+export interface MemoryEntity {
+  id: string;
+  name: string;
+  entityType: 'technology' | 'project' | 'person' | 'concept' | 'tool';
+  description?: string;
+  aliases: string[];
+  tags: string[];
+  mentionCount: number;
+  importance: number;
+  embeddingModel?: string;
+  vectorDim?: number;
+  createdAt: number;
+  updatedAt: number;
+  version?: number;
+}
+
+export interface MemoryRelationship {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  sourceKind: KnowledgeNodeKind;
+  targetKind: KnowledgeNodeKind;
+  type: MemoryRelationshipType;
+  strength: number;
+  confidence: number;
+  directed: boolean;
+  autoGenerated: boolean;
+  metadata?: Record<string, unknown>;
+  createdAt: number;
+  updatedAt: number;
+  version?: number;
+}
+
+export interface MemoryIntelligenceReport {
+  highlyConnected: Array<{ nodeId: string; title: string; kind: KnowledgeNodeKind; category?: string; degree: number }>;
+  isolated: Array<{ nodeId: string; title: string; kind: KnowledgeNodeKind; category?: string }>;
+  similarDuplicates: Array<{
+    aId: string;
+    bId: string;
+    aTitle: string;
+    bTitle: string;
+    similarity: number;
+    reason: string;
+  }>;
+  contradictions: Array<{
+    aId: string;
+    bId: string;
+    aTitle: string;
+    bTitle: string;
+    reason: string;
+    edgeId?: string;
+  }>;
+  recentlyUpdated: Array<{ nodeId: string; title: string; updatedAt: number; version: number; category?: string }>;
+  frequentlyRetrieved: Array<{ nodeId: string; title: string; accessCount: number; lastAccessedAt?: number }>;
+  importantClusters: Array<{ name: string; kind: string; count: number; avgImportance: number; memberIds: string[] }>;
+  missingRelationships: Array<{
+    sourceId: string;
+    targetId: string;
+    sourceKind: KnowledgeNodeKind;
+    targetKind: KnowledgeNodeKind;
+    sourceTitle: string;
+    targetTitle: string;
+    suggestedType: MemoryRelationshipType;
+    confidence: number;
+    reason: string;
+  }>;
+}
+
+export interface KnowledgeGraphPayload {
+  collection: string;
+  collections: string[];
+  memories: MemoryEntry[];
+  entities: MemoryEntity[];
+  relationships: MemoryRelationship[];
+  conversations: StoredConversation[];
+  intelligence: MemoryIntelligenceReport;
+}
+
+export interface MemoryRecallResult {
+  memory: MemoryEntry;
+  similarity: number;
+  score: number;
+  matchedBy: 'vector' | 'pinned' | 'hybrid';
+}
+
+export interface StoredConversation {
+  id: string;
+  title: string;
+  modelId: string;
+  modelName: string;
+  isAdapter?: boolean;
+  adapterPath?: string;
+  messages: ChatMessage[];
+  createdAt: number;
+  updatedAt: number;
+  lastStats?: {
+    latencyMs: number;
+    tokensPerSec: number;
+    tokenCount: number;
+    timeToFirstTokenMs?: number;
+    promptTokens?: number;
+    totalDurationMs?: number;
+  };
+  personaId?: string;
+  summary?: string;
+  version?: number;
+}
+
+
 
 

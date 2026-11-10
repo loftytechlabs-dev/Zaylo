@@ -22,6 +22,11 @@ import type {
   ImageGenerationParams,
   ImageGenerationProgress,
   Persona,
+  LoftyDbConfig,
+  LoftyDbStatus,
+  MemoryEntry,
+  MemoryCategory,
+  MemoryScope,
 } from '@local-ai/shared';
 import type { PlaygroundConversation } from '../features/playground/types';
 import {
@@ -36,6 +41,7 @@ export type NavTab =
   | 'forge'
   | 'playground'
   | 'personas'
+  | 'loftydb'
   | 'server'
   | 'devices'
   | 'performance'
@@ -116,6 +122,38 @@ interface AppStore {
   addRagDocument: (name: string, content: string, type?: DocumentType) => Promise<DocumentInfo>;
   deleteRagDocument: (id: string) => Promise<void>;
   setRagEnabled: (enabled: boolean) => void;
+
+  // LoftyDB Engine & Long-Term Memory
+  loftyDbConfig?: LoftyDbConfig;
+  loftyDbStatus?: LoftyDbStatus;
+  loftyDbLogs: string[];
+  memoryEnabled: boolean;
+  memories: MemoryEntry[];
+  setMemoryEnabled: (enabled: boolean) => void;
+  setLoftyDbStatus: (status: LoftyDbStatus) => void;
+  appendLoftyDbLog: (line: string) => void;
+  fetchLoftyDbState: () => Promise<void>;
+  updateLoftyDbConfig: (patch: Partial<LoftyDbConfig>) => Promise<LoftyDbConfig>;
+  startLoftyDb: () => Promise<LoftyDbStatus>;
+  stopLoftyDb: () => Promise<LoftyDbStatus>;
+  fetchMemories: () => Promise<void>;
+  saveMemory: (input: {
+    id?: string;
+    title?: string;
+    content: string;
+    category?: MemoryCategory;
+    scope?: MemoryScope;
+    personaId?: string;
+    conversationId?: string;
+    importance?: number;
+    confidence?: number;
+    pinned?: boolean;
+    tags?: string[];
+    source?: 'auto' | 'manual' | 'chat';
+  }) => Promise<MemoryEntry>;
+  deleteMemory: (id: string) => Promise<void>;
+  syncConversationsWithLoftyDb: () => Promise<void>;
+  persistConversationToLoftyDb: (conv: PlaygroundConversation) => Promise<void>;
 
   // Multimodal Vision
   pendingImage?: { dataUrl: string; name: string };
@@ -215,24 +253,19 @@ const getInitialThemePreference = (): 'dark' | 'light' | 'system' => {
 
 const getInitialTheme = (): 'dark' | 'light' => {
   const pref = getInitialThemePreference();
+  let resolved: 'dark' | 'light' = 'dark';
   if (pref === 'system' && typeof window !== 'undefined' && window.matchMedia) {
     const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const resolved = systemIsDark ? 'dark' : 'light';
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', resolved);
-    }
-    return resolved;
-  }
-  if (pref === 'light' || pref === 'dark') {
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', pref);
-    }
-    return pref;
+    resolved = systemIsDark ? 'dark' : 'light';
+  } else if (pref === 'light' || pref === 'dark') {
+    resolved = pref;
   }
   if (typeof document !== 'undefined') {
-    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.setAttribute('data-theme', resolved);
+    document.documentElement.classList.toggle('dark', resolved === 'dark');
+    document.documentElement.classList.toggle('light', resolved === 'light');
   }
-  return 'dark';
+  return resolved;
 };
 
 const PLAYGROUND_STORAGE_KEY = 'zaylo_playground_conversations_v3';
@@ -357,12 +390,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
       activeConvId: newId,
       activeTab: 'playground',
     });
+    if (state.loftyDbStatus?.connected) {
+      void api.invoke('memory:save-conversation', newConv).catch(() => {});
+    }
     return newId;
   },
   selectChat: (id) => {
     set({ activeConvId: id, activeTab: 'playground' });
   },
   deleteChat: (id) => {
+    const wasConnected = Boolean(get().loftyDbStatus?.connected);
     set((state) => {
       const remaining = state.conversations.filter((c) => c.id !== id);
       let nextActive = state.activeConvId;
@@ -390,17 +427,28 @@ export const useAppStore = create<AppStore>((set, get) => ({
         activeConvId: nextActive,
       };
     });
+    if (wasConnected) {
+      void api.invoke('memory:delete-conversation', { id }).catch(() => {});
+    }
   },
   renameChat: (id, newTitle) => {
+    let renamedConv: PlaygroundConversation | undefined;
     set((state) => {
-      const updated = state.conversations.map((c) =>
-        c.id === id ? { ...c, title: newTitle, updatedAt: Date.now() } : c
-      );
+      const updated = state.conversations.map((c) => {
+        if (c.id === id) {
+          renamedConv = { ...c, title: newTitle, updatedAt: Date.now() };
+          return renamedConv;
+        }
+        return c;
+      });
       try {
         localStorage.setItem(PLAYGROUND_STORAGE_KEY, JSON.stringify(updated));
       } catch {}
       return { conversations: updated };
     });
+    if (renamedConv && get().loftyDbStatus?.connected) {
+      void api.invoke('memory:save-conversation', renamedConv).catch(() => {});
+    }
   },
 
   theme: getInitialTheme(),
@@ -411,6 +459,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      document.documentElement.classList.toggle('light', theme === 'light');
     }
     set({ theme });
   },
@@ -565,6 +615,114 @@ export const useAppStore = create<AppStore>((set, get) => ({
   deleteRagDocument: async (id) => {
     await api.invoke('rag:delete-document', { id });
     await get().fetchRagDocuments();
+  },
+
+  // LoftyDB Engine & Long-Term Memory State & Actions
+  loftyDbConfig: undefined,
+  loftyDbStatus: undefined,
+  loftyDbLogs: [],
+  memoryEnabled: true,
+  memories: [],
+  setMemoryEnabled: (enabled) => set({ memoryEnabled: enabled }),
+  setLoftyDbStatus: (status) => {
+    const wasConnected = Boolean(get().loftyDbStatus?.connected);
+    set({
+      loftyDbStatus: status,
+      loftyDbLogs: status.logs || get().loftyDbLogs,
+    });
+    if (!wasConnected && status.connected) {
+      void get().fetchMemories();
+      void get().syncConversationsWithLoftyDb();
+    }
+  },
+  appendLoftyDbLog: (line) => {
+    set((state) => ({
+      loftyDbLogs: [...state.loftyDbLogs, line].slice(-200),
+    }));
+  },
+  fetchLoftyDbState: async () => {
+    try {
+      const [config, status] = await Promise.all([
+        api.invoke('loftydb:get-config', undefined),
+        api.invoke('loftydb:get-status', undefined),
+      ]);
+      if (config) {
+        set({
+          loftyDbConfig: config,
+          memoryEnabled: config.memoryEnabled,
+        });
+      }
+      if (status) {
+        get().setLoftyDbStatus(status);
+      }
+    } catch (err) {
+      console.error('Failed to fetch LoftyDB state:', err);
+    }
+  },
+  updateLoftyDbConfig: async (patch) => {
+    const updated = await api.invoke('loftydb:update-config', patch);
+    set({
+      loftyDbConfig: updated,
+      memoryEnabled: updated.memoryEnabled,
+    });
+    await get().fetchLoftyDbState();
+    return updated;
+  },
+  startLoftyDb: async () => {
+    const status = await api.invoke('loftydb:start', undefined);
+    get().setLoftyDbStatus(status);
+    return status;
+  },
+  stopLoftyDb: async () => {
+    const status = await api.invoke('loftydb:stop', undefined);
+    get().setLoftyDbStatus(status);
+    return status;
+  },
+  fetchMemories: async () => {
+    if (!get().loftyDbStatus?.connected) return;
+    try {
+      const list = await api.invoke('memory:list', undefined);
+      set({ memories: Array.isArray(list) ? list : [] });
+    } catch (err) {
+      console.error('Failed to fetch LoftyDB memories:', err);
+    }
+  },
+  saveMemory: async (input) => {
+    const saved = await api.invoke('memory:save', input);
+    await get().fetchMemories();
+    return saved;
+  },
+  deleteMemory: async (id) => {
+    await api.invoke('memory:delete', { id });
+    await get().fetchMemories();
+  },
+  syncConversationsWithLoftyDb: async () => {
+    if (!get().loftyDbStatus?.connected) return;
+    try {
+      const localConvs = get().conversations;
+      const merged = await api.invoke('memory:sync-conversations', { conversations: localConvs });
+      if (Array.isArray(merged) && merged.length > 0) {
+        const activeId = get().activeConvId;
+        const resolvedActiveId = merged.some((c) => c.id === activeId) ? activeId : merged[0].id;
+        try {
+          localStorage.setItem(PLAYGROUND_STORAGE_KEY, JSON.stringify(merged));
+        } catch {}
+        set({
+          conversations: merged,
+          activeConvId: resolvedActiveId,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to sync conversations with LoftyDB:', err);
+    }
+  },
+  persistConversationToLoftyDb: async (conv) => {
+    if (!get().loftyDbStatus?.connected) return;
+    try {
+      await api.invoke('memory:save-conversation', conv);
+    } catch (err) {
+      console.warn('Failed to persist conversation to LoftyDB:', err);
+    }
   },
 
   // Image Generation State & Actions
@@ -930,6 +1088,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
         top_p: state.topP,
         stream: false,
         rag: state.ragEnabled,
+        memory: state.memoryEnabled && Boolean(state.loftyDbStatus?.connected),
+        conversationId: state.activeConvId,
         personaId: activePersona?.id,
       });
 

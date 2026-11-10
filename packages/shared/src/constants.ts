@@ -5,6 +5,14 @@ export const DEFAULT_SERVER_PORT = 8080;
 export const DEFAULT_SERVER_HOST = '127.0.0.1';
 export const LAN_SERVER_HOST = '0.0.0.0';
 
+export const DEFAULT_LOFTYDB_PORT = 8090;
+export const DEFAULT_LOFTYDB_HOST = '127.0.0.1';
+export const LOFTYDB_MEMORY_COLLECTION = 'zaylo_memories';
+export const LOFTYDB_CONVERSATIONS_COLLECTION = 'zaylo_conversations';
+export const LOFTYDB_ENTITIES_COLLECTION = 'zaylo_entities';
+export const LOFTYDB_RELATIONSHIPS_COLLECTION = 'zaylo_relationships';
+export const LOFTYDB_METRICS_COLLECTION = 'zaylo_memory_metrics';
+
 export const DEFAULT_CONTEXT_LENGTH = 4096;
 export const DEFAULT_MAX_CONCURRENT_REQUESTS = 4;
 export const DEFAULT_TEMPERATURE = 0.7;
@@ -41,4 +49,8 @@ export function getDefaultForgeDir(): string {
 
 export function getDefaultForgeCheckpointsDir(): string {
   return path.join(getDefaultAppDataDir(), 'forge-checkpoints');
+}
+
+export function getDefaultLoftyDbDir(): string {
+  return path.join(getDefaultAppDataDir(), 'loftydb');
 }

@@ -9,6 +9,7 @@ import { ModelsView } from './features/models/ModelsView';
 import { ForgeView } from './features/forge/ForgeView';
 import { PlaygroundView } from './features/playground/PlaygroundView';
 import { PersonasView } from './features/personas/PersonasView';
+import { LoftyDbView } from './features/loftydb/LoftyDbView';
 import { ServerApiView } from './features/server-api/ServerApiView';
 import { DevicesView } from './features/devices/DevicesView';
 import { PerformanceView } from './features/performance/PerformanceView';
@@ -27,12 +28,18 @@ export const App: React.FC = () => {
     fetchModels,
     fetchLogs,
     fetchDevicesAndKeys,
+    fetchLoftyDbState,
+    fetchMemories,
+    setLoftyDbStatus,
+    appendLoftyDbLog,
     updateMetric,
     addLog,
   } = useAppStore();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.classList.toggle('light', theme === 'light');
   }, [theme]);
 
   useEffect(() => {
@@ -55,8 +62,18 @@ export const App: React.FC = () => {
     fetchModels();
     fetchLogs();
     fetchDevicesAndKeys();
+    fetchLoftyDbState();
 
     // Subscribe to typed IPC events
+    const unsubLoftyStatus = api.on('loftydb:status-changed', (status) => {
+      setLoftyDbStatus(status);
+    });
+    const unsubLoftyLog = api.on('loftydb:log', (line) => {
+      appendLoftyDbLog(line);
+    });
+    const unsubMemoryUpdated = api.on('memory:updated', () => {
+      void fetchMemories();
+    });
     const unsubMetrics = api.on('metrics:update', (sample: SystemMetricSample) => {
       updateMetric(sample);
     });
@@ -126,6 +143,9 @@ export const App: React.FC = () => {
     useAppStore.getState().fetchImageHistory();
 
     return () => {
+      unsubLoftyStatus?.();
+      unsubLoftyLog?.();
+      unsubMemoryUpdated?.();
       unsubMetrics?.();
       unsubLogs?.();
       unsubState?.();
@@ -140,20 +160,21 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div data-theme={theme} className="app-root flex h-screen w-screen bg-white dark:bg-[#090a0b] text-[#111111] dark:text-zinc-100 overflow-hidden select-none font-sans">
+    <div data-theme={theme} className="app-root flex h-screen w-screen bg-white dark:bg-[#090909] text-[#111111] dark:text-[#f5f5f5] overflow-hidden select-none font-sans">
       {/* Sidebar Navigation */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#090909]">
         {activeTab !== 'playground' && <Header />}
 
-        <main className="flex-1 overflow-hidden bg-white dark:bg-[#090a0b]">
+        <main className="flex-1 overflow-hidden bg-white dark:bg-[#090909]">
           {activeTab === 'overview' && <OverviewView />}
           {activeTab === 'models' && <ModelsView />}
           {activeTab === 'forge' && <ForgeView />}
           {activeTab === 'playground' && <PlaygroundView />}
           {activeTab === 'personas' && <PersonasView />}
+          {activeTab === 'loftydb' && <LoftyDbView />}
           {activeTab === 'server' && <ServerApiView />}
           {activeTab === 'devices' && <DevicesView />}
           {activeTab === 'performance' && <PerformanceView />}

@@ -106,18 +106,18 @@ export const PersonasView: React.FC = () => {
   return (
     <div className="p-8 space-y-7 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)] select-none">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#202227] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#eaeaea] dark:border-[#262626] pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-base font-bold tracking-tight text-[#111111] dark:text-zinc-100 flex items-center gap-2">
-              <Users className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+            <h1 className="text-base font-bold tracking-tight text-[#111111] dark:text-[#F5F5F5] flex items-center gap-2">
+              <Users className="w-4 h-4 text-zinc-700 dark:text-[#A1A1AA]" />
               Personas
             </h1>
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-[#191919] text-zinc-700 dark:text-[#A1A1AA] border border-zinc-200 dark:border-[#262626]">
               One AI Engine · Multiple Personalities
             </span>
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-zinc-500 dark:text-[#A1A1AA] mt-1 max-w-2xl leading-relaxed">
             Configure specialized behavioral and instruction profiles that adapt how your local models respond, reason, and communicate without requiring separate model weights.
           </p>
         </div>
@@ -133,15 +133,15 @@ export const PersonasView: React.FC = () => {
 
       {/* Active Persona Banner */}
       {activePersona && (
-        <div className="p-4 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#272932] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-xl shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-[#191919] border border-zinc-200 dark:border-[#262626] flex items-center justify-center text-xl shrink-0">
               {activePersona.avatar || '🤖'}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-mono text-zinc-500">Current Global Active Persona:</span>
-                <span className="text-xs font-bold text-[#111111] dark:text-zinc-100">{activePersona.name}</span>
+                <span className="text-xs font-mono text-zinc-500 dark:text-[#737373]">Current Global Active Persona:</span>
+                <span className="text-xs font-bold text-[#111111] dark:text-[#F5F5F5]">{activePersona.name}</span>
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>ACTIVE</span>
@@ -153,7 +153,7 @@ export const PersonasView: React.FC = () => {
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5 max-w-xl">
+              <p className="text-[11px] text-zinc-500 dark:text-[#A1A1AA] truncate mt-0.5 max-w-xl">
                 {activePersona.description || 'Instruction profile applied to new conversations.'}
               </p>
             </div>
@@ -170,7 +170,7 @@ export const PersonasView: React.FC = () => {
             </button>
             <button
               onClick={() => handleOpenEditModal(activePersona)}
-              className="px-3 py-1.5 rounded-lg bg-white dark:bg-[#171922] hover:bg-zinc-50 dark:hover:bg-[#202430] border border-[#eaeaea] dark:border-[#2b3040] text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-[#191919] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-xs font-medium text-zinc-700 dark:text-[#A1A1AA] transition-colors"
             >
               {activePersona.isBuiltIn ? 'View Directives' : 'Edit Profile'}
             </button>
@@ -188,13 +188,13 @@ export const PersonasView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search personas by name, purpose, or traits..."
-            className="w-full pl-9 pr-4 py-1.5 rounded-lg bg-white dark:bg-[#111317] border border-[#eaeaea] dark:border-[#22252c] text-xs text-[#111111] dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+            className="w-full pl-9 pr-4 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] text-xs text-[#111111] dark:text-[#F5F5F5] placeholder-zinc-400 dark:placeholder-[#737373] focus:outline-none focus:border-black dark:focus:border-white transition-colors"
           />
         </div>
 
         {/* Style Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto py-1 text-xs">
-          <span className="text-[11px] font-mono text-zinc-500 flex items-center gap-1 mr-1">
+          <span className="text-[11px] font-mono text-zinc-500 dark:text-[#737373] flex items-center gap-1 mr-1">
             <Filter className="w-3 h-3" />
             <span>Style:</span>
           </span>
@@ -205,7 +205,7 @@ export const PersonasView: React.FC = () => {
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                 selectedStyleFilter === style
                   ? 'bg-black dark:bg-white text-white dark:text-black'
-                  : 'bg-zinc-100 dark:bg-[#14161c] border border-zinc-200 dark:border-[#22252e] text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+                  : 'bg-zinc-100 dark:bg-[#141414] border border-zinc-200 dark:border-[#262626] text-zinc-600 dark:text-[#A1A1AA] hover:text-black dark:hover:text-white'
               }`}
             >
               {style}
@@ -259,13 +259,13 @@ export const PersonasView: React.FC = () => {
         </div>
 
         {customPersonas.length === 0 ? (
-          <div className="p-8 rounded-xl border border-dashed border-[#eaeaea] dark:border-[#262934] bg-white dark:bg-[#0c0d10] text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-[#161822] text-zinc-600 dark:text-zinc-400 flex items-center justify-center mx-auto text-lg">
+          <div className="p-8 rounded-xl border border-dashed border-[#eaeaea] dark:border-[#262626] bg-white dark:bg-[#141414] text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-[#191919] text-zinc-600 dark:text-[#A1A1AA] flex items-center justify-center mx-auto text-lg">
               ✨
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#111111] dark:text-zinc-200">No custom personas yet</h3>
-              <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+              <h3 className="text-sm font-semibold text-[#111111] dark:text-[#F5F5F5]">No custom personas yet</h3>
+              <p className="text-xs text-zinc-500 dark:text-[#A1A1AA] mt-1 max-w-sm mx-auto">
                 Create tailored AI profiles for specialized workflows, unique domain expertise, or distinct reasoning styles.
               </p>
             </div>

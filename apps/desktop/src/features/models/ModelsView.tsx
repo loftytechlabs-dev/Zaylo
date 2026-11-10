@@ -162,7 +162,7 @@ export const ModelsView: React.FC = () => {
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* Top Tabs & Action Bar */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[#202227] pb-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[#eaeaea] dark:border-[#222222] pb-4">
         <div className="flex items-center gap-2 flex-wrap">
           {(['installed', 'fine-tuned', 'recommended', 'catalog', 'search', 'import'] as const).map((tab) => (
             <button
@@ -170,11 +170,11 @@ export const ModelsView: React.FC = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-1.5 rounded-md text-xs font-medium capitalize transition-colors flex items-center gap-1.5 ${
                 activeTab === tab
-                  ? 'bg-[#1b1e24] text-zinc-100 border border-[#2e323b]'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#14161a]'
+                  ? 'bg-black dark:bg-white text-white dark:text-black font-semibold'
+                  : 'text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#202020]'
               }`}
             >
-              {tab === 'fine-tuned' && <Flame className="w-3.5 h-3.5 text-amber-400" />}
+              {tab === 'fine-tuned' && <Flame className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />}
               <span>
                 {tab === 'search'
                   ? 'Hugging Face Hub'
@@ -185,12 +185,12 @@ export const ModelsView: React.FC = () => {
                   : tab}
               </span>
               {tab === 'installed' && (
-                <span className="ml-1 px-1.5 py-0.2 rounded bg-[#252830] text-[10px] text-zinc-300">
+                <span className="ml-1 px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10 text-[10px] text-current">
                   {installedModels.length + fineTunedModels.length}
                 </span>
               )}
               {tab === 'fine-tuned' && (
-                <span className="ml-1 px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px]">
+                <span className="ml-1 px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px]">
                   {fineTunedModels.length}
                 </span>
               )}
@@ -204,21 +204,21 @@ export const ModelsView: React.FC = () => {
             onClick={() => handleToggleLowMemory(!isLowMemoryActive)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
               isLowMemoryActive
-                ? 'bg-zinc-100 dark:bg-zinc-800 border-black dark:border-white text-black dark:text-white'
-                : 'bg-zinc-50 dark:bg-[#14161c] border-zinc-200 dark:border-[#252934] text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200'
+                ? 'bg-black dark:bg-white border-black dark:border-white text-white dark:text-black'
+                : 'bg-white dark:bg-[#141414] border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white'
             }`}
             title="Enable dynamic disk layer paging & quantized KV cache to run 7B/12B models on low RAM"
           >
-            <Layers className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+            <Layers className="w-3.5 h-3.5" />
             <span>Low-Memory Streaming: <strong>{isLowMemoryActive ? 'ON' : 'OFF'}</strong></span>
           </button>
 
           <button
             onClick={handleBrowseAndImport}
             disabled={isImporting}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white dark:bg-[#181a20] hover:bg-zinc-50 dark:hover:bg-[#22252e] border border-[#eaeaea] dark:border-[#2d313b] text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white text-xs font-medium transition-colors"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white dark:bg-[#141414] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-[#111111] dark:text-[#f5f5f5] text-xs font-medium transition-colors"
           >
-            <FolderOpen className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <FolderOpen className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
             <span>Select Local GGUF File...</span>
           </button>
         </div>
@@ -226,8 +226,8 @@ export const ModelsView: React.FC = () => {
 
       {/* Active Downloads Bar */}
       {Object.values(downloads).length > 0 && (
-        <div className="space-y-3 p-4 rounded-lg bg-zinc-50 dark:bg-[#111317] border border-zinc-200 dark:border-zinc-800">
-          <div className="text-xs font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
+        <div className="space-y-3 p-4 rounded-lg bg-[#fafafa] dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626]">
+          <div className="text-xs font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
             <Download className="w-4 h-4 animate-bounce" />
             Active Downloads
           </div>
@@ -238,25 +238,25 @@ export const ModelsView: React.FC = () => {
             const speedMb = (dl.bytesPerSecond / 1e6).toFixed(2);
 
             return (
-              <div key={dl.id} className="p-3 rounded bg-[#0c0d10] border border-[#1f2229] space-y-2">
+              <div key={dl.id} className="p-3 rounded-lg bg-white dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] space-y-2">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-zinc-200 font-medium">{dl.filename}</span>
+                  <span className="text-[#111111] dark:text-[#f5f5f5] font-medium">{dl.filename}</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-zinc-400">
+                    <span className="text-[#666666] dark:text-[#a1a1aa]">
                       {downloadedMb} / {totalMb} MB ({speedMb} MB/s)
                     </span>
                     {dl.estimatedSecondsRemaining !== undefined && (
-                      <span className="text-zinc-500">{dl.estimatedSecondsRemaining}s left</span>
+                      <span className="text-[#888888] dark:text-[#737373]">{dl.estimatedSecondsRemaining}s left</span>
                     )}
                     <button
                       onClick={() => cancelDownload(dl.id)}
-                      className="text-rose-400 hover:text-rose-300 ml-2"
+                      className="text-rose-500 hover:text-rose-600 ml-2"
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
-                <div className="h-1.5 w-full bg-[#1c1f26] rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-[#eaeaea] dark:bg-[#262626] rounded-full overflow-hidden">
                   <div className="h-full bg-black dark:bg-white transition-all duration-300" style={{ width: `${pct}%` }} />
                 </div>
               </div>
@@ -271,15 +271,15 @@ export const ModelsView: React.FC = () => {
           {/* Sub-filter bar when fine-tuned models exist */}
           {fineTunedModels.length > 0 && installedModels.length > 0 && (
             <div className="flex items-center gap-2 pb-1">
-              <span className="text-xs text-zinc-500 font-mono">View:</span>
+              <span className="text-xs text-[#888888] dark:text-[#737373] font-mono">View:</span>
               {(['all', 'base', 'fine-tuned'] as const).map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setInstalledFilter(filter)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                     installedFilter === filter
-                      ? 'bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border border-black dark:border-white'
-                      : 'bg-[#14161a] text-zinc-400 hover:text-zinc-200 border border-[#22252c]'
+                      ? 'bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white'
+                      : 'bg-white dark:bg-[#141414] text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white border border-[#eaeaea] dark:border-[#262626]'
                   }`}
                 >
                   {filter === 'all'
@@ -293,25 +293,25 @@ export const ModelsView: React.FC = () => {
           )}
 
           {installedModels.length === 0 && fineTunedModels.length === 0 ? (
-            <div className="p-12 text-center rounded-lg bg-[#111317] border border-[#22252c] space-y-4">
-              <HardDrive className="w-10 h-10 text-zinc-600 mx-auto" />
+            <div className="p-12 text-center rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-4">
+              <HardDrive className="w-10 h-10 text-[#888888] dark:text-[#737373] mx-auto" />
               <div className="space-y-1">
-                <div className="text-sm font-semibold text-zinc-200">No models downloaded or loaded yet</div>
-                <p className="text-xs text-zinc-500 max-w-md mx-auto">
+                <div className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5]">No models downloaded or loaded yet</div>
+                <p className="text-xs text-[#666666] dark:text-[#a1a1aa] max-w-md mx-auto">
                   You can select an existing GGUF model file on your machine or download from our curated recommendations.
                 </p>
               </div>
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
                   onClick={handleBrowseAndImport}
-                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                 >
                   <FolderOpen className="w-4 h-4" />
                   <span>Select Local GGUF File on Computer</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('recommended')}
-                  className="px-4 py-2 rounded-md bg-[#1c1f26] hover:bg-[#262a33] text-zinc-300 hover:text-white text-xs font-medium transition-colors"
+                  className="px-4 py-2 rounded-md bg-[#f5f5f5] dark:bg-[#202020] hover:bg-[#eaeaea] dark:hover:bg-[#262626] text-[#111111] dark:text-[#f5f5f5] text-xs font-medium transition-colors"
                 >
                   Browse Catalog →
                 </button>
@@ -329,8 +329,8 @@ export const ModelsView: React.FC = () => {
                       key={inst.id}
                       className={`p-5 rounded-lg border flex flex-col justify-between space-y-4 transition-all ${
                         isLoaded
-                          ? 'bg-white dark:bg-[#12141a] border-black dark:border-white shadow-xs'
-                          : 'bg-[#111317] border-[#22252c]'
+                          ? 'bg-white dark:bg-[#141414] border-black dark:border-white shadow-xs'
+                          : 'bg-white dark:bg-[#141414] border-[#eaeaea] dark:border-[#262626]'
                       }`}
                     >
                       <div className="space-y-3">
@@ -341,10 +341,10 @@ export const ModelsView: React.FC = () => {
                               const isImage = taskType === 'image-generation';
                               return (
                                 <>
-                                  <div className="font-semibold text-sm text-zinc-100 flex items-center gap-2 flex-wrap">
+                                  <div className="font-semibold text-sm text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2 flex-wrap">
                                     <span>{inst.name}</span>
                                     {isImage ? (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-400 border border-sky-500/20 font-semibold">
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-semibold">
                                         IMAGE GEN
                                       </span>
                                     ) : inst.mmprojPath || taskType === 'vision' ? (
@@ -352,18 +352,18 @@ export const ModelsView: React.FC = () => {
                                         VISION
                                       </span>
                                     ) : (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/40 font-semibold">
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/40 font-semibold">
                                         TEXT
                                       </span>
                                     )}
                                     {isLoaded && (
-                                      <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                      <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                                         ACTIVE
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-xs text-zinc-500 font-mono mt-0.5">
+                                  <div className="text-xs text-[#666666] dark:text-[#a1a1aa] font-mono mt-0.5">
                                     {inst.format.toUpperCase()} • {inst.quantization} • {isImage ? 'Diffusion' : `${inst.contextLength} ctx`}
                                   </div>
                                 </>
@@ -373,22 +373,22 @@ export const ModelsView: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                          <div className="p-2 rounded bg-[#0d0f12] text-zinc-400 truncate">
-                            <span className="text-zinc-600 block text-[10px]">FILE PATH</span>
+                          <div className="p-2 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa] truncate">
+                            <span className="text-[#888888] dark:text-[#737373] block text-[10px]">FILE PATH</span>
                             {inst.localPath.split('/').pop()}
                           </div>
-                          <div className="p-2 rounded bg-[#0d0f12] text-zinc-400">
-                            <span className="text-zinc-600 block text-[10px]">FILE SIZE</span>
+                          <div className="p-2 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa]">
+                            <span className="text-[#888888] dark:text-[#737373] block text-[10px]">FILE SIZE</span>
                             {(inst.sizeBytes / 1e9).toFixed(2)} GB
                           </div>
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-[#1c1f26] flex items-center justify-between">
+                      <div className="pt-3 border-t border-[#eaeaea] dark:border-[#222222] flex items-center justify-between">
                         <button
                           onClick={() => deleteModel(inst.id)}
                           disabled={isLoaded}
-                          className="p-1.5 rounded text-zinc-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors disabled:opacity-30"
+                          className="p-1.5 rounded text-[#888888] dark:text-[#737373] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-30"
                           title="Remove model from library"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -405,7 +405,7 @@ export const ModelsView: React.FC = () => {
                                     setSelectedModel(inst.name || inst.modelId || inst.id);
                                     setNavTab('playground');
                                   }}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-sm"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors shadow-sm"
                                 >
                                   <Sparkles className="w-3.5 h-3.5" />
                                   <span>Open in Playground</span>
@@ -420,7 +420,7 @@ export const ModelsView: React.FC = () => {
                                       setSelectedModel(inst.name || inst.modelId || inst.id);
                                       setNavTab('playground');
                                     }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                                     title="Open in Playground"
                                   >
                                     <MessageSquare className="w-3.5 h-3.5" />
@@ -428,7 +428,7 @@ export const ModelsView: React.FC = () => {
                                   </button>
                                   <button
                                     onClick={() => stopServer()}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-rose-950/40 hover:bg-rose-900/50 border border-rose-800/40 text-rose-300 text-xs font-medium"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/40 text-rose-600 dark:text-rose-300 text-xs font-medium"
                                   >
                                     <Square className="w-3.5 h-3.5 fill-current" />
                                     <span>Stop</span>
@@ -439,7 +439,7 @@ export const ModelsView: React.FC = () => {
                             return (
                               <button
                                 onClick={() => startServer(inst.modelId, inst.variantId)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                               >
                                 <Play className="w-3.5 h-3.5 fill-current" />
                                 <span>Load & Start</span>
@@ -467,32 +467,32 @@ export const ModelsView: React.FC = () => {
                       key={art.id}
                       className={`p-5 rounded-lg border flex flex-col justify-between space-y-4 transition-all ${
                         isBaseLoaded
-                          ? 'bg-white dark:bg-[#12141a] border-black dark:border-white shadow-xs'
-                          : 'bg-[#111317] border-[#22252c] hover:border-[#2e323b]'
+                          ? 'bg-white dark:bg-[#141414] border-black dark:border-white shadow-xs'
+                          : 'bg-white dark:bg-[#141414] border-[#eaeaea] dark:border-[#262626]'
                       }`}
                     >
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="font-semibold text-sm text-zinc-100 flex items-center gap-2 flex-wrap">
+                            <div className="font-semibold text-sm text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2 flex-wrap">
                               <span>{art.name}</span>
-                              <span className="flex items-center gap-1 text-[10px] font-mono font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                                <Flame className="w-3 h-3 text-amber-400" />
+                              <span className="flex items-center gap-1 text-[10px] font-mono font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                                <Flame className="w-3 h-3 text-amber-500 dark:text-amber-400" />
                                 FINE-TUNED
                               </span>
-                              <span className="text-[10px] font-mono text-zinc-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800 uppercase">
+                              <span className="text-[10px] font-mono text-[#666666] dark:text-[#a1a1aa] bg-[#f5f5f5] dark:bg-[#191919] px-1.5 py-0.5 rounded border border-[#eaeaea] dark:border-[#262626] uppercase">
                                 {art.type === 'lora' ? 'LoRA Adapter' : 'Merged Standalone'}
                               </span>
                               {isBaseLoaded && (
-                                <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                                   ACTIVE ADAPTER
                                 </span>
                               )}
                             </div>
-                            <div className="text-xs text-zinc-400 font-mono mt-1 flex items-center gap-2">
+                            <div className="text-xs text-[#666666] dark:text-[#a1a1aa] font-mono mt-1 flex items-center gap-2">
                               <span>
-                                Base Model: <strong className="text-zinc-200">{art.baseModelName}</strong>
+                                Base Model: <strong className="text-[#111111] dark:text-[#f5f5f5]">{art.baseModelName}</strong>
                               </span>
                               <span>•</span>
                               <span>{art.format.toUpperCase()}</span>
@@ -501,33 +501,33 @@ export const ModelsView: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                          <div className="p-2 rounded bg-[#0c0d11] text-zinc-400">
-                            <span className="text-zinc-600 block text-[10px]">FINAL LOSS</span>
-                            <span className="text-emerald-400 font-bold">
+                          <div className="p-2 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa]">
+                            <span className="text-[#888888] dark:text-[#737373] block text-[10px]">FINAL LOSS</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                               {typeof art.finalLoss === 'number' && !isNaN(art.finalLoss)
                                 ? art.finalLoss.toFixed(4)
                                 : 'Completed'}
                             </span>
                           </div>
-                          <div className="p-2 rounded bg-[#0c0d11] text-zinc-400">
-                            <span className="text-zinc-600 block text-[10px]">ADAPTER SIZE</span>
+                          <div className="p-2 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa]">
+                            <span className="text-[#888888] dark:text-[#737373] block text-[10px]">ADAPTER SIZE</span>
                             <span>{(art.sizeBytes / 1e6).toFixed(1)} MB</span>
                           </div>
                         </div>
 
-                        <div className="text-[11px] text-zinc-500 font-mono truncate">
+                        <div className="text-[11px] text-[#888888] dark:text-[#737373] font-mono truncate">
                           Path: {art.artifactPath.split('/').pop()}
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-[#1a1c24] flex items-center justify-between gap-2 flex-wrap">
+                      <div className="pt-3 border-t border-[#eaeaea] dark:border-[#222222] flex items-center justify-between gap-2 flex-wrap">
                         <button
                           onClick={() => {
                             if (confirm(`Delete fine-tuned adapter "${art.name}"?`)) {
                               deleteFineTunedModel(art.id);
                             }
                           }}
-                          className="p-1.5 rounded text-zinc-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                          className="p-1.5 rounded text-[#888888] dark:text-[#737373] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                           title="Delete fine-tuned adapter"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -536,10 +536,10 @@ export const ModelsView: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setNavTab('forge')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#171922] hover:bg-[#202330] border border-[#272b38] text-zinc-300 hover:text-white text-xs font-medium transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#f5f5f5] dark:bg-[#202020] hover:bg-[#eaeaea] dark:hover:bg-[#262626] border border-[#eaeaea] dark:border-[#262626] text-[#111111] dark:text-[#f5f5f5] text-xs font-medium transition-colors"
                             title="Inspect in Forge Studio"
                           >
-                            <Flame className="w-3.5 h-3.5 text-amber-400" />
+                            <Flame className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                             <span>Forge Studio</span>
                           </button>
 
@@ -548,7 +548,7 @@ export const ModelsView: React.FC = () => {
                               setSelectedModel(art.name);
                               setNavTab('playground');
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                             title="Test in Playground"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
@@ -559,7 +559,7 @@ export const ModelsView: React.FC = () => {
                             (isBaseLoaded ? (
                               <button
                                 onClick={() => stopServer()}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-rose-950/40 hover:bg-rose-900/50 border border-rose-800/40 text-rose-300 text-xs font-medium"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/40 text-rose-600 dark:text-rose-300 text-xs font-medium"
                               >
                                 <Square className="w-3.5 h-3.5 fill-current" />
                                 <span>Stop</span>
@@ -567,7 +567,7 @@ export const ModelsView: React.FC = () => {
                             ) : (
                               <button
                                 onClick={() => startServer(matchingBase.modelId, matchingBase.variantId)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                                 title={`Start ${matchingBase.name} with this adapter`}
                               >
                                 <Play className="w-3.5 h-3.5 fill-current" />
@@ -588,23 +588,23 @@ export const ModelsView: React.FC = () => {
       {activeTab === 'fine-tuned' && (
         <div className="space-y-5">
           {/* Header Action Banner */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-[#13151b] to-[#101217] border border-amber-500/20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-semibold text-zinc-100">Forge Fine-Tuned Models</h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <Flame className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <h3 className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5]">Forge Fine-Tuned Models</h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                   {fineTunedModels.length} {fineTunedModels.length === 1 ? 'ADAPTER' : 'ADAPTERS'}
                 </span>
               </div>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-[#666666] dark:text-[#a1a1aa]">
                 LoRA adapters and standalone fine-tuned models created in Forge. Connect them to their base models for specialized inference.
               </p>
             </div>
 
             <button
               onClick={() => setNavTab('forge')}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-sm shrink-0"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors shadow-sm shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Train New in Forge</span>
@@ -612,20 +612,20 @@ export const ModelsView: React.FC = () => {
           </div>
 
           {fineTunedModels.length === 0 ? (
-            <div className="p-12 text-center rounded-lg bg-[#111317] border border-[#22252c] space-y-4">
-              <Flame className="w-10 h-10 text-amber-400/60 mx-auto" />
+            <div className="p-12 text-center rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-4">
+              <Flame className="w-10 h-10 text-amber-500/60 dark:text-amber-400/60 mx-auto" />
               <div className="space-y-1">
-                <div className="text-sm font-semibold text-zinc-200">No fine-tuned models yet</div>
-                <p className="text-xs text-zinc-400 max-w-md mx-auto">
+                <div className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5]">No fine-tuned models yet</div>
+                <p className="text-xs text-[#666666] dark:text-[#a1a1aa] max-w-md mx-auto">
                   Fine-tune any installed open-source model on your custom dataset using Forge. Your fine-tuned adapters will automatically register and appear here.
                 </p>
               </div>
               <div className="pt-2">
                 <button
                   onClick={() => setNavTab('forge')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                 >
-                  <Flame className="w-4 h-4 text-amber-400" />
+                  <Flame className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                   <span>Open Forge Studio →</span>
                 </button>
               </div>
@@ -645,32 +645,32 @@ export const ModelsView: React.FC = () => {
                     key={art.id}
                     className={`p-5 rounded-lg border flex flex-col justify-between space-y-4 transition-all ${
                       isBaseLoaded
-                        ? 'bg-white dark:bg-[#12141a] border-black dark:border-white shadow-xs'
-                        : 'bg-[#111317] border-[#22252c] hover:border-[#2e323b]'
+                        ? 'bg-white dark:bg-[#141414] border-black dark:border-white shadow-xs'
+                        : 'bg-white dark:bg-[#141414] border-[#eaeaea] dark:border-[#262626]'
                     }`}
                   >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="font-semibold text-sm text-zinc-100 flex items-center gap-2 flex-wrap">
+                          <div className="font-semibold text-sm text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2 flex-wrap">
                             <span>{art.name}</span>
-                            <span className="flex items-center gap-1 text-[10px] font-mono font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                              <Flame className="w-3 h-3 text-amber-400" />
+                            <span className="flex items-center gap-1 text-[10px] font-mono font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                              <Flame className="w-3 h-3 text-amber-500 dark:text-amber-400" />
                               FINE-TUNED
                             </span>
-                            <span className="text-[10px] font-mono text-zinc-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800 uppercase">
+                            <span className="text-[10px] font-mono text-[#666666] dark:text-[#a1a1aa] bg-[#f5f5f5] dark:bg-[#191919] px-1.5 py-0.5 rounded border border-[#eaeaea] dark:border-[#262626] uppercase">
                               {art.type === 'lora' ? 'LoRA Adapter' : 'Merged Standalone'}
                             </span>
                             {isBaseLoaded && (
-                              <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                                 ACTIVE ADAPTER
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-zinc-400 font-mono mt-1 flex items-center gap-2">
+                          <div className="text-xs text-[#666666] dark:text-[#a1a1aa] font-mono mt-1 flex items-center gap-2">
                             <span>
-                              Base Model: <strong className="text-zinc-200">{art.baseModelName}</strong>
+                              Base Model: <strong className="text-[#111111] dark:text-[#f5f5f5]">{art.baseModelName}</strong>
                             </span>
                             <span>•</span>
                             <span>{art.format.toUpperCase()}</span>
@@ -679,33 +679,33 @@ export const ModelsView: React.FC = () => {
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                        <div className="p-2 rounded bg-[#0c0d11] text-zinc-400">
-                          <span className="text-zinc-600 block text-[10px]">FINAL LOSS</span>
-                          <span className="text-emerald-400 font-bold">
+                        <div className="p-2 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa]">
+                          <span className="text-[#888888] dark:text-[#737373] block text-[10px]">FINAL LOSS</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                             {typeof art.finalLoss === 'number' && !isNaN(art.finalLoss)
                               ? art.finalLoss.toFixed(4)
                               : 'Completed'}
                           </span>
                         </div>
-                        <div className="p-2 rounded bg-[#0c0d11] text-zinc-400">
-                          <span className="text-zinc-600 block text-[10px]">ADAPTER SIZE</span>
+                        <div className="p-2 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa]">
+                          <span className="text-[#888888] dark:text-[#737373] block text-[10px]">ADAPTER SIZE</span>
                           <span>{(art.sizeBytes / 1e6).toFixed(1)} MB</span>
                         </div>
                       </div>
 
-                      <div className="text-[11px] text-zinc-500 font-mono truncate">
+                      <div className="text-[11px] text-[#888888] dark:text-[#737373] font-mono truncate">
                         Path: {art.artifactPath.split('/').pop()}
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-[#1a1c24] flex items-center justify-between gap-2 flex-wrap">
+                    <div className="pt-3 border-t border-[#eaeaea] dark:border-[#222222] flex items-center justify-between gap-2 flex-wrap">
                       <button
                         onClick={() => {
                           if (confirm(`Delete fine-tuned adapter "${art.name}"?`)) {
                             deleteFineTunedModel(art.id);
                           }
                         }}
-                        className="p-1.5 rounded text-zinc-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                        className="p-1.5 rounded text-[#888888] dark:text-[#737373] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                         title="Delete fine-tuned adapter"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -714,10 +714,10 @@ export const ModelsView: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setNavTab('forge')}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#171922] hover:bg-[#202330] border border-[#272b38] text-zinc-300 hover:text-white text-xs font-medium transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#f5f5f5] dark:bg-[#202020] hover:bg-[#eaeaea] dark:hover:bg-[#262626] border border-[#eaeaea] dark:border-[#262626] text-[#111111] dark:text-[#f5f5f5] text-xs font-medium transition-colors"
                           title="Inspect in Forge Studio"
                         >
-                          <Flame className="w-3.5 h-3.5 text-amber-400" />
+                          <Flame className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                           <span>Forge Studio</span>
                         </button>
 
@@ -726,7 +726,7 @@ export const ModelsView: React.FC = () => {
                             setSelectedModel(art.name);
                             setNavTab('playground');
                           }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                           title="Test in Playground"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
@@ -737,7 +737,7 @@ export const ModelsView: React.FC = () => {
                           (isBaseLoaded ? (
                             <button
                               onClick={() => stopServer()}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-rose-950/40 hover:bg-rose-900/50 border border-rose-800/40 text-rose-300 text-xs font-medium"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/40 text-rose-600 dark:text-rose-300 text-xs font-medium"
                             >
                               <Square className="w-3.5 h-3.5 fill-current" />
                               <span>Stop</span>
@@ -745,7 +745,7 @@ export const ModelsView: React.FC = () => {
                           ) : (
                             <button
                               onClick={() => startServer(matchingBase.modelId, matchingBase.variantId)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                               title={`Start ${matchingBase.name} with this adapter`}
                             >
                               <Play className="w-3.5 h-3.5 fill-current" />
@@ -765,25 +765,25 @@ export const ModelsView: React.FC = () => {
       {/* Tab Content: IMPORT LOCAL MODEL */}
       {activeTab === 'import' && (
         <div className="max-w-2xl mx-auto space-y-6">
-          <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-5">
+          <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-5">
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-                <FolderOpen className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+              <h3 className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
+                <FolderOpen className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
                 Import Existing Local GGUF Model File
               </h3>
-              <p className="text-xs text-zinc-400 mt-1">
-                Select any <code className="font-mono text-zinc-300">.gguf</code> model file on your computer to add it instantly to your server library without downloading.
+              <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-1">
+                Select any <code className="font-mono text-[#111111] dark:text-[#f5f5f5]">.gguf</code> model file on your computer to add it instantly to your server library without downloading.
               </p>
             </div>
 
             {/* Option A: File Picker Dialog */}
-            <div className="p-5 rounded-lg bg-[#0d0f12] border border-[#22252c] text-center space-y-3">
-              <FolderOpen className="w-8 h-8 text-zinc-600 dark:text-zinc-400 mx-auto" />
-              <div className="text-xs font-medium text-zinc-200">Browse filesystem for GGUF file</div>
+            <div className="p-5 rounded-lg bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-center space-y-3">
+              <FolderOpen className="w-8 h-8 text-[#666666] dark:text-[#a1a1aa] mx-auto" />
+              <div className="text-xs font-medium text-[#111111] dark:text-[#f5f5f5]">Browse filesystem for GGUF file</div>
               <button
                 onClick={handleBrowseAndImport}
                 disabled={isImporting}
-                className="px-5 py-2 rounded-md bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors inline-flex items-center gap-2"
+                className="px-5 py-2 rounded-md bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors inline-flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>{isImporting ? 'Importing...' : 'Browse & Select File...'}</span>
@@ -791,40 +791,40 @@ export const ModelsView: React.FC = () => {
             </div>
 
             {/* Divider */}
-            <div className="flex items-center gap-3 text-xs text-zinc-500 font-mono">
-              <div className="flex-1 h-px bg-[#20232a]" />
+            <div className="flex items-center gap-3 text-xs text-[#888888] dark:text-[#737373] font-mono">
+              <div className="flex-1 h-px bg-[#eaeaea] dark:bg-[#222222]" />
               <span>OR ENTER FILEPATH MANUALLY</span>
-              <div className="flex-1 h-px bg-[#20232a]" />
+              <div className="flex-1 h-px bg-[#eaeaea] dark:bg-[#222222]" />
             </div>
 
             {/* Option B: Direct Path Input */}
             <form onSubmit={handleManualImport} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs text-zinc-300 font-medium">Absolute File Path to .gguf</label>
+                <label className="text-xs text-[#111111] dark:text-[#f5f5f5] font-medium">Absolute File Path to .gguf</label>
                 <input
                   type="text"
                   placeholder="/Users/username/models/my-model-q4_k_m.gguf"
                   value={customPath}
                   onChange={(e) => setCustomPath(e.target.value)}
-                  className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-black dark:focus:border-white"
+                  className="w-full bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] rounded px-3 py-2 text-xs font-mono text-[#111111] dark:text-[#f5f5f5] placeholder-[#888888] dark:placeholder-[#737373] focus:outline-none focus:border-black dark:focus:border-white"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs text-zinc-300 font-medium">Model Display Name (Optional)</label>
+                <label className="text-xs text-[#111111] dark:text-[#f5f5f5] font-medium">Model Display Name (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g. Caden SQL 1.5B"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full bg-[#0d0f12] border border-[#23262f] rounded px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-black dark:focus:border-white"
+                  className="w-full bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] rounded px-3 py-2 text-xs font-mono text-[#111111] dark:text-[#f5f5f5] placeholder-[#888888] dark:placeholder-[#737373] focus:outline-none focus:border-black dark:focus:border-white"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isImporting || !customPath.trim()}
-                className="w-full py-2 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium rounded-md transition-colors disabled:opacity-40"
+                className="w-full py-2 bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium rounded-md transition-colors disabled:opacity-40"
               >
                 {isImporting ? 'Importing Model...' : 'Register Local Model'}
               </button>
@@ -838,9 +838,9 @@ export const ModelsView: React.FC = () => {
         <div className="space-y-4">
           {/* Low-Memory Mode Banner */}
           {isLowMemoryActive && (
-            <div className="p-3 rounded-lg bg-zinc-100 dark:bg-[#151720] border border-zinc-200 dark:border-[#272932] flex items-center justify-between text-xs text-zinc-700 dark:text-zinc-300">
+            <div className="p-3 rounded-lg bg-[#fafafa] dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] flex items-center justify-between text-xs text-[#111111] dark:text-[#f5f5f5]">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                <Layers className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
                 <span><strong>Low-Memory Layer Streaming is Active:</strong> 7B and 12B models are evaluated using dynamic disk layer paging & 8-bit quantized KV cache.</span>
               </div>
             </div>
@@ -860,15 +860,15 @@ export const ModelsView: React.FC = () => {
               return (
                 <div
                   key={model.id}
-                  className="p-5 rounded-lg bg-[#111317] border border-[#22252c] flex flex-col justify-between space-y-4"
+                  className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] flex flex-col justify-between space-y-4"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="font-semibold text-sm text-zinc-100 flex items-center gap-2 flex-wrap">
+                        <div className="font-semibold text-sm text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2 flex-wrap">
                           <span>{model.name}</span>
                           {model.taskType === 'image-generation' || model.capabilities.includes('IMAGE_GENERATION') ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-400 border border-sky-500/20 font-semibold">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-semibold">
                               IMAGE GEN
                             </span>
                           ) : model.capabilities.includes('VISION') ? (
@@ -876,28 +876,28 @@ export const ModelsView: React.FC = () => {
                               VISION
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/40 font-semibold">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/40 font-semibold">
                               TEXT
                             </span>
                           )}
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1f2229] text-zinc-400">
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#f5f5f5] dark:bg-[#191919] text-[#666666] dark:text-[#a1a1aa] border border-[#eaeaea] dark:border-[#262626]">
                             {model.parameterCount}
                           </span>
                         </div>
-                        <div className="text-xs text-zinc-500 font-mono mt-0.5">{model.publisher}</div>
+                        <div className="text-xs text-[#666666] dark:text-[#a1a1aa] font-mono mt-0.5">{model.publisher}</div>
                       </div>
                       {analysis && getRatingBadge(analysis.rating)}
                     </div>
 
-                    <p className="text-xs text-zinc-400 mt-3 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-3 line-clamp-2 leading-relaxed">
                       {model.description}
                     </p>
 
                     {/* Mathematical compatibility reason */}
                     {analysis && (
-                      <div className="mt-3 p-2.5 rounded bg-[#0d0f12] border border-[#1b1e25] text-[11px] space-y-1">
-                        <div className="text-zinc-300 font-medium">{analysis.reason}</div>
-                        <div className="text-zinc-500 font-mono text-[10px]">
+                      <div className="mt-3 p-2.5 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[11px] space-y-1">
+                        <div className="text-[#111111] dark:text-[#f5f5f5] font-medium">{analysis.reason}</div>
+                        <div className="text-[#888888] dark:text-[#737373] font-mono text-[10px]">
                           {isLowMemoryActive ? 'Active Working RAM' : 'Full RAM Req'}: ~{(analysis.estimatedMemoryBytes / 1e9).toFixed(1)} GB | GPU Offload:{' '}
                           {analysis.recommendedGpuLayers} layers
                         </div>
@@ -905,31 +905,31 @@ export const ModelsView: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-[#1c1f26] space-y-2">
+                  <div className="pt-3 border-t border-[#eaeaea] dark:border-[#222222] space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="text-xs font-mono text-zinc-400">
+                      <div className="text-xs font-mono text-[#666666] dark:text-[#a1a1aa]">
                         {(variant.sizeBytes / 1e9).toFixed(2)} GB • {variant.quantization}
                       </div>
 
                       {isInstalled ? (
                         <button
                           onClick={() => setActiveTab('installed')}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 text-xs font-medium"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           <span>Installed ✓</span>
                         </button>
                       ) : activeDownload ? (
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-medium font-mono">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600 dark:text-zinc-400" />
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#111111] dark:text-[#f5f5f5] text-xs font-medium font-mono">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#666666] dark:text-[#a1a1aa]" />
                             <span>
                               Downloading {activeDownload.totalBytes > 0 ? `${Math.round((activeDownload.downloadedBytes / activeDownload.totalBytes) * 100)}%` : '...'}
                             </span>
                           </div>
                           <button
                             onClick={() => cancelDownload(activeDownload.id)}
-                            className="px-2.5 py-1.5 rounded bg-rose-950/60 hover:bg-rose-900/70 border border-rose-800/50 text-rose-300 hover:text-white text-xs font-medium transition-colors"
+                            className="px-2.5 py-1.5 rounded bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/70 border border-rose-200 dark:border-rose-800/50 text-rose-600 dark:text-rose-300 hover:text-rose-700 dark:hover:text-white text-xs font-medium transition-colors"
                             title="Cancel download"
                           >
                             Cancel
@@ -938,15 +938,15 @@ export const ModelsView: React.FC = () => {
                       ) : isPending ? (
                         <button
                           disabled
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium cursor-not-allowed opacity-90"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#f5f5f5] dark:bg-[#191919] text-[#888888] dark:text-[#737373] text-xs font-medium cursor-not-allowed opacity-90"
                         >
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600 dark:text-zinc-400" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-[#888888] dark:text-[#737373]" />
                           <span>Starting...</span>
                         </button>
                       ) : (
                         <button
                           onClick={() => handleDownload(model, variant)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                         >
                           <Download className="w-3.5 h-3.5" />
                           <span>Download</span>
@@ -956,7 +956,7 @@ export const ModelsView: React.FC = () => {
 
                     {activeDownload && (
                       <div className="space-y-1 pt-1">
-                        <div className="h-1.5 w-full bg-[#1b1e26] rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-[#eaeaea] dark:bg-[#262626] rounded-full overflow-hidden">
                           <div
                             className="h-full bg-black dark:bg-white transition-all duration-300"
                             style={{
@@ -968,7 +968,7 @@ export const ModelsView: React.FC = () => {
                             }}
                           />
                         </div>
-                        <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                        <div className="flex items-center justify-between text-[10px] text-[#888888] dark:text-[#737373] font-mono">
                           <span>
                             {(activeDownload.downloadedBytes / 1e6).toFixed(1)} / {(activeDownload.totalBytes / 1e6).toFixed(1)} MB
                             {activeDownload.bytesPerSecond > 0 && ` (${(activeDownload.bytesPerSecond / 1e6).toFixed(1)} MB/s)`}
@@ -992,19 +992,19 @@ export const ModelsView: React.FC = () => {
         <div className="space-y-6">
           <form onSubmit={handleSearchHf} className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-3" />
+              <Search className="w-4 h-4 text-[#888888] dark:text-[#737373] absolute left-3 top-3" />
               <input
                 type="text"
                 placeholder="Search Hugging Face GGUF models (e.g. Qwen, DeepSeek, Gemma, Phi)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#111317] border border-[#22252c] rounded-md pl-9 pr-4 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white font-mono"
+                className="w-full bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] rounded-md pl-9 pr-4 py-2 text-xs text-[#111111] dark:text-[#f5f5f5] placeholder-[#888888] dark:placeholder-[#737373] focus:outline-none focus:border-black dark:focus:border-white font-mono"
               />
             </div>
             <button
               type="submit"
               disabled={isSearchingHf}
-              className="px-4 py-2 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium rounded-md transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium rounded-md transition-colors disabled:opacity-50"
             >
               {isSearchingHf ? 'Searching...' : 'Search'}
             </button>
@@ -1022,38 +1022,38 @@ export const ModelsView: React.FC = () => {
               return (
                 <div
                   key={model.id}
-                  className="p-5 rounded-lg bg-[#111317] border border-[#22252c] flex flex-col justify-between space-y-4"
+                  className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] flex flex-col justify-between space-y-4"
                 >
                   <div>
-                    <div className="font-semibold text-sm text-zinc-100">{model.name}</div>
-                    <div className="text-xs text-zinc-500 font-mono">{model.publisher}</div>
-                    <p className="text-xs text-zinc-400 mt-2 line-clamp-2">{model.description}</p>
+                    <div className="font-semibold text-sm text-[#111111] dark:text-[#f5f5f5]">{model.name}</div>
+                    <div className="text-xs text-[#666666] dark:text-[#a1a1aa] font-mono">{model.publisher}</div>
+                    <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-2 line-clamp-2">{model.description}</p>
                   </div>
 
-                  <div className="pt-3 border-t border-[#1c1f26] space-y-2">
+                  <div className="pt-3 border-t border-[#eaeaea] dark:border-[#222222] space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="text-xs font-mono text-zinc-400">
+                      <div className="text-xs font-mono text-[#666666] dark:text-[#a1a1aa]">
                         {variant.quantization} • {variant.format.toUpperCase()}
                       </div>
                       {isInstalled ? (
                         <button
                           disabled
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 text-xs font-medium"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           <span>Installed ✓</span>
                         </button>
                       ) : activeDownload ? (
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-medium font-mono">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600 dark:text-zinc-400" />
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#111111] dark:text-[#f5f5f5] text-xs font-medium font-mono">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#666666] dark:text-[#a1a1aa]" />
                             <span>
                               Downloading {activeDownload.totalBytes > 0 ? `${Math.round((activeDownload.downloadedBytes / activeDownload.totalBytes) * 100)}%` : '...'}
                             </span>
                           </div>
                           <button
                             onClick={() => cancelDownload(activeDownload.id)}
-                            className="px-2.5 py-1.5 rounded bg-rose-950/60 hover:bg-rose-900/70 border border-rose-800/50 text-rose-300 hover:text-white text-xs font-medium transition-colors"
+                            className="px-2.5 py-1.5 rounded bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/70 border border-rose-200 dark:border-rose-800/50 text-rose-600 dark:text-rose-300 hover:text-rose-700 dark:hover:text-white text-xs font-medium transition-colors"
                             title="Cancel download"
                           >
                             Cancel
@@ -1062,15 +1062,15 @@ export const ModelsView: React.FC = () => {
                       ) : isPending ? (
                         <button
                           disabled
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium cursor-not-allowed opacity-90"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#f5f5f5] dark:bg-[#191919] text-[#888888] dark:text-[#737373] text-xs font-medium cursor-not-allowed opacity-90"
                         >
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600 dark:text-zinc-400" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-[#888888] dark:text-[#737373]" />
                           <span>Starting...</span>
                         </button>
                       ) : (
                         <button
                           onClick={() => handleDownload(model, variant)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors"
                         >
                           <Download className="w-3.5 h-3.5" />
                           <span>Download GGUF</span>
@@ -1080,7 +1080,7 @@ export const ModelsView: React.FC = () => {
 
                     {activeDownload && (
                       <div className="space-y-1 pt-1">
-                        <div className="h-1.5 w-full bg-[#1b1e26] rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-[#eaeaea] dark:bg-[#262626] rounded-full overflow-hidden">
                           <div
                             className="h-full bg-black dark:bg-white transition-all duration-300"
                             style={{

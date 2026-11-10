@@ -36,17 +36,17 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   };
 
   return (
-    <aside className="w-80 border-l border-[#eaeaea] dark:border-[#202227] bg-white dark:bg-[#0c0d10] p-5 space-y-5 select-none overflow-y-auto shrink-0 z-20">
+    <aside className="w-80 border-l border-[#eaeaea] dark:border-[#262626] bg-white dark:bg-[#141414] p-5 space-y-5 select-none overflow-y-auto shrink-0 z-20">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#1f2228] pb-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#111111] dark:text-zinc-200">
-          <Sliders className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+      <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#222222] pb-3">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#111111] dark:text-[#F5F5F5]">
+          <Sliders className="w-4 h-4 text-zinc-700 dark:text-[#A1A1AA]" />
           <span>Generation Settings</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={onReset}
-            className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-200 transition-colors"
+            className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-700 dark:hover:text-[#F5F5F5] transition-colors"
             title="Reset parameters to defaults"
           >
             <RotateCcw className="w-3 h-3" />
@@ -54,7 +54,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           </button>
           <button
             onClick={onClose}
-            className="p-1 rounded text-zinc-500 hover:text-zinc-200 hover:bg-[#1a1d25] transition-colors"
+            className="p-1 rounded text-zinc-500 hover:text-zinc-700 dark:hover:text-[#F5F5F5] hover:bg-zinc-100 dark:hover:bg-[#202020] transition-colors"
             title="Close Settings Drawer"
           >
             <X className="w-4 h-4" />
@@ -65,14 +65,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
       {/* System Prompt */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs">
-          <label className="text-zinc-300 font-medium">System Instructions</label>
+          <label className="text-zinc-700 dark:text-[#A1A1AA] font-medium">System Instructions</label>
         </div>
         <textarea
           rows={3}
           value={settings.systemPrompt}
           onChange={(e) => onChange({ systemPrompt: e.target.value })}
           placeholder="You are a helpful local assistant..."
-          className="w-full p-2.5 rounded-lg bg-[#12141a] border border-[#22252f] text-xs text-zinc-200 focus:outline-none focus:border-black dark:focus:border-white font-sans resize-none leading-relaxed select-text"
+          className="w-full p-2.5 rounded-lg bg-white dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-xs text-[#111111] dark:text-[#F5F5F5] focus:outline-none focus:border-black dark:focus:border-white font-sans resize-none leading-relaxed select-text"
         />
         <p className="text-[10px] text-zinc-500 leading-normal">
           Defines persona, behavioral guidelines, and formatting style for assistant responses.
@@ -213,7 +213,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 value={stopInput}
                 onChange={(e) => handleStopChange(e.target.value)}
                 placeholder="###, User:, EndOfText"
-                className="w-full p-2 rounded-lg bg-[#12141a] border border-[#22252f] text-xs text-zinc-200 focus:outline-none focus:border-black dark:focus:border-white font-mono select-text"
+                className="w-full p-2 rounded-lg bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-xs text-[#111111] dark:text-[#f5f5f5] placeholder-[#888888] dark:placeholder-[#737373] focus:outline-none focus:border-black dark:focus:border-white font-mono select-text"
               />
               <p className="text-[10px] text-zinc-500">
                 Comma-separated strings that will immediately halt generation when emitted.

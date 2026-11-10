@@ -1,133 +1,163 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="Zaylo Logo" width="100" />
+<img src="assets/logo.png" alt="Zaylo Logo" width="96" />
 
-# Zaylo 3.0
+# Zaylo 3.2
 
-**Next-Generation Local AI Inference Engine, Diffusion Studio, and Desktop Server**
+**Local AI Infrastructure: Inference Engine, Diffusion Studio, LoRA Forge, and LoftyDB Knowledge Graph**
 
-Run open-weights language models, diffusion image generators, and multimodal vision models locally on macOS, Windows, and Linux with complete data confidentiality, native hardware acceleration, and drop-in OpenAI API compatibility.
+Run open-weights language models, multimodal vision models, diffusion pipelines, fine-tuning workflows, and persistent graph memory locally across macOS, Windows, and Linux with zero cloud telemetry and full OpenAI API compatibility.
 
-[![Release](https://img.shields.io/badge/Release-v3.0.0-2563eb.svg?style=flat-square)](https://github.com/akhileshg1124/Zaylo/releases)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-18181b.svg?style=flat-square)](https://github.com/akhileshg1124/Zaylo/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Release](https://img.shields.io/badge/Release-v3.2.0-111827.svg?style=flat-square)](https://github.com/loftytechlabs-dev/Zaylo/releases)
+[![Memory Engine](https://img.shields.io/badge/Memory-LoftyDB%20v1.3.4-0284c7.svg?style=flat-square)](#loftydb-knowledge-graph-memory)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-18181b.svg?style=flat-square)](#installers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-374151.svg?style=flat-square)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6.svg?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Fastify](https://img.shields.io/badge/Fastify-v5-000000.svg?style=flat-square&logo=fastify&logoColor=white)](https://fastify.dev)
-[![Offline First](https://img.shields.io/badge/Privacy-100%25%20Offline-10b981.svg?style=flat-square)](https://github.com/akhileshg1124/Zaylo)
+[![Go Engine](https://img.shields.io/badge/Engine-Go%201.26-00add8.svg?style=flat-square&logo=go&logoColor=white)](#system-architecture)
+[![Fastify](https://img.shields.io/badge/API%20Gateway-Fastify%20v5-000000.svg?style=flat-square&logo=fastify&logoColor=white)](#openai-and-memory-api-server)
 
 <br />
 
-[Installers](#installers) | [Overview](#overview) | [Screenshots](#visual-interface) | [Core Capabilities](#core-capabilities) | [Playground](#dynamic-playground) | [Forge Studio](#forge-fine-tuning-studio) | [API Hub](#openai-compatible-api-server) | [Hardware Benchmarks](#hardware-benchmarks) | [Monorepo Architecture](#monorepo-architecture) | [Development](#development-setup)
+[Installers](#installers) | [Highlights](#whats-new-in-zaylo-32) | [Architecture](#system-architecture) | [LoftyDB Memory Graph](#loftydb-knowledge-graph-memory) | [Visual Interface](#visual-interface) | [Playground & Generative UI](#dynamic-playground-and-generative-ui) | [Forge Studio](#forge-fine-tuning-studio) | [API Reference](#openai-and-memory-api-server) | [Benchmarks](#hardware-benchmarks) | [Development](#cross-platform-build-and-packaging)
 
 </div>
 
 ---
 
-## Installers
+## What's New in Zaylo 3.2
 
-Pre-compiled release packages are available for all major operating systems:
-
-| Operating System | Architecture | Format | Download Link |
-| :--- | :--- | :---: | :--- |
-| macOS | Apple Silicon (M1, M2, M3, M4) | .dmg | [Download Zaylo 3.0 (Apple Silicon)](https://github.com/akhileshg1124/Zaylo/releases/latest/download/Zaylo-3.0.0-arm64.dmg) |
-| macOS | Intel Core (x86_64) | .dmg | [Download Zaylo 3.0 (Intel Mac)](https://github.com/akhileshg1124/Zaylo/releases/latest/download/Zaylo-3.0.0.dmg) |
-| Windows | 10 / 11 (64-bit Installer) | .exe | [Download Zaylo 3.0 for Windows (Setup)](https://github.com/akhileshg1124/Zaylo/releases/latest/download/Zaylo.Setup.3.0.0.exe) |
-| Windows | 10 / 11 (64-bit Portable) | .exe | [Download Zaylo 3.0 for Windows (Portable)](https://github.com/akhileshg1124/Zaylo/releases/latest/download/Zaylo.3.0.0.exe) |
-| Linux | Universal AppImage | .AppImage | [Download Zaylo 3.0 for Linux (AppImage)](https://github.com/akhileshg1124/Zaylo/releases/latest/download/Zaylo-3.0.0.AppImage) |
-| Linux | Debian / Ubuntu | .deb | [Download Zaylo 3.0 for Linux (.deb)](https://github.com/akhileshg1124/Zaylo/releases/latest/download/Zaylo-3.0.0.deb) |
+| Subsystem | What Shipped |
+| :--- | :--- |
+| **Bundled LoftyDB Memory Engine** | Embedded, zero-dependency Go temporal vector database bundled per OS (`macOS arm64/x64`, `Windows x64/arm64`, `Linux x64/arm64`) for instant offline startup without global npm dependencies. |
+| **Knowledge Graph Explorer** | Interactive high-DPI Canvas explorer with `Network`, `Cluster`, and `Timeline` modes, automated entity extraction, semantic `RELATED_TO` / `BUILT_WITH` / `CONTRADICTS` edge detection, inspector drawer, time-travel diffs, and rollbacks. |
+| **Dual Storage Isolation** | Persistent memories, entity graphs, and searchable conversation transcripts live exclusively in LoftyDB (`zaylo_*` collections); model registries, telemetry, API keys, RAG chunks, and checkpoints remain in SQLite WAL. |
+| **AI Personas & Themes** | Task-tuned Personas synced cleanly between management panels and Playground, paired with a monochrome high-contrast Light and Dark theme system. |
+| **Inline Charts & Presentations** | Rich client-side chart synthesis (`bar`, `line`, `area`, `pie`) and exportable `.pptx` presentation generation rendered inline inside assistant responses. |
+| **Forge Studio (Renamed from Library)** | Streamlined LoRA fine-tuning workspace with automated dataset validation, VRAM budget estimation, real-time loss telemetry, and one-click adapter merging. |
 
 ---
 
-## Overview
+## Installers
 
-Zaylo 3.0 is a high-performance local artificial intelligence operating environment engineered for bare-metal hardware. It combines text generation, multimodal vision understanding, local diffusion image synthesis, and fine-tuning into a unified desktop interface and API gateway.
+Pre-built release installers and portable binaries are built automatically via GitHub Actions across macOS, Windows, and Linux with the matching LoftyDB binary pre-bundled:
 
-With Zaylo, models run locally on your workstation or server with zero subscription fees, zero cloud telemetry, and absolute privacy. Prompts, documents, generated images, and training datasets never leave your computer.
+| Operating System | Architecture | Package Format | Release Artifact |
+| :--- | :--- | :---: | :--- |
+| **macOS** | Universal (Apple Silicon + Intel) | `.dmg` / `.zip` | [Releases — macOS Universal](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
+| **macOS** | Apple Silicon (M1–M4 `arm64`) | `.dmg` | [Releases — macOS arm64](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
+| **macOS** | Intel (`x86_64`) | `.dmg` | [Releases — macOS x64](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
+| **Windows** | Windows 10 / 11 (`x64` Setup) | `.exe` | [Zaylo Setup (Windows x64)](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
+| **Windows** | Windows 10 / 11 (`x64` Portable) | `.exe` | [Zaylo Portable (Windows x64)](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
+| **Linux** | Universal (`x86_64`) | `.AppImage` | [`Zaylo-3.2.0.AppImage`](https://github.com/loftytechlabs-dev/Zaylo/releases/latest/download/Zaylo-3.2.0.AppImage) |
+| **Linux** | Debian / Ubuntu (`x86_64`) | `.deb` | [`Zaylo-3.2.0.deb`](https://github.com/loftytechlabs-dev/Zaylo/releases/latest/download/Zaylo-3.2.0.deb) |
 
-### Key Architectural Pillars
+---
 
-* **Task-Aware Runtime Dispatcher**: Automatically classifies models by operational task (Text Generation, Multimodal Vision, Image Generation, or Fine-Tuned Adapter) and routes execution to optimized backend engines.
-* **Bare-Metal Hardware Acceleration**: Direct execution through Apple Silicon Metal unified memory, NVIDIA CUDA, Vulkan compute, and multi-threaded CPU SIMD extensions (AVX2 and AVX-512).
-* **Local Diffusion Image Engine**: High-fidelity local image generation powered by Stable Diffusion and Tiny SD architectures, with live step progress reporting, negative prompting, aspect-ratio controls, and local storage persistence.
-* **Forge Studio**: Dedicated fine-tuning environment supporting Low-Rank Adaptation (LoRA) on custom datasets, automatic hyperparameter estimation, real-time training telemetry, and one-click adapter merging.
-* **Universal OpenAI API Gateway**: High-throughput Fastify server delivering drop-in compatibility with `/v1/chat/completions` (streaming text and multimodal vision payloads), `/v1/images/generations` (diffusion image generation), and `/v1/models`.
-* **Embedded SQLite WAL Persistence**: Zero-daemon SQLite database handles library registrations, fine-tuned checkpoints, document embeddings, hardware benchmarks, and network client tokens with WAL concurrency.
-* **Local Document RAG**: Complete offline Retrieval-Augmented Generation pipeline with paragraph-aware chunking, hybrid BM25 lexical search, dense cosine vector similarity, and automatic citation injection.
+## System Architecture
+
+Zaylo isolates high-frequency application telemetry from semantic AI memory and chat history across two specialized storage engines running alongside native inference runtimes:
+
+```text
++-----------------------------------------------------------------------------------+
+|                        ZAYLO WORKSPACE (Desktop App / CLI / Web)                  |
++-----------------------------------------------------------------------------------+
+         |                              |                                |
+         v                              v                                v
++------------------+       +-------------------------+       +----------------------+
+| Fastify Gateway  |       | InferenceService        |       | LoftyDbProcessMgr    |
+| :8080 /v1/*      |------>| - Priority Queue        |       | - Auto-resolves OS   |
+| - OpenAI API     |       | - Auto-Recall Prompting |       |   bundled LoftyDB    |
+| - Memory Graph   |       | - Hybrid RAG Injection  |       | - Managed / External |
+| - LAN & Devices  |       +-------------------------+       +----------------------+
++------------------+          |                   |                      |
+                              v                   v                      v
+        +--------------------------+     +------------------+   +-------------------+
+        | Compute Engines          |     | SQLite WAL Store |   | LoftyDB (Go)      |
+        | - llama.cpp (Metal/CUDA/ |     | - Models & Check |   | :8090 /api/*      |
+        |   Vulkan/AVX2 CPU)       |     |   points         |   | - zaylo_memories  |
+        | - Diffusion Image Engine |     | - API Keys       |   | - zaylo_entities  |
+        | - PyTorch LoRA Forge     |     | - Telemetry/Logs |   | - zaylo_relations |
+        +--------------------------+     | - RAG Embeddings |   | - zaylo_convs     |
+                                         +------------------+   +-------------------+
+```
+
+---
+
+## LoftyDB Knowledge Graph Memory
+
+Zaylo pairs `llama.cpp` inference with an embedded, pure-Go LoftyDB engine managed directly by [`LoftyDbProcessManager`](packages/inference/src/loftydb/LoftyDbProcessManager.ts) and orchestrated by [`MemoryEngine`](packages/inference/src/memory/MemoryEngine.ts):
+
+* **Automatic Extraction & Hybrid Recall**: Captures durable preferences, profile facts, project context, and instructions from conversations, recalling top memories via 128-dimensional trigram cosine similarity combined with lexical overlap, importance weights, and pinned-rule boosts.
+* **Interactive Knowledge Graph (`Network`, `Cluster`, `Timeline`)**: High-DPI Canvas visualization with physics simulation (`Force-Directed`, `Concentric Hubs`, `Compact Grid`), cluster collapse/expand, chronological timeline scrubbing, multi-select lasso/components, minimap viewport navigation, and keyboard shortcuts (`/`, `F`, `Space`, `1/2/3`, `Cmd/Ctrl+Z`).
+* **Graph Intelligence & Hygiene**: Automatically extracts technology, tool, and project entities (`zaylo_entities`), computes semantic (`RELATED_TO`), provenance (`DERIVED_FROM`, `OCCURRED_DURING`), stack (`BUILT_WITH`, `ABOUT`), and conflict (`CONTRADICTS`) links (`zaylo_relationships`), detects near-duplicate memories for confirmed user-approved merges, and surfaces isolated nodes.
+* **Temporal Versioning & Rollbacks**: Every memory mutation is recorded transactionally on disk with nanosecond timestamps, letting users inspect field-level version diffs, query historical `AS OF` snapshots, and roll back any memory cleanly.
+* **Built-In DB Workbench**: Inspect raw collections, run native SQL (`SELECT ... JOIN ... WHERE`), MongoDB-style NoSQL JSON filters, vector similarity queries, and watch real-time Server-Sent Events (SSE) mutation streams directly inside Zaylo.
 
 ---
 
 ## Visual Interface
 
-### Overview Dashboard & Real-Time Hardware Telemetry
-Real-time hardware monitoring, unified memory allocation, server lifecycle controls, and continuous token throughput charting.
+### System Overview & Live Hardware Telemetry
+Unified memory distribution, active model status, runtime toggles, and real-time throughput metrics.
 
 <p align="center">
-  <img src="assets/screenshots/overview.png" alt="Zaylo 3.0 Overview Dashboard" width="100%" />
+  <img src="assets/screenshots/overview.png" alt="Zaylo Overview Dashboard" width="100%" />
 </p>
 
-### Task-Aware Model Registry
-Classification of models by operational task (Text, Image Generation, Vision, and Fine-Tuned), with quantization specs, memory requirement estimators, and direct loading workflows.
+### Task-Aware Model Registry & LoftyDB Navigation
+Capability classification across Text, Vision, Image Generation, and Fine-Tuned LoRA adapters alongside dedicated access to Personas, LoftyDB Knowledge Graph, and Forge.
 
 <p align="center">
-  <img src="assets/screenshots/models.png" alt="Zaylo 3.0 Model Registry" width="100%" />
+  <img src="assets/screenshots/models.png" alt="Zaylo 3.2 Model Registry" width="100%" />
+</p>
+
+### Playground with Generative Visualizations, Memory Recall & RAG
+Inline chart synthesis, streaming markdown output, token speed telemetry, and per-turn RAG and LoftyDB Memory toggles.
+
+<p align="center">
+  <img src="assets/screenshots/playground.png" alt="Zaylo Playground with Chart Rendering and LoftyDB Memory" width="100%" />
 </p>
 
 ### Forge Fine-Tuning Studio
-Custom LoRA model training, dataset format detection, loss convergence monitoring, held-out validation suites, and comparative inference.
+Dataset ingestion, LoRA parameter estimation, real-time training loss curves, validation checks, and adapter management.
 
 <p align="center">
-  <img src="assets/screenshots/forge.png" alt="Zaylo 3.0 Forge Fine-Tuning Studio" width="100%" />
+  <img src="assets/screenshots/forge.png" alt="Zaylo Forge Fine-Tuning Studio" width="100%" />
+</p>
+
+### OpenAI-Compatible API Gateway & Mobile LAN Chat
+Zero-config local server, QR mobile pairing, scoped API keys, and interactive client snippets for `cURL`, `Python`, and `Node.js`.
+
+<p align="center">
+  <img src="assets/screenshots/server.png" alt="Zaylo Server and LAN API Gateway" width="100%" />
 </p>
 
 ---
 
 ## Core Capabilities
 
-### 1. Task-Aware Model Capability Registry
+### 1. Task-Aware Model Dispatch
+* **Text Generation**: Llama 3.2, Qwen 2.5, Mistral, DeepSeek, Gemma, Phi, and SmolLM2 in quantized GGUF format.
+* **Multimodal Vision**: Vision-language architectures (`Qwen 2.5-VL`, `SmolVLM`) with automatic `mmproj` pairing.
+* **Local Diffusion**: Stable Diffusion, Tiny SD, and SDXL pipelines in SafeTensors with step callbacks and aspect presets.
+* **Fine-Tuned Adapters**: LoRA checkpoints trained inside Forge linked cleanly to base models.
 
-Zaylo does not assume every open-weights checkpoint is a text model. It registers and validates models by task, architecture, execution runtime, and memory budget:
-
-* **Text Generation**: Llama 3.2, Qwen 2.5, Mistral, DeepSeek, Gemma, Phi, and SmolLM2 architectures in quantized GGUF format.
-* **Multimodal Vision**: Vision-language models (such as Qwen 2.5-VL and SmolVLM) with automatic multimodal tensor projector (`mmproj`) pairing.
-* **Image Generation**: Diffusion pipelines (including Stable Diffusion, Tiny SD, and SDXL checkpoints in SafeTensors format) running on local compute.
-* **Fine-Tuned Adapters**: LoRA weights and merged standalone checkpoints created inside Forge, linked to their parent base models.
-
-### 2. High-Precision Hardware Telemetry
-
-The hardware monitoring subsystem calculates memory usage according to operating system reporting conventions:
-
-* **Accurate RAM Diagnostics**: Evaluates memory in binary gigabytes (1024^3 bytes), accurately displaying total physical RAM and active wired/compressed pages.
-* **Unified Memory & VRAM Offloading**: Tracks unified buffer distribution on Apple Silicon and discrete VRAM allocations on NVIDIA GPUs.
-* **Throughput History**: Live SVG trendline displaying moving-average token generation velocity during active inference.
+### 2. Cross-Platform Acceleration & Diagnostics
+* **Native Compute Backends**: Apple Silicon Metal unified memory, NVIDIA CUDA, Vulkan compute, and multi-threaded CPU SIMD (`AVX2` / `AVX-512`).
+* **Exact Binary Memory Telemetry**: Reports physical RAM in GiB alongside active wired/compressed memory allocations and GPU VRAM offload metrics.
 
 ---
 
-## Dynamic Playground
+## Dynamic Playground and Generative UI
 
-The Zaylo Playground dynamically adapts its controls, parameter drawers, and renderer according to the selected model's task type.
-
-### For Text-Generation Models:
-* **Streaming Multi-Turn Conversations**: Low-latency token dispatch rendered with full GitHub-flavored Markdown and syntax-highlighted code blocks.
-* **Live Telemetry Strip**: Displays prompt ingestion speed, generation velocity (tokens per second), total latency, and memory consumption.
-* **Context Configuration**: Granular sliders for temperature, Top-P, frequency penalty, presence penalty, max generation length, and custom system instructions.
-* **Local Document RAG Integration**: Drag-and-drop file ingestion drawer (`.md`, `.txt`, `.json`, `.csv`, `.py`, `.ts`, `.rs`) with hybrid lexical and semantic retrieval.
-
-### For Image-Generation Models:
-* **Interactive Diffusion Canvas**: Dedicated canvas providing live step-by-step sampling progress indicators and instant image preview rendering.
-* **Prompt Engineering Tools**: Dedicated positive prompt composer with optional negative prompt configuration.
-* **Dimension & Aspect Ratio Presets**: Standard aspect ratio presets (1:1 square, 16:9 widescreen, 9:16 portrait, 4:3 standard) with resolution validation.
-* **Inference Settings**: Configurable inference steps, guidance scale (Classifier-Free Guidance), seed locking for reproducibility, and batch count.
-* **Local Persistence**: Save generated images to user-selected local folders or copy image data directly to the clipboard.
-* **Canvas Reset**: Instant canvas clearing to start fresh compositions while preserving historical outputs in the session gallery.
-
-### For Comparative Inference:
-* **Side-by-Side Evaluation**: Concurrently executes identical prompts across a base model and its fine-tuned LoRA adapter to assess domain adaptation and stylistic alignment.
+* **Multi-Turn Streaming & Telemetry**: Live prompt processing throughput, tokens/sec generation speed, TTFT latency, and memory footprint.
+* **Generative Charts & Slides**: Structured chart rendering (`pie`, `bar`, `line`, `area`) with theme customization and `.pptx` presentation deck exports.
+* **LoftyDB Long-Term Memory + Document RAG**: Toggle long-term memory recall (`zaylo_memories`) and hybrid BM25 + dense vector document retrieval (`local-ai.sqlite`) independently per chat turn.
+* **Side-by-Side Comparison**: Benchmark base checkpoints against LoRA adapters on identical prompts.
 
 ---
 
 ## Forge Fine-Tuning Studio
-
-Forge brings end-to-end local model adaptation directly to your desktop workstation:
 
 ```text
 +-----------------------+     Auto-Validation     +----------------------------+
@@ -135,100 +165,74 @@ Forge brings end-to-end local model adaptation directly to your desktop workstat
 |  (JSONL / CSV / Parq) |   Format & Duplicate    |  - Rank (r) & Alpha        |
 +-----------------------+   Filtering             |  - VRAM Budget Validation  |
                                                   +----------------------------+
-                                                                ||
-+-----------------------+     Real-Time Training                \/
+                                                                |
++-----------------------+     Real-Time Training                v
 |  Fine-Tuned Adapter   |  <====================  +----------------------------+
-|  - Standalone GGUF    |   Loss Convergence &    |  Local PyTorch / MPS Run   |
-|  - Merged Weights     |   Checkpoints           |  - Apple Silicon Metal     |
-+-----------------------+                         |  - NVIDIA CUDA             |
-                                                  +----------------------------+
+|  - Standalone GGUF    |   Loss Convergence &    |  Local PyTorch / MPS / CUDA|
+|  - Merged Weights     |   Checkpoints           |  Training Worker           |
++-----------------------+                         +----------------------------+
 ```
-
-* **Dataset Importer**: Ingests Instruction-Response pairs, Conversational formats, or Raw text datasets from `.jsonl`, `.csv`, and `.parquet` files with automatic schema detection.
-* **Automated Parameter Optimization**: Calculates optimal LoRA rank ($r$), alpha scaling, batch size, and learning rate schedules based on available GPU VRAM and CPU memory.
-* **Real-Time Convergence Metrics**: Interactive loss curves, gradient step monitors, execution timers, and resource utilization graphs during training.
-* **Evaluation Runner**: Evaluates fine-tuned checkpoints against held-out validation sets to measure accuracy, perplexity, and inference latency.
-* **One-Click Adapter Merging**: Merges low-rank delta weights directly into base models to produce standalone, deployment-ready GGUF binaries.
 
 ---
 
-## OpenAI-Compatible API Server
+## OpenAI and Memory API Server
 
-Zaylo acts as a local replacement for external API providers, listening at `http://localhost:8080/v1` (or your local network IP).
+Zaylo exposes an OpenAI-compatible HTTP server (`http://127.0.0.1:8080/v1`, or your local LAN IP when LAN sharing is enabled).
 
-### Text Generation Endpoint (`POST /v1/chat/completions`)
+### Chat Completions with Memory & RAG (`POST /v1/chat/completions`)
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
     base_url="http://localhost:8080/v1",
-    api_key="lcl_your_api_key"
+    api_key="lcl_your_api_key",
 )
 
 response = client.chat.completions.create(
     model="default",
     messages=[
         {"role": "system", "content": "You are an expert systems engineer."},
-        {"role": "user", "content": "Explain zero-copy memory buffers in operating systems."}
+        {"role": "user", "content": "Explain zero-copy buffers in modern OS kernels."},
     ],
     temperature=0.7,
-    stream=True
+    stream=True,
+    extra_body={"memory": True, "rag": True},
 )
 
 for chunk in response:
-    content = chunk.choices[0].delta.content
-    if content:
-        print(content, end="", flush=True)
+    delta = chunk.choices[0].delta.content
+    if delta:
+        print(delta, end="", flush=True)
 print()
 ```
 
-### Image Generation Endpoint (`POST /v1/images/generations`)
-
-```python
-import base64
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:8080/v1",
-    api_key="lcl_your_api_key"
-)
-
-response = client.images.generate(
-    model="tiny-sd",
-    prompt="A serene wooden cabin on a misty alpine mountain lake, photorealistic, 8k",
-    n=1,
-    size="512x512",
-    response_format="b64_json"
-)
-
-image_bytes = base64.b64decode(response.data[0].b64_json)
-with open("output.png", "wb") as f:
-    f.write(image_bytes)
-print("Image generated and saved to output.png")
-```
-
-### Multimodal Vision Request (`POST /v1/chat/completions`)
+### Knowledge Graph & Long-Term Memory API (`/v1/memories*`)
 
 ```bash
-curl http://localhost:8080/v1/chat/completions \
+# 1. Store a versioned memory (extracts entities & relationships automatically)
+curl -X POST http://localhost:8080/v1/memories \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer lcl_your_api_key" \
   -d '{
-    "model": "qwen2.5-vl",
-    "messages": [
-      {
-        "role": "user",
-        "content": [
-          {"type": "text", "text": "Describe the contents of this image in detail."},
-          {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."}}
-        ]
-      }
-    ]
+    "content": "Primary API runs on Fastify with TypeScript and LoftyDB.",
+    "category": "project",
+    "importance": 5,
+    "pinned": true
   }'
+
+# 2. Retrieve the full property Knowledge Graph + Intelligence diagnostics
+curl http://localhost:8080/v1/memories/graph \
+  -H "Authorization: Bearer lcl_your_api_key"
+
+# 3. Semantic hybrid memory recall
+curl -X POST http://localhost:8080/v1/memories/search \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer lcl_your_api_key" \
+  -d '{"query": "backend framework and storage", "limit": 5}'
 ```
 
-### Image Generation via cURL
+### Diffusion Image Generation (`POST /v1/images/generations`)
 
 ```bash
 curl http://localhost:8080/v1/images/generations \
@@ -236,40 +240,10 @@ curl http://localhost:8080/v1/images/generations \
   -H "Authorization: Bearer lcl_your_api_key" \
   -d '{
     "model": "tiny-sd",
-    "prompt": "An astronaut exploring ancient ruins on Mars, dramatic cinematic lighting",
+    "prompt": "Minimalist architectural concrete pavilion at twilight, high detail",
     "size": "512x512",
     "n": 1,
     "response_format": "b64_json"
-  }'
-```
-
-### Local Document Ingestion & RAG Search
-
-```bash
-# 1. Ingest document into SQLite vector storage
-curl -X POST http://localhost:8080/v1/documents \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer lcl_your_api_key" \
-  -d '{
-    "name": "system-spec.md",
-    "type": "markdown",
-    "content": "Zaylo runs entirely on local hardware with zero external cloud dependencies."
-  }'
-
-# 2. Hybrid BM25 and vector semantic search
-curl -X POST http://localhost:8080/v1/rag/search \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer lcl_your_api_key" \
-  -d '{"query": "cloud dependencies", "limit": 3}'
-
-# 3. Chat with automatic citation augmentation
-curl http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer lcl_your_api_key" \
-  -d '{
-    "model": "default",
-    "messages": [{"role": "user", "content": "Does Zaylo send data to the cloud?"}],
-    "rag": true
   }'
 ```
 
@@ -277,85 +251,96 @@ curl http://localhost:8080/v1/chat/completions \
 
 ## Hardware Benchmarks
 
-Measured on standard consumer hardware across verified model architectures:
+Measured across representative desktop and workstation GPUs/CPUs:
 
 | Hardware Specification | Model Architecture | Quantization | Prompt Processing | Generation Speed | TTFT Latency | Memory Allocation |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| Apple M4 Pro (Unified Memory) | Llama 3.2 1B Instruct | Q4_K_M | 248.5 tok/s | 72.1 tok/s | 38 ms | 1.1 GB |
-| Apple M4 Pro (Unified Memory) | Stable Diffusion (512x512) | F16 / SafeTensors | - | 1.8 s / image | - | 2.4 GB |
-| Apple M2 (Unified Memory) | SmolLM2 135M Instruct | Q8_0 | 380.0 tok/s | 94.2 tok/s | 24 ms | 350 MB |
-| Apple M2 (Unified Memory) | Qwen 2.5 0.5B Instruct | Q4_K_M | 185.0 tok/s | 46.5 tok/s | 45 ms | 620 MB |
-| NVIDIA RTX 4090 (24GB VRAM) | Qwen 2.5 7B Instruct | Q4_K_M | 435.0 tok/s | 98.4 tok/s | 26 ms | 5.2 GB |
-| NVIDIA RTX 4090 (24GB VRAM) | SDXL Turbo (512x512) | F16 / SafeTensors | - | 0.45 s / image | - | 4.8 GB |
-| Intel Core i7-9750H (AVX2 CPU) | SmolLM2 135M Instruct | Q8_0 | 142.0 tok/s | 38.6 tok/s | 78 ms | 380 MB |
+| Apple M4 Pro (Unified Memory) | Llama 3.2 1B Instruct | `Q4_K_M` | 248.5 tok/s | 72.1 tok/s | 38 ms | 1.1 GB |
+| Apple M4 Pro (Unified Memory) | Stable Diffusion (512x512) | `F16` / SafeTensors | - | 1.8 s / image | - | 2.4 GB |
+| Apple M2 (Unified Memory) | SmolLM2 135M Instruct | `Q8_0` | 380.0 tok/s | 94.2 tok/s | 24 ms | 350 MB |
+| Apple M2 (Unified Memory) | Qwen 2.5 0.5B Instruct | `Q4_K_M` | 185.0 tok/s | 46.5 tok/s | 45 ms | 620 MB |
+| NVIDIA RTX 4090 (24 GB VRAM) | Qwen 2.5 7B Instruct | `Q4_K_M` | 435.0 tok/s | 98.4 tok/s | 26 ms | 5.2 GB |
+| NVIDIA RTX 4090 (24 GB VRAM) | SDXL Turbo (512x512) | `F16` / SafeTensors | - | 0.45 s / image | - | 4.8 GB |
+| Intel Core i7-9750H (AVX2 CPU) | SmolLM2 135M Instruct | `Q8_0` | 142.0 tok/s | 38.6 tok/s | 78 ms | 380 MB |
 
 ---
 
 ## Monorepo Architecture
 
-Zaylo is built as a modular TypeScript and C++ monorepo managed with Turborepo and pnpm:
-
 ```text
-packages/
-  capabilities/    Model capability registry and execution dispatch planner
-  database/        SQLite WAL repositories (models, documents, checkpoints, devices)
-  hardware/        Hardware scanning engine for CPU, GPU, unified memory, and RAM
-  inference/       Request priority queue, streaming pipeline, and hybrid search
-  models/          Hugging Face Hub downloader, SHA-256 verifier, GGUF/mmproj parser
-  monitoring/      Hardware telemetry sampler and structured event logging
-  network/         Local network adapter scanner, QR code generator, device tracker
-  protocol/        Typed IPC message contracts and OpenAPI schemas
-  runtime-llama/   C++ llama-server process lifecycle supervisor
-  runtimes/        Abstract runtime contracts and task dispatch interfaces
-  security/        Cryptographic token generator and payload sanitization
-  server/          Fastify HTTP gateway, SSE streaming router, and Web Chat UI
-  shared/          Shared TypeScript domain models, error schemas, and constants
 apps/
-  desktop/         Electron, React, and Tailwind desktop application
-cli/
-  src/             Headless CLI control interface
+  desktop/
+    electron/
+      loftydb/     Managed LoftyDB IPC handlers and lifecycle hooks
+      forge/       Local Python environment & LoRA training runners
+      image/       Local diffusion worker orchestration
+    resources/
+      loftydb/     Bundled native Go binaries (macOS, Windows, Linux)
+    src/features/
+      loftydb/     Knowledge Graph Explorer (Network / Cluster / Timeline), DB Workbench
+      personas/    AI Persona manager & Playground selector
+      presentations/  Interactive slide preview & PPTX export
+      visualizations/ Chart engine (Bar, Line, Area, Pie)
+  vscode/          Zaylo VS Code IDE extension
+cli/               Headless CLI daemon (`zaylo start`, `zaylo status`, `zaylo models`)
+packages/
+  capabilities/    Model capability classifier and dispatch planner
+  database/        SQLite WAL repositories (models, checkpoints, devices, settings)
+  hardware/        Cross-OS CPU, GPU, unified memory, and RAM scanner
+  inference/
+    src/loftydb/   Native HTTP client + cross-OS LoftyDB process supervisor
+    src/memory/    Semantic MemoryEngine, entity extractor, and conflict/merge intelligence
+  models/          Hugging Face Hub downloader, SHA-256 verifier, GGUF parser
+  monitoring/      Telemetry sampler and structured logs
+  network/         LAN interface detection, QR pairing, device trust store
+  protocol/        End-to-end typed Electron IPC and REST contracts
+  runtime-llama/   Managed llama-server runtime supervisor
+  runtimes/        Runtime interfaces and task abstractions
+  security/        API key generation and secret redaction
+  server/          Fastify OpenAI + Memory Graph API gateway
+  shared/          Shared types, schemas, and cross-OS path helpers
 ```
 
 ---
 
-## Development Setup
-
-To build and run Zaylo 3.0 from source:
+## Cross-Platform Build and Packaging
 
 ### Prerequisites
-* Node.js >= 22.0.0
-* pnpm >= 11.0.0
-* Python >= 3.10 (for Forge fine-tuning and diffusion image synthesis)
-* C++ Toolchain (Xcode Command Line Tools on macOS, MSVC on Windows, GCC/Clang on Linux)
+* Node.js `>= 22.0.0`
+* pnpm `>= 11.24.0`
+* Python `>= 3.10` (optional — for Forge LoRA fine-tuning and diffusion image synthesis)
+* Native toolchain for Electron native addons if rebuilding from source (`Xcode Command Line Tools` on macOS, `MSVC` on Windows, `build-essential` + `libgbm-dev` + `libarchive-tools` on Ubuntu/Debian)
 
-### Build Instructions
+### Build from Source (macOS / Windows / Linux)
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/akhileshg1124/Zaylo.git
+# 1. Clone Zaylo (includes pre-compiled cross-OS LoftyDB binaries)
+git clone https://github.com/loftytechlabs-dev/Zaylo.git
 cd Zaylo
 
-# 2. Install workspace dependencies
+# 2. Install dependencies
 pnpm install
 
-# 3. Build all workspace packages
+# 3. Build all 16 workspace packages
 pnpm build
 
-# 4. Launch Desktop application in development mode
-pnpm dev:desktop
+# 4. Run LoftyDB integration and core tests
+npx vitest run tests/loftydb_memory.test.ts
 
-# 5. Execute full workspace test suite
-pnpm test
+# 5. Launch Desktop in development mode
+pnpm dev:desktop
 ```
 
-### Packaging Desktop Installers
+### Package Cross-OS Installers
 
 ```bash
-pnpm --filter @local-ai/desktop dist        # Package for current operating system
-pnpm --filter @local-ai/desktop dist:mac    # Package macOS .dmg and .zip bundles
-pnpm --filter @local-ai/desktop dist:win    # Package Windows setup and portable executables
-pnpm --filter @local-ai/desktop dist:linux  # Package Linux .AppImage and .deb packages
+pnpm --filter @local-ai/desktop dist        # Package for host operating system
+pnpm dist:mac                               # Package macOS .dmg and .zip (Universal / arm64 / x64)
+pnpm dist:win                               # Package Windows Setup and Portable .exe (x64)
+pnpm dist:linux                             # Package Linux .AppImage and .deb (x64)
 ```
+
+Note on macOS, Windows, and Linux CI releases: pushing a tag matching `v*` triggers `.github/workflows/release.yml` across `macos-latest`, `windows-latest`, and `ubuntu-latest`, running `pnpm build`, automated cross-OS integration checks (`tests/loftydb_memory.test.ts`, `tests/capabilities.test.ts`, `tests/theme.test.ts`, `tests/creations_and_visualizations.test.ts`), and native installer packaging.
 
 ---
 

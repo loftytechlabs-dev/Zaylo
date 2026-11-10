@@ -37,6 +37,23 @@ import type {
   ImageGenerationJob,
   ImageGenerationProgress,
   ModelCapabilityProfile,
+  LoftyDbConfig,
+  LoftyDbStatus,
+  LoftyDbStats,
+  LoftyDbDocument,
+  LoftyDbHistoryEntry,
+  LoftyDbDiffResult,
+  LoftyDbSqlResult,
+  LoftyDbSubscriptionEvent,
+  KnowledgeGraphPayload,
+  KnowledgeNodeKind,
+  MemoryEntry,
+  MemoryRecallResult,
+  MemoryRelationship,
+  MemoryRelationshipType,
+  MemoryCategory,
+  MemoryScope,
+  StoredConversation,
 } from '@local-ai/shared';
 
 export interface IPCChannels {
@@ -151,6 +168,64 @@ export interface IPCChannels {
   'capabilities:get-model-profile': { request: { modelId: string }; response: ModelCapabilityProfile | null };
   'capabilities:list-profiles': { request: void; response: ModelCapabilityProfile[] };
 
+  // LoftyDB Engine & Direct Database Features
+  'loftydb:get-config': { request: void; response: LoftyDbConfig };
+  'loftydb:update-config': { request: Partial<LoftyDbConfig>; response: LoftyDbConfig };
+  'loftydb:get-status': { request: void; response: LoftyDbStatus };
+  'loftydb:start': { request: void; response: LoftyDbStatus };
+  'loftydb:stop': { request: void; response: LoftyDbStatus };
+  'loftydb:test-connection': { request: { baseUrl?: string }; response: { ok: boolean; stats?: LoftyDbStats; error?: string } };
+  'loftydb:list-collections': { request: void; response: string[] };
+  'loftydb:delete-collection': { request: { collection: string }; response: boolean };
+  'loftydb:compact-collection': { request: { collection: string }; response: boolean };
+  'loftydb:query-documents': { request: { collection: string; filter?: Record<string, unknown>; asOf?: string | number }; response: LoftyDbDocument[] };
+  'loftydb:upsert-document': { request: { collection: string; document: Record<string, unknown>; id?: string }; response: LoftyDbDocument };
+  'loftydb:get-document': { request: { collection: string; id: string; asOf?: string | number }; response: LoftyDbDocument | null };
+  'loftydb:delete-document': { request: { collection: string; id: string }; response: boolean };
+  'loftydb:vector-search': { request: { collection: string; text?: string; vector?: number[]; limit?: number; minSimilarity?: number }; response: { queryVector: number[]; documents: LoftyDbDocument[] } };
+  'loftydb:execute-sql': { request: { query: string; asOf?: string | number }; response: LoftyDbSqlResult };
+  'loftydb:get-history': { request: { collection: string; id: string }; response: LoftyDbHistoryEntry[] };
+  'loftydb:diff-versions': { request: { collection: string; id: string; v1: number; v2: number }; response: LoftyDbDiffResult };
+  'loftydb:rollback': { request: { collection: string; id: string; version: number }; response: LoftyDbDocument };
+  'loftydb:subscribe': { request: { collection: string; filter?: Record<string, unknown> }; response: { subscriptionId: string } };
+  'loftydb:unsubscribe': { request: { subscriptionId: string }; response: boolean };
+
+  // Long-Term Memory & Persistent Chat History (backed by LoftyDB)
+  'memory:list': { request: { scope?: 'all' | MemoryScope; personaId?: string; conversationId?: string; category?: MemoryCategory; minImportance?: number; pinnedOnly?: boolean } | void; response: MemoryEntry[] };
+  'memory:save': { request: { id?: string; title?: string; content: string; category?: MemoryCategory; scope?: MemoryScope; personaId?: string; conversationId?: string; importance?: number; confidence?: number; pinned?: boolean; tags?: string[]; source?: 'auto' | 'manual' | 'chat' }; response: MemoryEntry };
+  'memory:delete': { request: { id: string }; response: boolean };
+  'memory:recall': { request: { query: string; limit?: number; minSimilarity?: number; scope?: 'all' | MemoryScope; personaId?: string; conversationId?: string }; response: MemoryRecallResult[] };
+  'memory:history': { request: { id: string }; response: LoftyDbHistoryEntry[] };
+  'memory:diff': { request: { id: string; v1: number; v2: number }; response: LoftyDbDiffResult };
+  'memory:rollback': { request: { id: string; version: number }; response: MemoryEntry };
+  'memory:query-as-of': { request: { asOf: string | number; filter?: Record<string, unknown> }; response: MemoryEntry[] };
+  'memory:list-conversations': { request: void; response: StoredConversation[] };
+  'memory:save-conversation': { request: StoredConversation; response: StoredConversation };
+  'memory:delete-conversation': { request: { id: string }; response: boolean };
+  'memory:search-conversations': { request: { query: string; limit?: number }; response: StoredConversation[] };
+  'memory:sync-conversations': { request: { conversations: StoredConversation[] }; response: StoredConversation[] };
+  'memory:extract-from-conversations': {
+    request: { conversationId?: string };
+    response: { scannedConversations: number; scannedMessages: number; extracted: MemoryEntry[] };
+  };
+  'memory:get-graph': { request: { collection?: string } | void; response: KnowledgeGraphPayload };
+  'memory:create-relationship': {
+    request: {
+      sourceId: string;
+      targetId: string;
+      sourceKind: KnowledgeNodeKind;
+      targetKind: KnowledgeNodeKind;
+      type: MemoryRelationshipType;
+      strength?: number;
+      confidence?: number;
+      directed?: boolean;
+      metadata?: Record<string, unknown>;
+    };
+    response: MemoryRelationship;
+  };
+  'memory:delete-relationship': { request: { id: string }; response: boolean };
+  'memory:merge': { request: { primaryId: string; secondaryId: string; mergedContent?: string }; response: MemoryEntry };
+
   // App & System
   'app:get-version': { request: void; response: string };
   'app:select-directory': { request: { defaultPath?: string }; response: string | null };
@@ -171,4 +246,8 @@ export interface IPCEvents {
   'image:completed': { jobId: string; images: GeneratedImage[] };
   'image:error': { jobId: string; error: string };
   'models:updated': void;
+  'loftydb:status-changed': LoftyDbStatus;
+  'loftydb:log': string;
+  'loftydb:subscription-event': LoftyDbSubscriptionEvent & { subscriptionId: string };
+  'memory:updated': void;
 }

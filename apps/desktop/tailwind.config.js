@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: ['selector', '[data-theme="dark"], .dark'],
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,6 +8,20 @@ export default {
   theme: {
     extend: {
       colors: {
+        'app-bg': 'var(--app-bg)',
+        'sidebar-bg': 'var(--sidebar-bg)',
+        'workspace-bg': 'var(--workspace-bg)',
+        'header-bg': 'var(--header-bg)',
+        'surface': 'var(--surface)',
+        'surface-elevated': 'var(--surface-elevated)',
+        'hover-bg': 'var(--hover-bg)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
+        'border-color': 'var(--border-color)',
+        'divider-color': 'var(--divider-color)',
+        'btn-primary-bg': 'var(--btn-primary-bg)',
+        'btn-primary-text': 'var(--btn-primary-text)',
         background: 'var(--background)',
         foreground: 'var(--foreground)',
         card: 'var(--card)',

@@ -970,4 +970,34 @@ export class FineTunedModelRepository {
   }
 }
 
+export class SettingsRepository {
+  constructor(private db: IDatabase) {}
+
+  get<T>(key: string): T | null {
+    const row = this.db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as any;
+    if (!row || typeof row.value !== 'string') return null;
+    try {
+      return JSON.parse(row.value) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  set<T>(key: string, value: T): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO settings (key, value, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = excluded.updated_at
+    `);
+    stmt.run(key, JSON.stringify(value), Date.now());
+  }
+
+  delete(key: string): boolean {
+    const res = this.db.prepare('DELETE FROM settings WHERE key = ?').run(key);
+    return res.changes > 0;
+  }
+}
+
 

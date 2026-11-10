@@ -110,20 +110,20 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
 
       {/* Active Generation Banner Card */}
       {isGenerating && (
-        <div className="p-5 rounded-2xl bg-[#fafafa] dark:bg-[#12141c] border border-[#eaeaea] dark:border-zinc-800 shadow-xl space-y-3.5 animate-in fade-in duration-300">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] shadow-xl space-y-3.5 animate-in fade-in duration-300">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white">
                 <RotateCw className="w-4 h-4 animate-spin" />
               </div>
               <div>
-                <div className="text-xs font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
+                <div className="text-xs font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
                   <span>Generating Local Diffusion Image</span>
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
                     {progress?.percentage || 0}%
                   </span>
                 </div>
-                <div className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono mt-0.5">
+                <div className="text-[11px] text-[#666666] dark:text-[#a1a1aa] font-mono mt-0.5">
                   {progress?.statusMessage || `Denoising step ${progress?.step || 0} of ${progress?.totalSteps || 20}`}
                   {progress?.elapsedSeconds ? ` • ${progress.elapsedSeconds.toFixed(1)}s elapsed` : ''}
                 </div>
@@ -132,7 +132,7 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
 
             <button
               onClick={onCancelGeneration}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 text-xs font-medium transition-colors"
             >
               <X className="w-3.5 h-3.5" />
               <span>Cancel</span>
@@ -140,7 +140,7 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
           </div>
 
           {/* Progress Bar */}
-          <div className="h-2 w-full bg-zinc-100 dark:bg-[#1b1e27] rounded-full overflow-hidden">
+          <div className="h-2 w-full bg-[#eaeaea] dark:bg-[#262626] rounded-full overflow-hidden">
             <div
               className="h-full bg-black dark:bg-white rounded-full transition-all duration-200"
               style={{ width: `${Math.max(5, progress?.percentage || 0)}%` }}
@@ -151,22 +151,22 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
 
       {/* Scope Selector & Canvas Management Bar */}
       {images.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#eaeaea] dark:border-[#1d2028]">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#eaeaea] dark:border-[#222222]">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-xs text-[#111111] dark:text-zinc-200">Canvas</span>
+            <span className="font-semibold text-xs text-[#111111] dark:text-[#f5f5f5]">Canvas</span>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
               {displayImages.length} {displayImages.length === 1 ? 'image' : 'images'}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#222530] text-xs">
+            <div className="flex items-center p-0.5 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] text-xs">
               <button
                 onClick={() => setViewScope('current')}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                   viewScope === 'current'
                     ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
-                    : 'text-zinc-500 hover:text-black dark:hover:text-white'
+                    : 'text-[#666666] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white'
                 }`}
               >
                 Current Canvas ({sessionImages.length})
@@ -176,7 +176,7 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                   viewScope === 'all'
                     ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
-                    : 'text-zinc-500 hover:text-black dark:hover:text-white'
+                    : 'text-[#666666] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white'
                 }`}
               >
                 All History ({images.length})
@@ -186,10 +186,10 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
             {onResetCanvas && (
               <button
                 onClick={onResetCanvas}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-[#161820] hover:bg-zinc-50 dark:hover:bg-[#1e212b] border border-[#eaeaea] dark:border-[#262a38] text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white text-[11px] font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-[#141414] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white text-[11px] font-medium transition-colors"
                 title="Start a fresh blank canvas"
               >
-                <Plus className="w-3.5 h-3.5 text-zinc-500" />
+                <Plus className="w-3.5 h-3.5 text-[#666666] dark:text-[#a1a1aa]" />
                 <span>New Canvas</span>
               </button>
             )}
@@ -258,10 +258,10 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
             {displayImages.map((img) => (
               <div
                 key={img.id}
-                className="group relative rounded-2xl bg-[#111318] border border-[#20232c] hover:border-[#323747] overflow-hidden flex flex-col shadow-md transition-all"
+                className="group relative rounded-2xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] hover:border-black/30 dark:hover:border-white/30 overflow-hidden flex flex-col shadow-xs transition-all"
               >
                 {/* Image Container with Hover Overlay */}
-                <div className="relative aspect-square bg-[#0b0c0f] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => onOpenLightbox(img)}>
+                <div className="relative aspect-square bg-[#fafafa] dark:bg-[#090909] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => onOpenLightbox(img)}>
                   <img
                     src={img.base64Data || `file://${img.localPath}`}
                     alt={img.prompt}
@@ -276,7 +276,7 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
                           e.stopPropagation();
                           onOpenLightbox(img);
                         }}
-                        className="p-1.5 rounded-lg bg-black/60 hover:bg-black text-zinc-300 hover:text-white border border-white/10 transition-colors"
+                        className="p-1.5 rounded-lg bg-black/60 hover:bg-black text-white border border-white/20 transition-colors"
                         title="View Full Resolution"
                       >
                         <Maximize2 className="w-3.5 h-3.5" />
@@ -287,7 +287,7 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
                           e.stopPropagation();
                           onOpenFolder(img.localPath);
                         }}
-                        className="p-1.5 rounded-lg bg-black/60 hover:bg-black text-zinc-300 hover:text-white border border-white/10 transition-colors"
+                        className="p-1.5 rounded-lg bg-black/60 hover:bg-black text-white border border-white/20 transition-colors"
                         title="Show in Folder"
                       >
                         <FolderOpen className="w-3.5 h-3.5" />
@@ -298,14 +298,14 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
                           e.stopPropagation();
                           onDeleteImage(img.id);
                         }}
-                        className="p-1.5 rounded-lg bg-black/60 hover:bg-red-950 text-zinc-300 hover:text-red-300 border border-white/10 transition-colors"
+                        className="p-1.5 rounded-lg bg-black/60 hover:bg-rose-900 text-white border border-white/20 transition-colors"
                         title="Delete Image"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px] text-zinc-300 font-mono">
+                    <div className="flex items-center justify-between text-[10px] text-white font-mono">
                       <span>{img.width} × {img.height}</span>
                       <span>Seed: {img.seed}</span>
                     </div>
@@ -314,20 +314,20 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
 
                 {/* Card Metadata Footer */}
                 <div className="p-3.5 space-y-2.5 flex-1 flex flex-col justify-between">
-                  <p className="text-xs text-zinc-200 line-clamp-2 leading-relaxed" title={img.prompt}>
+                  <p className="text-xs text-[#111111] dark:text-[#f5f5f5] line-clamp-2 leading-relaxed" title={img.prompt}>
                     "{img.prompt}"
                   </p>
 
-                  <div className="pt-2 border-t border-[#1a1c24] flex items-center justify-between text-[11px] font-mono text-zinc-400">
-                    <span className="truncate max-w-[120px] text-zinc-500">{img.modelName}</span>
-                    <span className="text-emerald-400">{(img.durationMs / 1000).toFixed(1)}s</span>
+                  <div className="pt-2 border-t border-[#eaeaea] dark:border-[#222222] flex items-center justify-between text-[11px] font-mono text-[#666666] dark:text-[#a1a1aa]">
+                    <span className="truncate max-w-[120px] text-[#888888] dark:text-[#737373]">{img.modelName}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{(img.durationMs / 1000).toFixed(1)}s</span>
                   </div>
 
                   {/* Actions Row */}
                   <div className="grid grid-cols-3 gap-1.5 pt-1">
                     <button
                       onClick={() => onSaveImageAs(img.localPath, `zaylo_${img.seed}.png`)}
-                      className="flex items-center justify-center gap-1 py-1.5 rounded bg-[#171922] hover:bg-[#1f222e] text-zinc-300 hover:text-white border border-[#252835] text-[11px] font-medium transition-colors"
+                      className="flex items-center justify-center gap-1 py-1.5 rounded bg-[#f5f5f5] dark:bg-[#191919] hover:bg-[#eaeaea] dark:hover:bg-[#202020] text-[#111111] dark:text-[#f5f5f5] border border-[#eaeaea] dark:border-[#262626] text-[11px] font-medium transition-colors"
                       title="Save Image"
                     >
                       <Download className="w-3 h-3" />
@@ -336,16 +336,16 @@ export const ImagePlaygroundArea: React.FC<ImagePlaygroundAreaProps> = ({
 
                     <button
                       onClick={() => handleCopyPrompt(img)}
-                      className="flex items-center justify-center gap-1 py-1.5 rounded bg-[#171922] hover:bg-[#1f222e] text-zinc-300 hover:text-white border border-[#252835] text-[11px] font-medium transition-colors"
+                      className="flex items-center justify-center gap-1 py-1.5 rounded bg-[#f5f5f5] dark:bg-[#191919] hover:bg-[#eaeaea] dark:hover:bg-[#202020] text-[#111111] dark:text-[#f5f5f5] border border-[#eaeaea] dark:border-[#262626] text-[11px] font-medium transition-colors"
                       title="Copy Prompt"
                     >
-                      {copiedId === img.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedId === img.id ? <Check className="w-3 h-3 text-emerald-500 dark:text-emerald-400" /> : <Copy className="w-3 h-3" />}
                       <span>{copiedId === img.id ? 'Copied' : 'Prompt'}</span>
                     </button>
 
                     <button
                       onClick={() => onRegenerate(img)}
-                      className="flex items-center justify-center gap-1 py-1.5 rounded bg-[#171922] hover:bg-[#1f222e] text-zinc-300 hover:text-white border border-[#252835] text-[11px] font-medium transition-colors"
+                      className="flex items-center justify-center gap-1 py-1.5 rounded bg-[#f5f5f5] dark:bg-[#191919] hover:bg-[#eaeaea] dark:hover:bg-[#202020] text-[#111111] dark:text-[#f5f5f5] border border-[#eaeaea] dark:border-[#262626] text-[11px] font-medium transition-colors"
                       title="Regenerate Image"
                     >
                       <RotateCw className="w-3 h-3" />

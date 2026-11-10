@@ -20,6 +20,7 @@ interface ConversationAreaProps {
   onRetry: () => void;
   onClearConversation: () => void;
   onTriggerImageUpload?: () => void;
+  onSaveToMemory?: (text: string) => void;
 }
 
 export const ConversationArea: React.FC<ConversationAreaProps> = ({
@@ -32,6 +33,7 @@ export const ConversationArea: React.FC<ConversationAreaProps> = ({
   onRetry,
   onClearConversation,
   onTriggerImageUpload,
+  onSaveToMemory,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -69,10 +71,10 @@ export const ConversationArea: React.FC<ConversationAreaProps> = ({
         <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto text-center space-y-7 my-auto select-none">
           {/* Prominent Clean Heading */}
           <div className="space-y-1.5">
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#111111] dark:text-[#f4f4f5] tracking-tight font-sans">
+            <h1 className="text-4xl sm:text-5xl font-bold text-[#111111] dark:text-[#F5F5F5] tracking-tight font-sans">
               Zaylo
             </h1>
-            <p className="text-base sm:text-lg text-zinc-400 dark:text-zinc-500 font-normal">
+            <p className="text-base sm:text-lg text-zinc-400 dark:text-[#A1A1AA] font-normal">
               Your Local AI Playground
             </p>
           </div>
@@ -82,36 +84,36 @@ export const ConversationArea: React.FC<ConversationAreaProps> = ({
             {/* 1. Write Code */}
             <button
               onClick={() => handleSuggestionClick('code')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs sm:text-sm font-medium text-[#111111] dark:text-[#f4f4f5] transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] hover:border-zinc-400 dark:hover:border-[#737373] text-xs sm:text-sm font-medium text-[#111111] dark:text-[#F5F5F5] transition-all shadow-xs cursor-pointer"
             >
-              <Code className="w-4 h-4 text-[#111111] dark:text-[#f4f4f5]" />
+              <Code className="w-4 h-4 text-[#111111] dark:text-[#F5F5F5]" />
               <span>Write Code</span>
             </button>
 
             {/* 2. Query SQL */}
             <button
               onClick={() => handleSuggestionClick('sql')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs sm:text-sm font-medium text-[#111111] dark:text-[#f4f4f5] transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] hover:border-zinc-400 dark:hover:border-[#737373] text-xs sm:text-sm font-medium text-[#111111] dark:text-[#F5F5F5] transition-all shadow-xs cursor-pointer"
             >
-              <Database className="w-4 h-4 text-[#111111] dark:text-[#f4f4f5]" />
+              <Database className="w-4 h-4 text-[#111111] dark:text-[#F5F5F5]" />
               <span>Query SQL</span>
             </button>
 
             {/* 3. Summarize */}
             <button
               onClick={() => handleSuggestionClick('summarize')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs sm:text-sm font-medium text-[#111111] dark:text-[#f4f4f5] transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] hover:border-zinc-400 dark:hover:border-[#737373] text-xs sm:text-sm font-medium text-[#111111] dark:text-[#F5F5F5] transition-all shadow-xs cursor-pointer"
             >
-              <FileText className="w-4 h-4 text-[#111111] dark:text-[#f4f4f5]" />
+              <FileText className="w-4 h-4 text-[#111111] dark:text-[#F5F5F5]" />
               <span>Summarize</span>
             </button>
 
             {/* 4. Analyze Image */}
             <button
               onClick={() => handleSuggestionClick('image')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] hover:border-zinc-400 dark:hover:border-zinc-600 text-xs sm:text-sm font-medium text-[#111111] dark:text-[#f4f4f5] transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] hover:border-zinc-400 dark:hover:border-[#737373] text-xs sm:text-sm font-medium text-[#111111] dark:text-[#F5F5F5] transition-all shadow-xs cursor-pointer"
             >
-              <ImageIcon className="w-4 h-4 text-[#111111] dark:text-[#f4f4f5]" />
+              <ImageIcon className="w-4 h-4 text-[#111111] dark:text-[#F5F5F5]" />
               <span>Analyze Image</span>
             </button>
           </div>
@@ -145,6 +147,7 @@ export const ConversationArea: React.FC<ConversationAreaProps> = ({
                 stats={isLastAssistant ? generationStats : undefined}
                 onRegenerate={isLastAssistant ? onRegenerate : undefined}
                 onRetry={isLastAssistant ? onRetry : undefined}
+                onSaveToMemory={onSaveToMemory}
               />
             );
           })}

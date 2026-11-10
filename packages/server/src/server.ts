@@ -235,6 +235,64 @@ export class ApiServer {
       return formatOpenAIModelList(installed, loadedModel);
     });
 
+    // Agents List (Zaylo AI Agents for Daxon and external consumers)
+    const listAgentsHandler = async () => {
+      const activeModel = this.inferenceService.getModelName() || 'SmolLM2 135M Instruct';
+      return {
+        object: 'list',
+        data: [
+          {
+            id: 'data-analyst',
+            name: 'Data Analyst Agent',
+            description: 'Expert in database exploration, schema-aware Text-to-SQL, dataset profiling, and trend analysis.',
+            avatar: '📊',
+            capabilities: ['text-to-sql', 'data-profiling', 'anomaly-detection', 'chart-recommendation', 'report-generation'],
+            model: activeModel,
+            status: 'connected',
+          },
+          {
+            id: 'sql-optimizer',
+            name: 'SQL Performance Optimizer',
+            description: 'Analyzes query execution plans, indexes, costly scans, and rewrites inefficient SQL queries.',
+            avatar: '⚡',
+            capabilities: ['query-optimization', 'index-recommendation', 'execution-plan-analysis', 'explain-advisory'],
+            model: activeModel,
+            status: 'connected',
+          },
+          {
+            id: 'database-auditor',
+            name: 'Database Security & Integrity Auditor',
+            description: 'Scans schemas for missing constraints, unindexed foreign keys, orphan rows, and security vulnerabilities.',
+            avatar: '🛡️',
+            capabilities: ['schema-audit', 'security-audit', 'constraint-verification', 'integrity-check'],
+            model: activeModel,
+            status: 'connected',
+          },
+          {
+            id: 'bi-analyst',
+            name: 'Business Intelligence Analyst',
+            description: 'Transforms raw database metrics into executive KPI dashboards, cohort breakdowns, and revenue visualizations.',
+            avatar: '📈',
+            capabilities: ['kpi-calculation', 'cohort-analysis', 'trend-forecasting', 'executive-summary'],
+            model: activeModel,
+            status: 'connected',
+          },
+          {
+            id: 'data-quality-agent',
+            name: 'Data Quality & Anomaly Sentinel',
+            description: 'Detects duplicate rows, null spikes, categorical drift, out-of-range anomalies, and format violations.',
+            avatar: '🔍',
+            capabilities: ['anomaly-detection', 'duplicate-detection', 'null-profiling', 'data-cleaning-sql'],
+            model: activeModel,
+            status: 'connected',
+          },
+        ],
+      };
+    };
+
+    this.fastify.get('/agents', listAgentsHandler);
+    this.fastify.get('/v1/agents', listAgentsHandler);
+
     // OpenAI Chat Completions (Stream & Non-stream)
     this.fastify.post('/v1/chat/completions', async (req: FastifyRequest, reply: FastifyReply) => {
       const body = req.body as ChatCompletionRequest;
@@ -435,6 +493,113 @@ export class ApiServer {
       if (!ragEngine) return [];
       return ragEngine.search(body.query, body.limit || 4, body.documentIds);
     });
+
+    // 8. Long-Term Memory Endpoints (LoftyDB)
+    this.fastify.get('/v1/memories', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) return [];
+      const query = (req.query || {}) as { scope?: any; personaId?: string; category?: any };
+      return memoryEngine.listMemories({
+        scope: query.scope,
+        personaId: query.personaId,
+        category: query.category,
+      });
+    });
+
+    this.fastify.post('/v1/memories', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) {
+        throw new AppError('LoftyDB memory engine is not configured', 'NOT_CONFIGURED');
+      }
+      const body = req.body as any;
+      if (!body?.content || typeof body.content !== 'string') {
+        throw new ValidationError('content string is required');
+      }
+      return memoryEngine.saveMemory(body);
+    });
+
+    this.fastify.post('/v1/memories/search', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) return [];
+      const body = req.body as { query: string; limit?: number; minSimilarity?: number; personaId?: string; conversationId?: string };
+      if (!body?.query) {
+        throw new ValidationError('query is required');
+      }
+      return memoryEngine.recall(body);
+    });
+
+    this.fastify.delete('/v1/memories/:id', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) return { success: false };
+      const { id } = req.params as { id: string };
+      const ok = await memoryEngine.deleteMemory(id);
+      return { success: ok };
+    });
+
+    this.fastify.get('/v1/memories/:id/history', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) return { history: [] };
+      const { id } = req.params as { id: string };
+      const history = await memoryEngine.getMemoryHistory(id);
+      return { history };
+    });
+
+    this.fastify.post('/v1/memories/:id/rollback', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) {
+        throw new AppError('LoftyDB memory engine is not configured', 'NOT_CONFIGURED');
+      }
+      const { id } = req.params as { id: string };
+      const body = req.body as { version: number };
+      if (!body?.version || typeof body.version !== 'number') {
+        throw new ValidationError('version number is required');
+      }
+      return memoryEngine.rollbackMemory(id, body.version);
+    });
+
+    this.fastify.get('/v1/memories/graph', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) {
+        throw new AppError('LoftyDB memory engine is not configured', 'NOT_CONFIGURED');
+      }
+      const query = (req.query || {}) as { collection?: string };
+      return memoryEngine.getKnowledgeGraph(query.collection);
+    });
+
+    this.fastify.post('/v1/memories/relationships', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) {
+        throw new AppError('LoftyDB memory engine is not configured', 'NOT_CONFIGURED');
+      }
+      const body = req.body as any;
+      if (!body?.sourceId || !body?.targetId || !body?.type) {
+        throw new ValidationError('sourceId, targetId, and type are required');
+      }
+      return memoryEngine.createRelationship({
+        sourceId: String(body.sourceId),
+        targetId: String(body.targetId),
+        sourceKind: body.sourceKind || 'memory',
+        targetKind: body.targetKind || 'memory',
+        type: body.type,
+        strength: body.strength,
+        confidence: body.confidence,
+        directed: body.directed,
+        autoGenerated: false,
+        metadata: body.metadata,
+      });
+    });
+
+    this.fastify.post('/v1/memories/merge', async (req: FastifyRequest) => {
+      const memoryEngine = this.inferenceService.getMemoryEngine();
+      if (!memoryEngine) {
+        throw new AppError('LoftyDB memory engine is not configured', 'NOT_CONFIGURED');
+      }
+      const body = req.body as { primaryId?: string; secondaryId?: string; mergedContent?: string };
+      if (!body?.primaryId || !body?.secondaryId) {
+        throw new ValidationError('primaryId and secondaryId are required');
+      }
+      return memoryEngine.mergeMemories(body.primaryId, body.secondaryId, body.mergedContent);
+    });
   }
 
   public async start(): Promise<void> {
@@ -445,10 +610,35 @@ export class ApiServer {
       host: '0.0.0.0',
     });
     this.isRunning = true;
+
+    try {
+      const zayloDir = path.join(os.homedir(), '.zaylo');
+      if (!fs.existsSync(zayloDir)) fs.mkdirSync(zayloDir, { recursive: true });
+      const meta = {
+        name: 'Zaylo AI Server',
+        version: '3.2.0',
+        port: this.config.port,
+        host: '127.0.0.1',
+        pid: process.pid,
+        activeModel: this.inferenceService.getModelName() || null,
+        startedAt: new Date().toISOString(),
+        endpoints: {
+          health: '/health',
+          models: '/v1/models',
+          agents: '/v1/agents',
+          chat: '/v1/chat/completions',
+        },
+      };
+      fs.writeFileSync(path.join(zayloDir, 'server.json'), JSON.stringify(meta, null, 2), 'utf8');
+    } catch {}
   }
 
   public async stop(): Promise<void> {
     if (!this.isRunning) return;
+    try {
+      const serverJson = path.join(os.homedir(), '.zaylo', 'server.json');
+      if (fs.existsSync(serverJson)) fs.unlinkSync(serverJson);
+    } catch {}
     await this.fastify.close();
     this.isRunning = false;
   }

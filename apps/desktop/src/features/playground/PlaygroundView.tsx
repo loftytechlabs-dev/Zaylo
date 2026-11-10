@@ -7,6 +7,8 @@ import type {
   ChatCompletionResponse,
   GeneratedImage,
   ImageGenerationParams,
+  ChartSpec,
+  PresentationSpec,
 } from '@local-ai/shared';
 import { PersonaResolver, PersonaPromptAdapter } from '@local-ai/inference';
 import { ModelCapabilityRegistry } from '@local-ai/capabilities';
@@ -27,6 +29,12 @@ import { RagSelectorModal } from './components/RagSelectorModal';
 import { ImagePlaygroundArea } from './components/ImagePlaygroundArea';
 import { ImagePromptComposer } from './components/ImagePromptComposer';
 import { ImageLightboxModal } from './components/ImageLightboxModal';
+import { ChartPromptModal } from '../visualizations/ChartPromptModal';
+import { PresentationPromptModal } from '../presentations/PresentationPromptModal';
+import {
+  synthesizeChartFromPrompt,
+  synthesizePresentationFromPrompt,
+} from './utils/specSynthesizer';
 
 const DEFAULT_SETTINGS: GenerationSettings = {
   systemPrompt: 'You are a helpful, fast, and accurate local AI assistant.',
@@ -80,6 +88,15 @@ export const PlaygroundView: React.FC = () => {
     setConversations,
     setActiveConvId,
     createNewChat,
+    deleteChat,
+    renameChat,
+    memoryEnabled,
+    memories,
+    loftyDbStatus,
+    setMemoryEnabled,
+    saveMemory,
+    fetchMemories,
+    persistConversationToLoftyDb,
   } = useAppStore();
 
   const [externalInput, setExternalInput] = useState<string>('');
@@ -129,6 +146,10 @@ export const PlaygroundView: React.FC = () => {
   const [isPerformanceOpen, setIsPerformanceOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isCompareMode, setIsCompareMode] = useState<boolean>(false);
+
+  // Creative Studio Modals
+  const [isChartModalOpen, setIsChartModalOpen] = useState<boolean>(false);
+  const [isPresentationModalOpen, setIsPresentationModalOpen] = useState<boolean>(false);
 
   // Compare Mode History
   const [compareHistory, setCompareHistory] = useState<CompareRunResult[]>([]);
@@ -413,44 +434,47 @@ export const PlaygroundView: React.FC = () => {
   };
 
   const handleRenameConversation = (id: string, newTitle: string) => {
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, title: newTitle, updatedAt: Date.now() } : c))
-    );
+    renameChat(id, newTitle);
   };
 
   const handleDeleteConversation = (id: string) => {
-    setConversations((prev) => {
-      const next = prev.filter((c) => c.id !== id);
-      if (next.length === 0) {
-        const freshId = `conv_${Date.now()}`;
-        return [
-          {
-            id: freshId,
-            title: 'New Chat',
-            modelId: activeModel?.id || '',
-            modelName: activeModel?.name || '',
-            messages: [],
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          },
-        ];
-      }
-      return next;
-    });
-
-    if (activeConvId === id) {
-      const remaining = conversations.filter((c) => c.id !== id);
-      if (remaining.length > 0) {
-        setActiveConvId(remaining[0].id);
-      }
-    }
+    deleteChat(id);
   };
 
   const handleClearConversation = () => {
     if (!confirm('Clear all messages in this conversation?')) return;
+    let clearedConv: any = null;
     setConversations((prev) =>
-      prev.map((c) => (c.id === activeConvId ? { ...c, messages: [], updatedAt: Date.now() } : c))
+      prev.map((c) => {
+        if (c.id === activeConvId) {
+          clearedConv = { ...c, messages: [], updatedAt: Date.now() };
+          return clearedConv;
+        }
+        return c;
+      })
     );
+    if (clearedConv) {
+      void persistConversationToLoftyDb(clearedConv);
+    }
+  };
+
+  const handleSaveMessageToMemory = async (text: string) => {
+    if (!text.trim() || !loftyDbStatus?.connected) return;
+    try {
+      await saveMemory({
+        content: text.trim().slice(0, 600),
+        category: 'context',
+        scope: 'global',
+        conversationId: activeConvId,
+        personaId: activeConvPersona?.id,
+        importance: 4,
+        pinned: false,
+        tags: ['chat-saved'],
+        source: 'chat',
+      });
+    } catch (err: any) {
+      console.warn('Failed to save message to LoftyDB memory:', err);
+    }
   };
 
   // Chat Submission & Streaming Execution
@@ -574,6 +598,8 @@ export const PlaygroundView: React.FC = () => {
         stream: true,
         rag: ragEnabled,
         ragDocumentIds: selectedRagDocIds.length > 0 ? selectedRagDocIds : undefined,
+        memory: memoryEnabled && Boolean(loftyDbStatus?.connected),
+        conversationId: activeConvId,
         personaId: resolvedPersona?.id,
       });
 
@@ -609,24 +635,54 @@ export const PlaygroundView: React.FC = () => {
         totalDurationMs: totalLatencyMs,
       };
 
+      let finalizedConv: any = null;
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== activeConvId) return c;
           const msgs = [...c.messages];
           if (msgs.length > 0) {
+            let resolvedContent = finalContent || activeStreamContentRef.current;
+            const lp = userText.toLowerCase();
+
+            // Detect chart request
+            if (
+              (lp.includes('chart') || lp.includes('visualiz') || lp.includes('plot') || lp.includes('graph')) &&
+              !resolvedContent.includes('json:chart-spec') &&
+              !resolvedContent.includes('```chart')
+            ) {
+              const fallbackChart = synthesizeChartFromPrompt(userText);
+              resolvedContent += `\n\n\`\`\`json:chart-spec\n${JSON.stringify(fallbackChart, null, 2)}\n\`\`\``;
+            }
+            // Detect presentation request
+            else if (
+              (lp.includes('presentation') || lp.includes('pitch deck') || lp.includes('powerpoint') || lp.includes('pptx') || lp.includes('slides')) &&
+              !resolvedContent.includes('json:presentation-spec') &&
+              !resolvedContent.includes('```presentation')
+            ) {
+              const fallbackPres = synthesizePresentationFromPrompt(userText);
+              resolvedContent += `\n\n\`\`\`json:presentation-spec\n${JSON.stringify(fallbackPres, null, 2)}\n\`\`\``;
+            }
+
             msgs[msgs.length - 1] = {
               role: 'assistant',
-              content: finalContent || activeStreamContentRef.current,
+              content: resolvedContent,
             };
           }
-          return {
+          finalizedConv = {
             ...c,
             messages: msgs,
             lastStats: finalStats,
             updatedAt: Date.now(),
           };
+          return finalizedConv;
         })
       );
+      if (finalizedConv) {
+        void persistConversationToLoftyDb(finalizedConv);
+      }
+      if (loftyDbStatus?.connected) {
+        void fetchMemories();
+      }
     } catch (err: any) {
       const rawError = err?.message || 'Inference request failed';
       let errorMsg = `[Error: ${rawError}]`;
@@ -658,6 +714,55 @@ export const PlaygroundView: React.FC = () => {
       api.invoke('inference:abort', { requestId: activeRequestId });
     }
     setIsGenerating(false);
+  };
+
+  const appendTurnToActiveConversation = (
+    userMsg: ChatMessage,
+    assistantMsg: ChatMessage,
+    fallbackTitle: string
+  ) => {
+    const targetPersonaId = activeConv?.personaId || activePersonaId;
+    let updatedConv: any = null;
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id !== activeConvId) return c;
+        updatedConv = {
+          ...c,
+          title: c.title === 'New Chat' ? fallbackTitle.slice(0, 32) : c.title,
+          personaId: targetPersonaId,
+          messages: [...c.messages, userMsg, assistantMsg],
+          updatedAt: Date.now(),
+        };
+        return updatedConv;
+      })
+    );
+    if (updatedConv) {
+      void persistConversationToLoftyDb(updatedConv);
+    }
+  };
+
+  // Create Chart Direct from Studio / Modal
+  const handleCreateChart = (chartSpec: ChartSpec, promptText: string) => {
+    appendTurnToActiveConversation(
+      { role: 'user', content: promptText },
+      {
+        role: 'assistant',
+        content: `I've generated the **${chartSpec.title}** visualization using the **${chartSpec.theme}** theme preset.\n\n\`\`\`json:chart-spec\n${JSON.stringify(chartSpec, null, 2)}\n\`\`\``,
+      },
+      chartSpec.title
+    );
+  };
+
+  // Create Presentation Direct from Studio / Modal
+  const handleCreatePresentation = (presSpec: PresentationSpec, promptText: string) => {
+    appendTurnToActiveConversation(
+      { role: 'user', content: promptText },
+      {
+        role: 'assistant',
+        content: `I've generated the **${presSpec.title}** presentation deck featuring **${presSpec.slides.length} slides** with the **${presSpec.theme}** preset.\n\n\`\`\`json:presentation-spec\n${JSON.stringify(presSpec, null, 2)}\n\`\`\``,
+      },
+      presSpec.title
+    );
   };
 
   // Regenerate last response
@@ -728,9 +833,9 @@ export const PlaygroundView: React.FC = () => {
   const isVisionSupported = Boolean(activeModel?.isVisionSupported);
 
   return (
-    <div className="flex h-full w-full bg-white dark:bg-[#0c0d10] text-[#111111] dark:text-[#f4f4f5] overflow-hidden relative font-sans">
+    <div className="flex h-full w-full bg-white dark:bg-[#090909] text-[#111111] dark:text-[#F5F5F5] overflow-hidden relative font-sans">
       {/* Main Workspace Column */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[#0c0d10]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[#090909]">
         {/* Top Toolbar */}
         <PlaygroundToolbar
           models={unifiedModels}
@@ -827,6 +932,7 @@ export const PlaygroundView: React.FC = () => {
               onRegenerate={handleRegenerate}
               onRetry={handleRegenerate}
               onClearConversation={handleClearConversation}
+              onSaveToMemory={loftyDbStatus?.connected ? handleSaveMessageToMemory : undefined}
             />
 
             {/* Bottom Message Composer */}
@@ -842,10 +948,17 @@ export const PlaygroundView: React.FC = () => {
               ragDocsCount={ragDocuments.length}
               onOpenRagModal={() => setIsRagModalOpen(true)}
               onToggleRag={() => setRagEnabled(!ragEnabled)}
+              memoryEnabled={memoryEnabled}
+              memoryCount={memories.length}
+              loftyDbConnected={Boolean(loftyDbStatus?.connected)}
+              onToggleMemory={() => setMemoryEnabled(!memoryEnabled)}
+              onOpenMemorySection={() => setActiveTab('loftydb')}
               onStartServer={handleStartServer}
               isStartingServer={isStartingServer}
               externalInput={externalInput}
               onClearExternalInput={() => setExternalInput('')}
+              onOpenChartModal={() => setIsChartModalOpen(true)}
+              onOpenPresentationModal={() => setIsPresentationModalOpen(true)}
             />
           </>
         )}
@@ -911,6 +1024,20 @@ export const PlaygroundView: React.FC = () => {
         }}
         onAddDocument={addRagDocument}
         onDeleteDocument={deleteRagDocument}
+      />
+
+      {/* AI Chart Generation Prompt Modal */}
+      <ChartPromptModal
+        isOpen={isChartModalOpen}
+        onClose={() => setIsChartModalOpen(false)}
+        onGenerate={handleCreateChart}
+      />
+
+      {/* AI Presentation Generation Prompt Modal */}
+      <PresentationPromptModal
+        isOpen={isPresentationModalOpen}
+        onClose={() => setIsPresentationModalOpen(false)}
+        onGenerate={handleCreatePresentation}
       />
     </div>
   );

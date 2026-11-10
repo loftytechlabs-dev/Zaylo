@@ -53,21 +53,21 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] text-xs font-medium text-[#111111] dark:text-[#f4f4f5] transition-colors shadow-xs select-none"
+        className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-xs font-medium text-[#111111] dark:text-[#F5F5F5] transition-colors shadow-xs select-none"
         title={`Active Persona: ${activePersona?.name || 'Persona'}`}
       >
-        <User className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400 shrink-0" />
+        <User className="w-3.5 h-3.5 text-zinc-600 dark:text-[#A1A1AA] shrink-0" />
         <span className="truncate max-w-[110px] sm:max-w-[130px] font-sans">
           {activePersona?.name || 'Persona'}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-150 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 dark:text-[#737373] transition-transform duration-150 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Popup */}
       {isOpen && (
-        <div className="absolute left-0 mt-1.5 w-64 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#262934] shadow-xl py-1.5 z-50 text-xs overflow-hidden select-none animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-3 py-1.5 border-b border-[#eaeaea] dark:border-[#1c1f28] flex items-center justify-between">
-            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+        <div className="absolute left-0 mt-1.5 w-64 rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] shadow-xl py-1.5 z-50 text-xs overflow-hidden select-none animate-in fade-in zoom-in-95 duration-100">
+          <div className="px-3 py-1.5 border-b border-[#eaeaea] dark:border-[#222222] flex items-center justify-between">
+            <span className="text-[10px] font-mono text-zinc-500 dark:text-[#737373] uppercase tracking-wider">
               Select Persona
             </span>
             <span className="text-[10px] font-mono text-black dark:text-white">
@@ -77,8 +77,8 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
 
           <div className="max-h-64 overflow-y-auto py-1 space-y-0.5 scrollbar-thin">
             {/* Built-in Section */}
-            <div className="px-3 py-1 text-[10px] font-mono text-zinc-400 flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-zinc-400" />
+            <div className="px-3 py-1 text-[10px] font-mono text-zinc-400 dark:text-[#737373] flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-zinc-400 dark:text-[#737373]" />
               <span>PRESETS</span>
             </div>
             {builtIns.map((p) => {
@@ -92,15 +92,15 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
                   }}
                   className={`w-full px-3 py-1.5 text-left flex items-center justify-between transition-colors ${
                     isSelected
-                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium'
-                      : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#181a22]'
+                      ? 'bg-zinc-100 dark:bg-[#202020] text-zinc-900 dark:text-[#F5F5F5] font-medium'
+                      : 'text-zinc-700 dark:text-[#A1A1AA] hover:bg-zinc-50 dark:hover:bg-[#202020]'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
                     <span className="text-sm shrink-0">{p.avatar || '🤖'}</span>
                     <div className="truncate">
                       <span className="truncate block leading-tight">{p.name}</span>
-                      <span className="text-[10px] text-zinc-400 font-mono leading-none">
+                      <span className="text-[10px] text-zinc-400 dark:text-[#737373] font-mono leading-none">
                         {p.communicationStyle}
                       </span>
                     </div>
@@ -113,7 +113,7 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
             {/* Custom Personas Section */}
             {customs.length > 0 && (
               <>
-                <div className="px-3 pt-2 pb-1 text-[10px] font-mono text-zinc-400 flex items-center gap-1 border-t border-[#eaeaea] dark:border-[#1c1f28] mt-1">
+                <div className="px-3 pt-2 pb-1 text-[10px] font-mono text-zinc-400 dark:text-[#737373] flex items-center gap-1 border-t border-[#eaeaea] dark:border-[#222222] mt-1">
                   <Sparkles className="w-3 h-3 text-sky-500" />
                   <span>CUSTOM</span>
                 </div>
@@ -128,15 +128,15 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
                       }}
                       className={`w-full px-3 py-1.5 text-left flex items-center justify-between transition-colors ${
                         isSelected
-                          ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium'
-                          : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#181a22]'
+                          ? 'bg-zinc-100 dark:bg-[#202020] text-zinc-900 dark:text-[#F5F5F5] font-medium'
+                          : 'text-zinc-700 dark:text-[#A1A1AA] hover:bg-zinc-50 dark:hover:bg-[#202020]'
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
                         <span className="text-sm shrink-0">{p.avatar || '✨'}</span>
                         <div className="truncate">
                           <span className="truncate block leading-tight">{p.name}</span>
-                          <span className="text-[10px] text-zinc-400 font-mono leading-none">
+                          <span className="text-[10px] text-zinc-400 dark:text-[#737373] font-mono leading-none">
                             {p.communicationStyle}
                           </span>
                         </div>
@@ -150,7 +150,7 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
           </div>
 
           {/* Quick Action Footer */}
-          <div className="border-t border-[#eaeaea] dark:border-[#1c1f28] pt-1 mt-1 space-y-0.5 bg-zinc-50/50 dark:bg-[#0e1014]">
+          <div className="border-t border-[#eaeaea] dark:border-[#222222] pt-1 mt-1 space-y-0.5 bg-zinc-50/50 dark:bg-[#141414]">
             {activePersona?.id !== 'persona_general' && (
               <button
                 type="button"
@@ -158,7 +158,7 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
                   onSelectPersona('persona_general');
                   setIsOpen(false);
                 }}
-                className="w-full text-left px-3 py-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#181a22] flex items-center gap-2 transition-colors"
+                className="w-full text-left px-3 py-1.5 text-zinc-600 dark:text-[#A1A1AA] hover:text-zinc-900 dark:hover:text-[#F5F5F5] hover:bg-zinc-100 dark:hover:bg-[#202020] flex items-center gap-2 transition-colors"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
                 <span>Return to General Assistant</span>
@@ -171,7 +171,7 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
                 setIsOpen(false);
                 onCreatePersona();
               }}
-              className="w-full text-left px-3 py-1.5 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-[#181a22] flex items-center gap-2 transition-colors"
+              className="w-full text-left px-3 py-1.5 text-zinc-700 dark:text-[#A1A1AA] hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-[#202020] flex items-center gap-2 transition-colors"
             >
               <Plus className="w-3.5 h-3.5 text-black dark:text-white" />
               <span>Create New Persona</span>
@@ -183,9 +183,9 @@ export const PlaygroundPersonaSelector: React.FC<PlaygroundPersonaSelectorProps>
                 setIsOpen(false);
                 onOpenManagement();
               }}
-              className="w-full text-left px-3 py-1.5 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-[#181a22] flex items-center gap-2 transition-colors"
+              className="w-full text-left px-3 py-1.5 text-zinc-700 dark:text-[#A1A1AA] hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-[#202020] flex items-center gap-2 transition-colors"
             >
-              <Users className="w-3.5 h-3.5 text-zinc-500" />
+              <Users className="w-3.5 h-3.5 text-zinc-500 dark:text-[#737373]" />
               <span>Manage Personas...</span>
             </button>
           </div>

@@ -1,11 +1,11 @@
 {
   "name": "@local-ai/desktop",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Zaylo High-Performance Local AI Server Desktop App",
   "author": "Lofty Tech Labs <contact@loftytechlabs.com>",
-  "homepage": "https://github.com/akhileshg1124/Zaylo",
+  "homepage": "https://github.com/loftytechlabs-dev/Zaylo",
   "license": "MIT",
-  "repository": "https://github.com/akhileshg1124/Zaylo",
+  "repository": "https://github.com/loftytechlabs-dev/Zaylo",
   "private": true,
   "type": "module",
   "main": "dist-electron/main/index.js",
@@ -24,7 +24,7 @@
     "executableName": "zaylo",
     "publish": {
       "provider": "github",
-      "owner": "akhileshg1124",
+      "owner": "loftytechlabs-dev",
       "repo": "Zaylo"
     },
     "directories": {
@@ -42,6 +42,15 @@
     "icon": "build/icon.png",
     "mac": {
       "icon": "build/icon.icns",
+      "extraResources": [
+        {
+          "from": "resources/loftydb",
+          "to": "loftydb",
+          "filter": [
+            "loftyDB-darwin-*"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "dmg",
@@ -64,6 +73,15 @@
     },
     "win": {
       "icon": "build/icon.ico",
+      "extraResources": [
+        {
+          "from": "resources/loftydb",
+          "to": "loftydb",
+          "filter": [
+            "loftyDB-windows-*"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "nsis",
@@ -84,6 +102,15 @@
     },
     "linux": {
       "icon": "build/icon.png",
+      "extraResources": [
+        {
+          "from": "resources/loftydb",
+          "to": "loftydb",
+          "filter": [
+            "loftyDB-linux-*"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "AppImage",
@@ -143,6 +170,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "clsx": "^2.1.1",
     "lucide-react": "^0.477.0",
+    "pptxgenjs": "^4.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sql.js": "^1.14.2",

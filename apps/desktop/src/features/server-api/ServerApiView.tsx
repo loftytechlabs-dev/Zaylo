@@ -333,17 +333,17 @@ for await (const chunk of stream) {
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* 1. Mobile & Web Chat Access Banner */}
-      <div className="p-6 rounded-xl bg-zinc-50 dark:bg-[#121622] border border-zinc-200 dark:border-zinc-800 space-y-4">
+      <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
-              <h2 className="text-base font-bold text-[#111111] dark:text-zinc-100">Mobile & LAN Web Chat Interface</h2>
+              <Smartphone className="w-5 h-5 text-[#111111] dark:text-[#f5f5f5]" />
+              <h2 className="text-base font-bold text-[#111111] dark:text-[#f5f5f5]">Mobile & LAN Web Chat Interface</h2>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
                 PHONE & TABLET
               </span>
             </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-2xl">
+            <p className="text-xs text-[#666666] dark:text-[#a1a1aa] max-w-2xl">
               Open this link in Safari on your iPhone, Chrome on Android, iPad, or any laptop connected to your Wi-Fi to chat with your local AI models with live token streaming.
             </p>
           </div>
@@ -351,7 +351,7 @@ for await (const chunk of stream) {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setShowQrModal(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white dark:bg-[#181d28] hover:bg-zinc-50 dark:hover:bg-[#222938] border border-[#eaeaea] dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-semibold transition-colors shadow-xs"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white dark:bg-[#191919] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-[#111111] dark:text-[#f5f5f5] text-xs font-semibold transition-colors shadow-xs"
             >
               <QrCode className="w-4 h-4" />
               <span>Scan Phone QR</span>
@@ -364,7 +364,7 @@ for await (const chunk of stream) {
                   : webChatUrl;
                 window.open(target, '_blank');
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-semibold transition-colors shadow-xs"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-semibold transition-colors shadow-xs"
             >
               <ExternalLink className="w-4 h-4" />
               <span>Open Web Chat</span>
@@ -374,9 +374,9 @@ for await (const chunk of stream) {
 
         {/* Server Stopped Warning */}
         {serverState !== 'RUNNING' && (
-          <div className="p-3 rounded-lg bg-amber-950/40 border border-amber-800/60 flex items-center justify-between text-xs text-amber-200">
+          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between text-xs text-amber-700 dark:text-amber-200">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse"></span>
               <span>Server is currently <strong>STOPPED</strong>. Click Start Server to enable this URL on your phone and browser.</span>
             </div>
             <button
@@ -390,10 +390,10 @@ for await (const chunk of stream) {
         )}
 
         {/* Copyable Phone URL Bar */}
-        <div className="p-3 rounded-lg bg-[#0b0d12] border border-[#202532] flex items-center justify-between font-mono text-xs text-zinc-200">
+        <div className="p-3 rounded-lg bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] flex items-center justify-between font-mono text-xs text-[#111111] dark:text-[#f5f5f5]">
           <div className="flex items-center gap-2 truncate">
-            <span className="text-zinc-500 select-none text-[11px]">URL:</span>
-            <span className="text-zinc-900 dark:text-zinc-100 select-all font-semibold">{webChatUrl}</span>
+            <span className="text-[#888888] dark:text-[#737373] select-none text-[11px]">URL:</span>
+            <span className="text-[#111111] dark:text-[#f5f5f5] select-all font-semibold">{webChatUrl}</span>
           </div>
 
           <button
@@ -402,12 +402,12 @@ for await (const chunk of stream) {
               setCopiedMobileUrl(true);
               setTimeout(() => setCopiedMobileUrl(false), 2000);
             }}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#181c26] hover:bg-[#242938] text-xs text-zinc-300 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1 rounded bg-white dark:bg-[#141414] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-xs text-[#111111] dark:text-[#f5f5f5] transition-colors"
           >
             {copiedMobileUrl ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400 font-sans font-medium">Copied!</span>
+                <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+                <span className="text-emerald-600 dark:text-emerald-400 font-sans font-medium">Copied!</span>
               </>
             ) : (
               <>
@@ -420,14 +420,14 @@ for await (const chunk of stream) {
       </div>
 
       {/* 2. Endpoint & LAN Configuration Card */}
-      <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-6">
-        <div className="flex items-center justify-between border-b border-[#1c1f26] pb-4">
+      <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-6">
+        <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#222222] pb-4">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-              <Server className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <h2 className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
+              <Server className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
               OpenAI-Compatible API Endpoint
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-0.5">
               Connect external apps, LangChain, Cursor, Open WebUI, and Python scripts using standard OpenAI SDK clients.
             </p>
           </div>
@@ -439,7 +439,7 @@ for await (const chunk of stream) {
             )}
             <span
               className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium ${
-                serverState === 'RUNNING' ? 'bg-emerald-950 text-emerald-300' : 'bg-zinc-800 text-zinc-400'
+                serverState === 'RUNNING' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50' : 'bg-[#f5f5f5] dark:bg-zinc-800 text-[#666666] dark:text-zinc-400'
               }`}
             >
               {serverState}
@@ -449,9 +449,9 @@ for await (const chunk of stream) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Base URL Box */}
-          <div className="p-4 rounded-md bg-[#0c0d10] border border-[#1d2027] space-y-2">
-            <span className="text-[11px] font-mono text-zinc-500 block">BASE API URL</span>
-            <div className="flex items-center justify-between font-mono text-xs text-zinc-100">
+          <div className="p-4 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] space-y-2">
+            <span className="text-[11px] font-mono text-[#888888] dark:text-[#737373] block">BASE API URL</span>
+            <div className="flex items-center justify-between font-mono text-xs text-[#111111] dark:text-[#f5f5f5]">
               <span className="select-all">{apiEndpointUrl}</span>
               <button
                 onClick={() => {
@@ -459,21 +459,21 @@ for await (const chunk of stream) {
                   setCopiedSnippet(true);
                   setTimeout(() => setCopiedSnippet(false), 2000);
                 }}
-                className="p-1 rounded hover:bg-[#1a1c22] text-zinc-400"
+                className="p-1 rounded hover:bg-[#eaeaea] dark:hover:bg-[#202020] text-[#666666] dark:text-[#a1a1aa]"
               >
-                {copiedSnippet ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedSnippet ? <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
 
           {/* LAN Access Toggle */}
-          <div className="p-4 rounded-md bg-[#0c0d10] border border-[#1d2027] flex items-center justify-between">
+          <div className="p-4 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] flex items-center justify-between">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200">
-                <Wifi className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#111111] dark:text-[#f5f5f5]">
+                <Wifi className="w-3.5 h-3.5 text-[#666666] dark:text-[#a1a1aa]" />
                 LAN Network Access
               </div>
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-[11px] text-[#666666] dark:text-[#a1a1aa]">
                 {serverConfig?.lanEnabled
                   ? `Exposed on ${lanAddress || '0.0.0.0'}. Local API authentication required.`
                   : 'Bound strictly to localhost (127.0.0.1).'}
@@ -485,7 +485,7 @@ for await (const chunk of stream) {
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 serverConfig?.lanEnabled
                   ? 'bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white'
-                  : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+                  : 'bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white'
               }`}
             >
               {serverConfig?.lanEnabled ? 'Enabled ✓' : 'Disabled'}
@@ -495,27 +495,27 @@ for await (const chunk of stream) {
       </div>
 
       {/* 3. Interactive Code Examples with Live API Key Editing & Model Dropdown */}
-      <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#1c1f26] pb-4">
+      <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#eaeaea] dark:border-[#222222] pb-4">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-              <Code2 className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <h2 className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
               Live Interactive Client Snippets
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-0.5">
               Select a model from your installed models list, click <strong>+ Quick Gen</strong> to get a working key, and copy the ready-to-run snippet.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 bg-[#0c0d10] p-1 rounded-md border border-[#1e2026]">
+            <div className="flex items-center gap-1 bg-[#fafafa] dark:bg-[#191919] p-1 rounded-md border border-[#eaeaea] dark:border-[#262626]">
               <button
                 onClick={() => {
                   setApiTaskTab('chat');
                   setCustomPrompt('Explain quantum computing in one sentence.');
                 }}
                 className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                  apiTaskTab === 'chat' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+                  apiTaskTab === 'chat' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white'
                 }`}
               >
                 💬 Chat
@@ -526,7 +526,7 @@ for await (const chunk of stream) {
                   setCustomPrompt('What is visible in this landscape photograph?');
                 }}
                 className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                  apiTaskTab === 'vision' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+                  apiTaskTab === 'vision' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white'
                 }`}
               >
                 👁️ Vision
@@ -537,20 +537,20 @@ for await (const chunk of stream) {
                   setCustomPrompt('A cozy cabin in a snowy pine forest at twilight, 8k, photorealistic');
                 }}
                 className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                  apiTaskTab === 'image' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+                  apiTaskTab === 'image' ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white'
                 }`}
               >
                 🎨 Image Gen
               </button>
             </div>
 
-            <div className="flex items-center gap-1 bg-[#0c0d10] p-1 rounded-md border border-[#1e2026]">
+            <div className="flex items-center gap-1 bg-[#fafafa] dark:bg-[#191919] p-1 rounded-md border border-[#eaeaea] dark:border-[#262626]">
               {(['curl', 'python', 'node'] as const).map((lang) => (
                 <button
                   key={lang}
                   onClick={() => setActiveCodeLang(lang)}
                   className={`px-3 py-1 rounded text-xs font-mono capitalize transition-colors ${
-                    activeCodeLang === lang ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+                    activeCodeLang === lang ? 'bg-black dark:bg-white text-white dark:text-black font-semibold' : 'text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white'
                   }`}
                 >
                   {lang === 'node' ? 'Node.js' : lang}
@@ -561,15 +561,15 @@ for await (const chunk of stream) {
         </div>
 
         {/* Live Snippet Parameter Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-lg bg-[#0d0f13] border border-[#1f222b]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-lg bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626]">
           {/* API Key Selector / Input */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <label className="text-zinc-400 font-medium">API Key in Snippet:</label>
+              <label className="text-[#666666] dark:text-[#a1a1aa] font-medium">API Key in Snippet:</label>
               <button
                 type="button"
                 onClick={() => handleCreateKey()}
-                className="text-[11px] text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white font-medium flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700"
+                className="text-[11px] text-[#111111] dark:text-[#f5f5f5] hover:opacity-80 font-medium flex items-center gap-1 bg-white dark:bg-[#141414] px-2 py-0.5 rounded border border-[#eaeaea] dark:border-[#262626]"
               >
                 <Plus className="w-3 h-3" />
                 + Quick Gen
@@ -586,7 +586,7 @@ for await (const chunk of stream) {
                   }
                 }}
                 placeholder="Click + Quick Gen or paste full lcl_... key"
-                className="flex-1 bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-emerald-300 placeholder-zinc-600 focus:outline-none focus:border-black dark:focus:border-white"
+                className="flex-1 bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] rounded px-3 py-1.5 text-xs font-mono text-emerald-600 dark:text-emerald-400 placeholder-[#888888] dark:placeholder-[#737373] focus:outline-none focus:border-black dark:focus:border-white"
               />
               {selectedKeyText && (
                 <button
@@ -596,10 +596,10 @@ for await (const chunk of stream) {
                     setCopiedKey(true);
                     setTimeout(() => setCopiedKey(false), 2000);
                   }}
-                  className="px-2.5 py-1.5 rounded bg-[#181a20] border border-[#242834] text-zinc-300 hover:text-white flex items-center gap-1 text-xs shrink-0"
+                  className="px-2.5 py-1.5 rounded bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] text-[#111111] dark:text-[#f5f5f5] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] flex items-center gap-1 text-xs shrink-0"
                   title="Copy active API Key"
                 >
-                  {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
+                  {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#666666] dark:text-[#a1a1aa]" />}
                 </button>
               )}
             </div>
@@ -607,11 +607,11 @@ for await (const chunk of stream) {
 
           {/* Model Name Dropdown */}
           <div className="space-y-1.5">
-            <label className="text-xs text-zinc-400 font-medium block">Select Model:</label>
+            <label className="text-xs text-[#666666] dark:text-[#a1a1aa] font-medium block">Select Model:</label>
             <select
               value={selectedModelText}
               onChange={(e) => setSelectedModelText(e.target.value)}
-              className="w-full bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-zinc-100 focus:outline-none focus:border-black dark:focus:border-white"
+              className="w-full bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] rounded px-3 py-1.5 text-xs font-mono text-[#111111] dark:text-[#f5f5f5] focus:outline-none focus:border-black dark:focus:border-white"
             >
               {installedModels.length === 0 ? (
                 <option value="default">default (No models installed yet)</option>
@@ -628,19 +628,19 @@ for await (const chunk of stream) {
 
           {/* Prompt */}
           <div className="space-y-1.5">
-            <label className="text-xs text-zinc-400 font-medium block">Test Prompt:</label>
+            <label className="text-xs text-[#666666] dark:text-[#a1a1aa] font-medium block">Test Prompt:</label>
             <input
               type="text"
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
               placeholder="Type test prompt..."
-              className="w-full bg-[#13161c] border border-[#232732] rounded px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-black dark:focus:border-white"
+              className="w-full bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] rounded px-3 py-1.5 text-xs font-mono text-[#111111] dark:text-[#f5f5f5] placeholder-[#888888] dark:placeholder-[#737373] focus:outline-none focus:border-black dark:focus:border-white"
             />
           </div>
         </div>
 
         {/* Code Box */}
-        <div className="relative rounded-md bg-[#090a0c] border border-[#1e2026] p-4 font-mono text-xs text-zinc-300 overflow-x-auto">
+        <div className="relative rounded-md bg-[#fafafa] dark:bg-[#101010] border border-[#eaeaea] dark:border-[#262626] p-4 font-mono text-xs text-[#111111] dark:text-[#f5f5f5] overflow-x-auto">
           <pre>{codeSnippets[activeCodeLang]}</pre>
           <button
             onClick={() => {
@@ -648,13 +648,13 @@ for await (const chunk of stream) {
               setCopiedSnippet(true);
               setTimeout(() => setCopiedSnippet(false), 2000);
             }}
-            className="absolute top-3 right-3 p-1.5 rounded bg-[#181a20] text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5"
+            className="absolute top-3 right-3 p-1.5 rounded bg-white dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-[#f5f5f5] flex items-center gap-1.5 shadow-xs"
             title="Copy code snippet"
           >
             {copiedSnippet ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400 text-[11px] font-sans font-semibold">Copied!</span>
+                <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+                <span className="text-emerald-600 dark:text-emerald-400 text-[11px] font-sans font-semibold">Copied!</span>
               </>
             ) : (
               <>
@@ -667,21 +667,21 @@ for await (const chunk of stream) {
       </div>
 
       {/* 4. API Key Management Table */}
-      <div className="p-6 rounded-lg bg-[#111317] border border-[#22252c] space-y-5">
-        <div className="flex items-center justify-between border-b border-[#1c1f26] pb-4">
+      <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] space-y-5">
+        <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#222222] pb-4">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-              <Key className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
+              <Key className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               API Keys Management
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-0.5">
               Keys are secret tokens. For security, full keys are displayed once when generated.
             </p>
           </div>
 
           <button
             onClick={() => setIsCreatingKey(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Generate Key</span>
@@ -690,25 +690,25 @@ for await (const chunk of stream) {
 
         {/* Inline Create Key Form */}
         {isCreatingKey && (
-          <form onSubmit={handleCreateKey} className="p-4 rounded-md bg-[#0c0d10] border border-[#242731] flex gap-3">
+          <form onSubmit={handleCreateKey} className="p-4 rounded-md bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] flex gap-3">
             <input
               type="text"
               placeholder="Key Name (e.g. My Phone, Python Script, Open WebUI)"
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
-              className="flex-1 bg-[#13151a] border border-[#23262f] rounded px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-black dark:focus:border-white"
+              className="flex-1 bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] rounded px-3 py-1.5 text-xs text-[#111111] dark:text-[#f5f5f5] placeholder-[#888888] dark:placeholder-[#737373] focus:outline-none focus:border-black dark:focus:border-white"
               autoFocus
             />
             <button
               type="submit"
-              className="px-4 py-1.5 rounded-lg bg-black dark:bg-white text-white dark:text-black text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-xs"
+              className="px-4 py-1.5 rounded-lg bg-black dark:bg-white text-white dark:text-black text-xs font-medium hover:bg-[#222222] dark:hover:bg-[#f0f0f0] shadow-xs"
             >
               Save Key
             </button>
             <button
               type="button"
               onClick={() => setIsCreatingKey(false)}
-              className="px-3 py-1.5 rounded bg-zinc-800 text-zinc-300 text-xs hover:bg-zinc-700"
+              className="px-3 py-1.5 rounded bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] text-[#666666] dark:text-[#a1a1aa] text-xs hover:bg-[#f5f5f5] dark:hover:bg-[#202020]"
             >
               Cancel
             </button>
@@ -717,15 +717,15 @@ for await (const chunk of stream) {
 
         {/* Show newly generated raw key once */}
         {generatedKey && (
-          <div className="p-4 rounded-md bg-emerald-950/40 border border-emerald-800/50 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+          <div className="p-4 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               <Check className="w-4 h-4" />
               API Key Generated Successfully & Injected Into Snippets
             </div>
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[11px] text-[#666666] dark:text-zinc-400">
               This complete unmasked key is now active in your code snippets above. Copy and save it now:
             </p>
-            <div className="flex items-center justify-between p-2 rounded bg-[#0b0c0e] font-mono text-xs text-emerald-300">
+            <div className="flex items-center justify-between p-2 rounded bg-white dark:bg-[#0b0c0e] border border-emerald-200 dark:border-emerald-850 font-mono text-xs text-emerald-700 dark:text-emerald-300">
               <span className="select-all">{generatedKey}</span>
               <button
                 onClick={() => {
@@ -733,14 +733,14 @@ for await (const chunk of stream) {
                   setCopiedKey(true);
                   setTimeout(() => setCopiedKey(false), 2000);
                 }}
-                className="p-1 rounded hover:bg-zinc-800 text-zinc-400"
+                className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-zinc-800 text-emerald-700 dark:text-zinc-400"
               >
-                {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
             <button
               onClick={() => setGeneratedKey(null)}
-              className="text-[11px] text-zinc-400 hover:text-zinc-200 underline"
+              className="text-[11px] text-[#666666] dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 underline"
             >
               Dismiss
             </button>
@@ -748,9 +748,9 @@ for await (const chunk of stream) {
         )}
 
         {/* Keys Table */}
-        <div className="border border-[#1e2026] rounded-md overflow-hidden font-mono text-xs">
+        <div className="border border-[#eaeaea] dark:border-[#262626] rounded-md overflow-hidden font-mono text-xs">
           <table className="w-full text-left">
-            <thead className="bg-[#0e1013] text-zinc-500 text-[11px] border-b border-[#1e2026]">
+            <thead className="bg-[#fafafa] dark:bg-[#191919] text-[#666666] dark:text-[#a1a1aa] text-[11px] border-b border-[#eaeaea] dark:border-[#222222]">
               <tr>
                 <th className="py-2.5 px-4">NAME</th>
                 <th className="py-2.5 px-4">PREFIX</th>
@@ -759,10 +759,10 @@ for await (const chunk of stream) {
                 <th className="py-2.5 px-4 text-right">ACTION</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e2026] text-zinc-300">
+            <tbody className="divide-y divide-[#eaeaea] dark:divide-[#222222] text-[#111111] dark:text-[#f5f5f5]">
               {apiKeys.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-zinc-500 font-sans">
+                  <td colSpan={5} className="py-6 text-center text-[#888888] dark:text-[#737373] font-sans">
                     No API keys created yet. Click <strong>+ Quick Gen</strong> above to generate a working key instantly.
                   </td>
                 </tr>
@@ -771,11 +771,11 @@ for await (const chunk of stream) {
                   const isActive = (generatedKey && generatedKey.startsWith(k.prefix.replace('...', ''))) ||
                     (selectedKeyText && selectedKeyText.startsWith(k.prefix.replace('...', '')));
                   return (
-                    <tr key={k.id} className="hover:bg-[#13151a]">
-                      <td className="py-3 px-4 font-sans font-medium text-zinc-200 flex items-center gap-2">
+                    <tr key={k.id} className="hover:bg-[#fafafa] dark:hover:bg-[#191919]">
+                      <td className="py-3 px-4 font-sans font-medium text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
                         <span>{k.name}</span>
                         {isActive && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-mono">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-black text-white dark:bg-white dark:text-black font-mono">
                             DEFAULT
                           </span>
                         )}
@@ -791,26 +791,26 @@ for await (const chunk of stream) {
                           className="flex items-center gap-2 hover:text-black dark:hover:text-white font-mono transition-colors text-left group"
                           title="Click to copy full key"
                         >
-                          <span className="underline decoration-dotted decoration-zinc-600 group-hover:decoration-black dark:group-hover:decoration-white">
+                          <span className="underline decoration-dotted decoration-zinc-400 group-hover:decoration-black dark:group-hover:decoration-white">
                             {k.prefix}
                           </span>
                           {copiedRowKeyId === k.id ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-sans font-semibold">
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-sans font-semibold">
                               <Check className="w-3 h-3" />
                               Copied!
                             </span>
                           ) : (
-                            <Copy className="w-3 h-3 text-zinc-500 group-hover:text-black dark:group-hover:text-white transition-colors" />
+                            <Copy className="w-3 h-3 text-[#888888] dark:text-[#737373] group-hover:text-black dark:group-hover:text-white transition-colors" />
                           )}
                         </button>
                       </td>
-                      <td className="py-3 px-4 text-zinc-500">{new Date(k.createdAt).toLocaleDateString()}</td>
+                      <td className="py-3 px-4 text-[#888888] dark:text-[#737373]">{new Date(k.createdAt).toLocaleDateString()}</td>
                       <td className="py-3 px-4">
                         {k.isRevoked ? (
-                          <span className="text-rose-400 text-[11px] font-medium">Revoked</span>
+                          <span className="text-rose-500 text-[11px] font-medium">Revoked</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
                             Active
                           </span>
                         )}
@@ -820,7 +820,7 @@ for await (const chunk of stream) {
                           {!k.isRevoked && (
                             <button
                               onClick={() => revokeKey(k.id)}
-                              className="text-[11px] text-amber-500 hover:text-amber-400 px-2 py-0.5 rounded bg-amber-950/30 border border-amber-800/40"
+                              className="text-[11px] text-amber-600 dark:text-amber-500 hover:text-amber-700 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40"
                               title="Revoke key authorization"
                             >
                               Revoke
@@ -828,7 +828,7 @@ for await (const chunk of stream) {
                           )}
                           <button
                             onClick={() => handleDeleteKey(k.id, k.prefix)}
-                            className="text-zinc-500 hover:text-rose-400 transition-colors p-1"
+                            className="text-[#888888] dark:text-[#737373] hover:text-rose-500 transition-colors p-1"
                             title="Delete API key permanently"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -846,48 +846,48 @@ for await (const chunk of stream) {
 
       {/* 5. Mobile QR Code Modal */}
       {showQrModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#12141a] border border-[#282d3a] rounded-2xl p-6 max-w-sm w-full space-y-5 shadow-2xl text-center">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] rounded-2xl p-6 max-w-sm w-full space-y-5 shadow-2xl text-center">
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-zinc-100 flex items-center justify-center gap-2">
-                <Smartphone className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+              <h3 className="text-base font-bold text-[#111111] dark:text-[#f5f5f5] flex items-center justify-center gap-2">
+                <Smartphone className="w-5 h-5 text-[#666666] dark:text-[#a1a1aa]" />
                 Scan to Open on Mobile
               </h3>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-[#666666] dark:text-[#a1a1aa]">
                 Point your iPhone or Android camera at this QR code to start chatting immediately.
               </p>
             </div>
 
             {/* QR Image Box */}
-            <div className="p-4 bg-white rounded-xl mx-auto w-fit shadow-inner">
+            <div className="p-4 bg-white rounded-xl mx-auto w-fit shadow-xs border border-[#eaeaea] dark:border-transparent">
               {qrDataUrl ? (
                 <img src={qrDataUrl} alt="Mobile QR Code" className="w-56 h-56 block mx-auto" />
               ) : (
-                <div className="w-56 h-56 flex items-center justify-center text-zinc-500 text-xs font-mono">
+                <div className="w-56 h-56 flex items-center justify-center text-[#888888] dark:text-[#737373] text-xs font-mono">
                   Generating QR...
                 </div>
               )}
             </div>
 
-            <div className="text-xs font-mono text-zinc-400 select-all p-2 rounded bg-[#0b0c0f] border border-[#1e222d] break-all">
+            <div className="text-xs font-mono text-[#666666] dark:text-[#a1a1aa] select-all p-2 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] break-all">
               {includeKeyInQr && (generatedKey || selectedKeyText) && !selectedKeyText.includes('...')
                 ? `${webChatUrl}/?key=${generatedKey || selectedKeyText}`
                 : webChatUrl}
             </div>
 
-            <label className="flex items-center justify-center gap-2 text-xs text-zinc-300 cursor-pointer">
+            <label className="flex items-center justify-center gap-2 text-xs text-[#666666] dark:text-[#a1a1aa] cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeKeyInQr}
                 onChange={(e) => setIncludeKeyInQr(e.target.checked)}
-                className="rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white accent-black dark:accent-white"
+                className="rounded border-[#eaeaea] dark:border-[#262626] bg-white dark:bg-[#191919] text-black dark:text-white accent-black dark:accent-white"
               />
               <span>Include API Key in QR Link</span>
             </label>
 
             <button
               onClick={() => setShowQrModal(false)}
-              className="w-full py-2 bg-[#1c202a] hover:bg-[#252b38] text-zinc-200 text-xs font-medium rounded-lg transition-colors"
+              className="w-full py-2 bg-[#f5f5f5] dark:bg-[#191919] hover:bg-[#eaeaea] dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-[#111111] dark:text-[#f5f5f5] text-xs font-medium rounded-lg transition-colors"
             >
               Close
             </button>

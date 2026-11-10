@@ -54,8 +54,8 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
     <div
       className={`group relative rounded-xl p-5 border transition-all duration-200 flex flex-col justify-between ${
         isActive
-          ? 'bg-white dark:bg-[#12141a] border-black dark:border-white shadow-xs'
-          : 'bg-white dark:bg-[#111317] border-[#eaeaea] dark:border-[#22252c] hover:border-zinc-400 dark:hover:border-[#333742]'
+          ? 'bg-white dark:bg-[#191919] border-black dark:border-white shadow-xs'
+          : 'bg-white dark:bg-[#141414] border-[#eaeaea] dark:border-[#262626] hover:border-zinc-400 dark:hover:border-[#737373]'
       }`}
     >
       <div>
@@ -66,8 +66,8 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
             <div
               className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-xs transition-transform duration-200 group-hover:scale-105 ${
                 isActive
-                  ? 'bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 text-black dark:text-white'
-                  : 'bg-zinc-50 dark:bg-[#171922] border border-[#eaeaea] dark:border-[#262934] text-zinc-700 dark:text-zinc-200'
+                  ? 'bg-zinc-100 dark:bg-[#202020] border border-zinc-300 dark:border-[#262626] text-black dark:text-white'
+                  : 'bg-zinc-50 dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-zinc-700 dark:text-[#F5F5F5]'
               }`}
             >
               <span>{persona.avatar || '🤖'}</span>
@@ -75,7 +75,7 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-bold text-[#111111] dark:text-zinc-100 truncate tracking-tight">
+                <h3 className="text-sm font-bold text-[#111111] dark:text-[#F5F5F5] truncate tracking-tight">
                   {persona.name}
                 </h3>
 
@@ -130,7 +130,7 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
           <div className="relative shrink-0">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-[#1a1d26] transition-colors"
+              className="p-1 rounded-md text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#202020] transition-colors"
               title="Persona options"
             >
               <MoreVertical className="w-4 h-4" />
@@ -142,15 +142,15 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
                   className="fixed inset-0 z-20"
                   onClick={() => setShowMenu(false)}
                 />
-                <div className="absolute right-0 mt-1 w-44 rounded-lg bg-[#14161c] border border-[#262934] shadow-xl py-1 z-30 text-xs">
+                <div className="absolute right-0 mt-1 w-44 rounded-lg bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] shadow-xl py-1 z-30 text-xs">
                   <button
                     onClick={() => {
                       setShowMenu(false);
                       onActivate();
                     }}
-                    className="w-full text-left px-3 py-1.5 text-zinc-300 hover:bg-[#1f222d] flex items-center gap-2"
+                    className="w-full text-left px-3 py-1.5 text-[#111111] dark:text-[#f5f5f5] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] flex items-center gap-2"
                   >
-                    <Zap className="w-3.5 h-3.5 text-zinc-500" />
+                    <Zap className="w-3.5 h-3.5 text-[#888888] dark:text-[#737373]" />
                     <span>{isActive ? 'Currently Active' : 'Set as Active'}</span>
                   </button>
 
@@ -160,9 +160,9 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
                       onSetDefault();
                     }}
                     disabled={isDefault}
-                    className="w-full text-left px-3 py-1.5 text-zinc-300 hover:bg-[#1f222d] disabled:opacity-40 flex items-center gap-2"
+                    className="w-full text-left px-3 py-1.5 text-[#111111] dark:text-[#f5f5f5] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] disabled:opacity-40 flex items-center gap-2"
                   >
-                    <Star className="w-3.5 h-3.5 text-amber-400" />
+                    <Star className="w-3.5 h-3.5 text-amber-500" />
                     <span>{isDefault ? 'Default Persona' : 'Set as Default'}</span>
                   </button>
 
@@ -171,9 +171,9 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
                       setShowMenu(false);
                       onEdit();
                     }}
-                    className="w-full text-left px-3 py-1.5 text-zinc-300 hover:bg-[#1f222d] flex items-center gap-2"
+                    className="w-full text-left px-3 py-1.5 text-[#111111] dark:text-[#f5f5f5] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] flex items-center gap-2"
                   >
-                    <Edit2 className="w-3.5 h-3.5 text-zinc-400" />
+                    <Edit2 className="w-3.5 h-3.5 text-[#888888] dark:text-[#737373]" />
                     <span>{persona.isBuiltIn ? 'Inspect / Duplicate' : 'Edit Persona'}</span>
                   </button>
 
@@ -182,20 +182,20 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
                       setShowMenu(false);
                       onDuplicate();
                     }}
-                    className="w-full text-left px-3 py-1.5 text-zinc-300 hover:bg-[#1f222d] flex items-center gap-2"
+                    className="w-full text-left px-3 py-1.5 text-[#111111] dark:text-[#f5f5f5] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] flex items-center gap-2"
                   >
-                    <Copy className="w-3.5 h-3.5 text-zinc-400" />
+                    <Copy className="w-3.5 h-3.5 text-[#888888] dark:text-[#737373]" />
                     <span>Duplicate as Custom</span>
                   </button>
 
                   {!persona.isBuiltIn && onDelete && (
-                    <div className="border-t border-[#22252e] mt-1 pt-1">
+                    <div className="border-t border-[#eaeaea] dark:border-[#222222] mt-1 pt-1">
                       <button
                         onClick={() => {
                           setShowMenu(false);
                           onDelete();
                         }}
-                        className="w-full text-left px-3 py-1.5 text-rose-400 hover:bg-rose-950/30 flex items-center gap-2"
+                        className="w-full text-left px-3 py-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Delete Persona</span>
@@ -232,7 +232,7 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
       </div>
 
       {/* Card Footer: Quick Actions */}
-      <div className="mt-4 pt-3 border-t border-[#eaeaea] dark:border-[#1d2027] flex items-center justify-between gap-2">
+      <div className="mt-4 pt-3 border-t border-[#eaeaea] dark:border-[#222222] flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
           {isActive ? (
             <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-mono">
@@ -240,14 +240,14 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
               <span>ACTIVE</span>
             </span>
           ) : (
-            <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px]">STANDBY</span>
+            <span className="text-zinc-400 dark:text-[#737373] font-mono text-[10px]">STANDBY</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={onEdit}
-            className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#16181f] hover:bg-zinc-50 dark:hover:bg-[#1f222d] border border-[#eaeaea] dark:border-[#252834] text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors"
+            className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#191919] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-xs font-medium text-zinc-700 dark:text-[#A1A1AA] transition-colors"
           >
             {persona.isBuiltIn ? 'View' : 'Edit'}
           </button>
@@ -256,7 +256,7 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
             onClick={onActivate}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
               isActive
-                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 cursor-default'
+                ? 'bg-zinc-100 dark:bg-[#202020] text-zinc-800 dark:text-[#F5F5F5] border border-zinc-200 dark:border-[#262626] cursor-default'
                 : 'bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black shadow-xs'
             }`}
           >

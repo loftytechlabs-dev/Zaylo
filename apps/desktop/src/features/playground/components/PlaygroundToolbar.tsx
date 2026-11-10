@@ -85,7 +85,7 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
   }, []);
 
   return (
-    <div className="h-[76px] px-6 border-b border-[#eaeaea] dark:border-[#202227] bg-white dark:bg-[#0c0d10] flex items-center justify-between select-none shrink-0 z-20">
+    <div className="h-[76px] px-6 border-b border-[#eaeaea] dark:border-[#262626] bg-white dark:bg-[#090909] flex items-center justify-between select-none shrink-0 z-20">
       {/* Left Controls: Model Pill & Persona Pill */}
       <div className="flex items-center gap-2.5">
         {/* Model Selector Pill */}
@@ -93,24 +93,24 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
           <button
             type="button"
             onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] text-xs font-medium text-[#111111] dark:text-[#f4f4f5] transition-colors shadow-xs"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-xs font-medium text-[#111111] dark:text-[#F5F5F5] transition-colors shadow-xs"
             title="Select AI Model"
           >
-            <Box className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400 shrink-0" />
+            <Box className="w-3.5 h-3.5 text-zinc-600 dark:text-[#A1A1AA] shrink-0" />
             <span className="truncate max-w-[140px] sm:max-w-[180px] font-sans">
               {isLoadingModel ? 'Loading...' : selectedModel?.name || 'Select Model'}
             </span>
-            <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-150 shrink-0 ${isModelDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 dark:text-[#737373] transition-transform duration-150 shrink-0 ${isModelDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Model Dropdown Popup */}
           {isModelDropdownOpen && (
-            <div className="absolute left-0 mt-1.5 w-72 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#262934] shadow-xl py-1.5 z-50 text-xs overflow-hidden select-none animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-3 py-1.5 border-b border-[#eaeaea] dark:border-[#1c1f28] flex items-center justify-between">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+            <div className="absolute left-0 mt-1.5 w-72 rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] shadow-xl py-1.5 z-50 text-xs overflow-hidden select-none animate-in fade-in zoom-in-95 duration-100">
+              <div className="px-3 py-1.5 border-b border-[#eaeaea] dark:border-[#222222] flex items-center justify-between">
+                <span className="text-[10px] font-mono text-zinc-500 dark:text-[#737373] uppercase tracking-wider">
                   Available Models
                 </span>
-                <span className="text-[10px] font-mono text-zinc-400">
+                <span className="text-[10px] font-mono text-zinc-400 dark:text-[#A1A1AA]">
                   {models.length} installed
                 </span>
               </div>
@@ -127,15 +127,15 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
                       }}
                       className={`w-full px-3 py-2 text-left flex items-center justify-between transition-colors ${
                         isSelected
-                          ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium'
-                          : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#181a22]'
+                          ? 'bg-zinc-100 dark:bg-[#202020] text-zinc-900 dark:text-[#F5F5F5] font-medium'
+                          : 'text-zinc-700 dark:text-[#A1A1AA] hover:bg-zinc-50 dark:hover:bg-[#202020]'
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
-                        <Box className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-zinc-900 dark:text-white' : 'text-zinc-400'}`} />
+                        <Box className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-zinc-900 dark:text-[#F5F5F5]' : 'text-zinc-400 dark:text-[#737373]'}`} />
                         <div className="truncate">
                           <span className="truncate block leading-tight">{m.name}</span>
-                          <span className="text-[10px] text-zinc-400 font-mono leading-none">
+                          <span className="text-[10px] text-zinc-400 dark:text-[#737373] font-mono leading-none">
                             {m.type === 'adapter' ? 'LoRA Adapter' : m.taskType || 'Text'}
                           </span>
                         </div>
@@ -168,8 +168,8 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
           onClick={onToggleCompare}
           className={`p-2 rounded-xl border transition-colors ${
             isCompareMode
-              ? 'bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white'
-              : 'bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border-[#eaeaea] dark:border-[#272932] text-zinc-600 dark:text-zinc-400 shadow-xs'
+              ? 'bg-zinc-100 dark:bg-[#202020] border-zinc-300 dark:border-[#262626] text-zinc-900 dark:text-[#F5F5F5]'
+              : 'bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border-[#eaeaea] dark:border-[#262626] text-zinc-600 dark:text-[#A1A1AA] shadow-xs'
           }`}
           title="Compare Models side-by-side"
         >
@@ -179,7 +179,7 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
         {/* History Control */}
         <button
           onClick={onToggleHistory}
-          className="p-2 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] text-zinc-600 dark:text-zinc-400 shadow-xs transition-colors"
+          className="p-2 rounded-xl bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-zinc-600 dark:text-[#A1A1AA] shadow-xs transition-colors"
           title="Conversation History"
         >
           <Clock className="w-4 h-4" />
@@ -189,22 +189,22 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
         <div className="relative inline-block" ref={moreMenuRef}>
           <button
             onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-            className="p-2 rounded-xl bg-white dark:bg-[#15161b] hover:bg-zinc-50 dark:hover:bg-[#1c1e26] border border-[#eaeaea] dark:border-[#272932] text-zinc-600 dark:text-zinc-400 shadow-xs transition-colors"
+            className="p-2 rounded-xl bg-white dark:bg-[#141414] hover:bg-zinc-50 dark:hover:bg-[#202020] border border-[#eaeaea] dark:border-[#262626] text-zinc-600 dark:text-[#A1A1AA] shadow-xs transition-colors"
             title="More Options"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
 
           {isMoreMenuOpen && (
-            <div className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white dark:bg-[#12141a] border border-[#eaeaea] dark:border-[#262934] shadow-xl py-1.5 z-50 text-xs select-none animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] shadow-xl py-1.5 z-50 text-xs select-none animate-in fade-in zoom-in-95 duration-100">
               <button
                 onClick={() => {
                   onToggleSettings();
                   setIsMoreMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#181a22] transition-colors"
+                className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-zinc-700 dark:text-[#A1A1AA] hover:bg-zinc-50 dark:hover:bg-[#202020] hover:text-[#111111] dark:hover:text-[#F5F5F5] transition-colors"
               >
-                <Sliders className="w-4 h-4 text-zinc-500" />
+                <Sliders className="w-4 h-4 text-zinc-500 dark:text-[#737373]" />
                 <span>Generation Parameters...</span>
               </button>
 
@@ -213,9 +213,9 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
                   onTogglePerformance();
                   setIsMoreMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#181a22] transition-colors"
+                className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-zinc-700 dark:text-[#A1A1AA] hover:bg-zinc-50 dark:hover:bg-[#202020] hover:text-[#111111] dark:hover:text-[#F5F5F5] transition-colors"
               >
-                <Activity className="w-4 h-4 text-zinc-500" />
+                <Activity className="w-4 h-4 text-zinc-500 dark:text-[#737373]" />
                 <span>Performance Monitor</span>
               </button>
 
@@ -224,7 +224,7 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
                   toggleTheme();
                   setIsMoreMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#181a22] transition-colors"
+                className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-zinc-700 dark:text-[#A1A1AA] hover:bg-zinc-50 dark:hover:bg-[#202020] hover:text-[#111111] dark:hover:text-[#F5F5F5] transition-colors"
               >
                 {theme === 'dark' ? (
                   <>
@@ -239,7 +239,7 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
                 )}
               </button>
 
-              <div className="border-t border-[#eaeaea] dark:border-[#1c1f28] my-1" />
+              <div className="border-t border-[#eaeaea] dark:border-[#222222] my-1" />
 
               <button
                 onClick={() => {
@@ -250,7 +250,7 @@ export const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = ({
                   }
                   setIsMoreMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#181a22] transition-colors"
+                className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-zinc-700 dark:text-[#A1A1AA] hover:bg-zinc-50 dark:hover:bg-[#202020] hover:text-[#111111] dark:hover:text-[#F5F5F5] transition-colors"
               >
                 <Power className={`w-4 h-4 ${serverState === 'RUNNING' ? 'text-rose-500' : 'text-emerald-500'}`} />
                 <span>{serverState === 'RUNNING' ? 'Stop Local Engine' : 'Start Local Engine'}</span>

@@ -109,7 +109,12 @@ async function createWindow() {
     mainWindow = null;
   });
 
-  cleanupHandlers = await registerIpcHandlers(mainWindow);
+  try {
+    await performCleanup();
+    cleanupHandlers = await registerIpcHandlers(mainWindow);
+  } catch (err) {
+    console.error('[Electron Main] Error registering IPC handlers:', err);
+  }
 
   if (VITE_DEV_SERVER_URL) {
     await mainWindow.loadURL(VITE_DEV_SERVER_URL);

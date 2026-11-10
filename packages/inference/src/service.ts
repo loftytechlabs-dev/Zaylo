@@ -13,6 +13,7 @@ import { RequestQueue } from './queue.js';
 import { MetricsRepository, LogsRepository } from '@local-ai/database';
 import { createChatCompletionResponse } from '@local-ai/protocol';
 import { RagEngine } from './rag.js';
+import { MemoryEngine } from './memory/MemoryEngine.js';
 
 export function extractMessageText(message: ChatMessage): string {
   if (typeof message.content === 'string') return message.content;
@@ -37,6 +38,8 @@ export class InferenceService {
   private currentModelName: string = '';
   private activeAbortControllers = new Map<string, AbortController>();
   private ragEngine?: RagEngine;
+  private memoryEngine?: MemoryEngine;
+  private onMemoryMutated?: () => void;
   
   // Rolling metrics
   private totalRequests = 0;
@@ -45,12 +48,14 @@ export class InferenceService {
 
   constructor(
     private metricsRepo?: MetricsRepository,
-    private logsRepo?: LogsRepository,
+    _logsRepo?: LogsRepository,
     maxConcurrent: number = 4,
-    ragEngine?: RagEngine
+    ragEngine?: RagEngine,
+    memoryEngine?: MemoryEngine
   ) {
     this.queue = new RequestQueue(maxConcurrent);
     this.ragEngine = ragEngine;
+    this.memoryEngine = memoryEngine;
   }
 
   public setRagEngine(ragEngine?: RagEngine): void {
@@ -59,6 +64,15 @@ export class InferenceService {
 
   public getRagEngine(): RagEngine | undefined {
     return this.ragEngine;
+  }
+
+  public setMemoryEngine(memoryEngine?: MemoryEngine, onMemoryMutated?: () => void): void {
+    this.memoryEngine = memoryEngine;
+    this.onMemoryMutated = onMemoryMutated;
+  }
+
+  public getMemoryEngine(): MemoryEngine | undefined {
+    return this.memoryEngine;
   }
 
   public setRuntime(runtime?: InferenceRuntime, modelName?: string): void {
@@ -149,15 +163,50 @@ export class InferenceService {
         }
       }
 
-      if (request.rag && this.ragEngine) {
-        const userMessages = request.messages.filter((m) => m.role === 'user');
-        const lastUserMsg = userMessages[userMessages.length - 1];
-        if (lastUserMsg) {
-          const queryText = extractMessageText(lastUserMsg);
-          const searchResults = await this.ragEngine.search(queryText, 4, request.ragDocumentIds);
-          if (searchResults.length > 0) {
-            effectiveRequest.messages = this.ragEngine.augmentMessages(request.messages, searchResults);
+      const userMessages = request.messages.filter((m) => m.role === 'user');
+      const lastUserMsg = userMessages[userMessages.length - 1];
+      const lastUserText = lastUserMsg ? extractMessageText(lastUserMsg) : '';
+
+      // Automatically recall long-term memories from LoftyDB when enabled
+      const shouldUseMemory =
+        Boolean(this.memoryEngine) &&
+        (request.memory === true ||
+          (request.memory !== false && Boolean(this.memoryEngine?.isAutoRecallEnabled())));
+
+      if (shouldUseMemory && this.memoryEngine && lastUserText) {
+        try {
+          const recalled = await this.memoryEngine.recall({
+            query: lastUserText,
+            scope: request.memoryScope || 'all',
+            personaId: request.personaId,
+            conversationId: request.conversationId,
+          });
+          if (recalled.length > 0) {
+            effectiveRequest.messages = this.memoryEngine.augmentMessages(effectiveRequest.messages, recalled);
           }
+        } catch {
+          // Graceful fallback if LoftyDB is offline or unreachable
+        }
+
+        if (this.memoryEngine.isAutoExtractEnabled() && request.memory !== false) {
+          this.memoryEngine
+            .extractAndPersistFromUserMessage(lastUserText, {
+              personaId: request.personaId,
+              conversationId: request.conversationId,
+            })
+            .then((saved) => {
+              if (saved.length > 0) {
+                this.onMemoryMutated?.();
+              }
+            })
+            .catch(() => {});
+        }
+      }
+
+      if (request.rag && this.ragEngine && lastUserText) {
+        const searchResults = await this.ragEngine.search(lastUserText, 4, request.ragDocumentIds);
+        if (searchResults.length > 0) {
+          effectiveRequest.messages = this.ragEngine.augmentMessages(effectiveRequest.messages, searchResults);
         }
       }
 

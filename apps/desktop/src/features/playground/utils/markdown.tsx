@@ -44,7 +44,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
         // Text before match
         if (match.index > lastIndex) {
           tokens.push(
-            <span key={keyCounter++} className="text-zinc-200">
+            <span key={keyCounter++} className="text-zinc-800 dark:text-[#F5F5F5]">
               {remaining.substring(lastIndex, match.index)}
             </span>
           );
@@ -54,19 +54,19 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
 
         if (stringMatch) {
           tokens.push(
-            <span key={keyCounter++} className="text-emerald-400">
+            <span key={keyCounter++} className="text-emerald-600 dark:text-emerald-400">
               {stringMatch}
             </span>
           );
         } else if (keywordMatch) {
           tokens.push(
-            <span key={keyCounter++} className="text-purple-400 font-semibold">
+            <span key={keyCounter++} className="text-purple-600 dark:text-purple-400 font-semibold">
               {keywordMatch}
             </span>
           );
         } else if (numberMatch) {
           tokens.push(
-            <span key={keyCounter++} className="text-amber-400">
+            <span key={keyCounter++} className="text-amber-600 dark:text-amber-400">
               {numberMatch}
             </span>
           );
@@ -78,7 +78,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
       // Remaining line text
       if (lastIndex < remaining.length) {
         tokens.push(
-          <span key={keyCounter++} className="text-zinc-200">
+          <span key={keyCounter++} className="text-zinc-800 dark:text-[#F5F5F5]">
             {remaining.substring(lastIndex)}
           </span>
         );
@@ -93,28 +93,28 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
   };
 
   return (
-    <div className="my-3 rounded-lg overflow-hidden border border-[#272b35] bg-[#0c0d11] text-xs font-mono select-text shadow-sm">
+    <div className="my-3 rounded-lg overflow-hidden border border-[#eaeaea] dark:border-[#262626] bg-[#f8fafc] dark:bg-[#141414] text-xs font-mono select-text shadow-sm">
       {/* Code Header */}
-      <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#14161d] border-b border-[#222530] text-[11px] select-none">
-        <div className="flex items-center gap-1.5 text-zinc-400">
-          <Terminal className="w-3.5 h-3.5 text-zinc-500" />
-          <span className="font-semibold uppercase tracking-wider text-[10px] text-zinc-300">
+      <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#f1f5f9] dark:bg-[#191919] border-b border-[#eaeaea] dark:border-[#262626] text-[11px] select-none">
+        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-[#A1A1AA]">
+          <Terminal className="w-3.5 h-3.5 text-zinc-500 dark:text-[#737373]" />
+          <span className="font-semibold uppercase tracking-wider text-[10px] text-zinc-700 dark:text-[#F5F5F5]">
             {language || 'code'}
           </span>
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-[#1f222d] text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-[#202020] text-zinc-600 dark:text-[#A1A1AA] hover:text-black dark:hover:text-[#F5F5F5] transition-colors"
           title="Copy code"
         >
           {copied ? (
             <>
-              <Check className="w-3 h-3 text-emerald-400" />
-              <span className="text-[10px] text-emerald-400 font-sans">Copied</span>
+              <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-sans">Copied</span>
             </>
           ) : (
             <>
-              <Copy className="w-3 h-3 text-zinc-400" />
+              <Copy className="w-3 h-3 text-zinc-500 dark:text-[#737373]" />
               <span className="text-[10px] font-sans">Copy</span>
             </>
           )}
@@ -122,7 +122,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
       </div>
 
       {/* Code Body */}
-      <div className="p-3.5 overflow-x-auto text-zinc-200 scrollbar-thin">
+      <div className="p-3.5 overflow-x-auto text-zinc-800 dark:text-[#F5F5F5] scrollbar-thin">
         {highlightSyntax(code, language)}
       </div>
     </div>
@@ -198,7 +198,7 @@ const FormattedParagraph: React.FC<{ text: string }> = ({ text }) => {
     if (trimmed.startsWith('# ')) {
       flushList();
       elements.push(
-        <h1 key={idx} className="text-base font-bold text-zinc-100 mt-2 mb-1">
+        <h1 key={idx} className="text-base font-bold text-[#111111] dark:text-[#F5F5F5] mt-2 mb-1">
           {renderInlineMarkdown(trimmed.substring(2))}
         </h1>
       );
@@ -207,7 +207,7 @@ const FormattedParagraph: React.FC<{ text: string }> = ({ text }) => {
     if (trimmed.startsWith('## ')) {
       flushList();
       elements.push(
-        <h2 key={idx} className="text-sm font-bold text-zinc-100 mt-2 mb-1">
+        <h2 key={idx} className="text-sm font-bold text-[#111111] dark:text-[#F5F5F5] mt-2 mb-1">
           {renderInlineMarkdown(trimmed.substring(3))}
         </h2>
       );
@@ -216,7 +216,7 @@ const FormattedParagraph: React.FC<{ text: string }> = ({ text }) => {
     if (trimmed.startsWith('### ')) {
       flushList();
       elements.push(
-        <h3 key={idx} className="text-xs font-bold text-zinc-200 mt-1.5 mb-1">
+        <h3 key={idx} className="text-xs font-bold text-[#111111] dark:text-[#F5F5F5] mt-1.5 mb-1">
           {renderInlineMarkdown(trimmed.substring(4))}
         </h3>
       );
@@ -230,7 +230,7 @@ const FormattedParagraph: React.FC<{ text: string }> = ({ text }) => {
       inList = true;
       isOrderedList = false;
       listItems.push(
-        <li key={`li-${idx}`} className="text-zinc-200 text-xs">
+        <li key={`li-${idx}`} className="text-[#111111] dark:text-[#F5F5F5] text-xs">
           {renderInlineMarkdown(bulletMatch[2])}
         </li>
       );
@@ -244,7 +244,7 @@ const FormattedParagraph: React.FC<{ text: string }> = ({ text }) => {
       inList = true;
       isOrderedList = true;
       listItems.push(
-        <li key={`li-${idx}`} className="text-zinc-200 text-xs">
+        <li key={`li-${idx}`} className="text-[#111111] dark:text-[#F5F5F5] text-xs">
           {renderInlineMarkdown(numberMatch[2])}
         </li>
       );
@@ -257,7 +257,7 @@ const FormattedParagraph: React.FC<{ text: string }> = ({ text }) => {
       elements.push(
         <blockquote
           key={idx}
-          className="border-l-2 border-zinc-400 dark:border-zinc-600 pl-3 py-0.5 my-1.5 text-zinc-600 dark:text-zinc-400 italic text-xs bg-zinc-50 dark:bg-zinc-900/40 rounded-r"
+          className="border-l-2 border-zinc-400 dark:border-zinc-600 pl-3 py-0.5 my-1.5 text-zinc-600 dark:text-[#A1A1AA] italic text-xs bg-zinc-50 dark:bg-[#191919] rounded-r"
         >
           {renderInlineMarkdown(trimmed.substring(2))}
         </blockquote>
@@ -274,7 +274,7 @@ const FormattedParagraph: React.FC<{ text: string }> = ({ text }) => {
     // Regular line
     flushList();
     elements.push(
-      <p key={idx} className="text-xs text-zinc-200 leading-relaxed">
+      <p key={idx} className="text-xs text-[#111111] dark:text-[#F5F5F5] leading-relaxed">
         {renderInlineMarkdown(line)}
       </p>
     );
@@ -306,20 +306,20 @@ function renderInlineMarkdown(str: string): React.ReactNode {
       parts.push(
         <code
           key={keyCounter++}
-          className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-[#171922] border border-zinc-200 dark:border-[#262937] text-[#111111] dark:text-zinc-200 font-mono text-[11px]"
+          className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-[#191919] border border-zinc-200 dark:border-[#262626] text-[#111111] dark:text-[#F5F5F5] font-mono text-[11px]"
         >
           {token.substring(1, token.length - 1)}
         </code>
       );
     } else if (token.startsWith('**') && token.endsWith('**')) {
       parts.push(
-        <strong key={keyCounter++} className="font-semibold text-zinc-100">
+        <strong key={keyCounter++} className="font-semibold text-[#111111] dark:text-[#F5F5F5]">
           {token.substring(2, token.length - 2)}
         </strong>
       );
     } else if (token.startsWith('*') && token.endsWith('*')) {
       parts.push(
-        <em key={keyCounter++} className="italic text-zinc-300">
+        <em key={keyCounter++} className="italic text-zinc-600 dark:text-[#A1A1AA]">
           {token.substring(1, token.length - 1)}
         </em>
       );

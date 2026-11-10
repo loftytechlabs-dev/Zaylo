@@ -1,6 +1,7 @@
 import { ipcMain, dialog, shell, BrowserWindow } from 'electron';
 import type { IPCChannels, IPCEvents } from '@local-ai/protocol';
-import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepository, DeviceRepository, MetricsRepository, LogsRepository, BenchmarkRepository, DocumentRepository, TrainingJobRepository, FineTunedModelRepository } from '@local-ai/database';
+import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepository, DeviceRepository, MetricsRepository, LogsRepository, BenchmarkRepository, DocumentRepository, TrainingJobRepository, FineTunedModelRepository, SettingsRepository } from '@local-ai/database';
+import { registerLoftyDbHandlers } from '../loftydb/registerLoftyDbHandlers.js';
 import { ModelInspector, DatasetParser, AutoConfigurator, PreflightValidator, ForgeTrainingEngine } from '../forge/index.js';
 import { ImageEngine } from '../image/imageEngine.js';
 import { HardwareScanner } from '@local-ai/hardware';
@@ -27,6 +28,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
   const documentRepo = new DocumentRepository(dbConn.raw);
   const trainingJobRepo = new TrainingJobRepository(dbConn.raw);
   const fineTunedModelRepo = new FineTunedModelRepository(dbConn.raw);
+  const settingsRepo = new SettingsRepository(dbConn.raw);
   const forgeEngine = new ForgeTrainingEngine(trainingJobRepo, fineTunedModelRepo);
 
   let config = serverRepo.getConfig();
@@ -117,6 +119,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
     channel: K,
     fn: (req: IPCChannels[K]['request']) => Promise<IPCChannels[K]['response']> | IPCChannels[K]['response']
   ) {
+    ipcMain.removeHandler(channel);
     ipcMain.handle(channel, async (_event, args) => {
       try {
         return await fn(args);
@@ -942,7 +945,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
 
   // 12. App & System
   handle('app:get-version', async () => {
-    return '3.1.0';
+    return '3.2.0';
   });
 
   handle('app:select-directory', async ({ defaultPath }) => {
@@ -957,8 +960,17 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
     shell.openExternal(url);
   });
 
+  // 13. LoftyDB Engine & Long-Term Memory
+  const cleanupLoftyDb = registerLoftyDbHandlers({
+    handle,
+    sendEvent,
+    settingsRepo,
+    inferenceService,
+  });
+
   return async () => {
     monitor.stop();
+    await cleanupLoftyDb().catch(() => {});
     if (apiServer) {
       await apiServer.stop().catch(() => {});
       apiServer = null;

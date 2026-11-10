@@ -63,8 +63,38 @@ export const ChatCompletionRequestSchema = z.object({
   user: z.string().optional(),
   rag: z.boolean().optional().default(false),
   ragDocumentIds: z.array(z.string()).optional(),
+  memory: z.boolean().optional(),
+  memoryScope: z.enum(['all', 'global', 'persona', 'conversation']).optional(),
+  conversationId: z.string().optional(),
   personaId: z.string().optional(),
   personaInstructions: z.string().optional(),
+});
+
+export const LoftyDbConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  autoStart: z.boolean().default(true),
+  mode: z.enum(['managed', 'external']).default('managed'),
+  port: z.number().int().min(1024).max(65535).default(8090),
+  baseUrl: z.string().url().default('http://127.0.0.1:8090'),
+  dataDir: z.string().min(1),
+  binaryPath: z.string().optional(),
+  memoryEnabled: z.boolean().default(true),
+  autoExtractMemories: z.boolean().default(true),
+  recallLimit: z.number().int().min(1).max(20).default(5),
+  minSimilarity: z.number().min(0).max(1).default(0.15),
+});
+
+export const MemoryEntryInputSchema = z.object({
+  id: z.string().optional(),
+  content: z.string().min(1),
+  category: z.enum(['fact', 'preference', 'instruction', 'project', 'episode', 'context']).default('fact'),
+  scope: z.enum(['global', 'persona', 'conversation']).default('global'),
+  personaId: z.string().optional(),
+  conversationId: z.string().optional(),
+  importance: z.number().int().min(1).max(5).default(3),
+  pinned: z.boolean().default(false),
+  tags: z.array(z.string()).default([]),
+  source: z.enum(['auto', 'manual', 'chat']).default('manual'),
 });
 
 export const EmbeddingRequestSchema = z.object({

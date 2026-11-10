@@ -55,13 +55,13 @@ export const DevicesView: React.FC = () => {
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-4rem)]">
       {/* Header & Action */}
-      <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#202227] pb-4">
+      <div className="flex items-center justify-between border-b border-[#eaeaea] dark:border-[#222222] pb-4">
         <div>
-          <h2 className="text-sm font-semibold text-[#111111] dark:text-zinc-100 flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+          <h2 className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
             Connected & Paired Devices
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-0.5">
             Manage physical computers, phones, and tablets that have accessed or paired with this inference server.
           </p>
         </div>
@@ -69,14 +69,14 @@ export const DevicesView: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => fetchDevicesAndKeys()}
-            className="p-1.5 rounded-lg bg-white dark:bg-[#16181f] hover:bg-zinc-50 dark:hover:bg-[#20242e] text-zinc-500 hover:text-black dark:hover:text-white border border-[#eaeaea] dark:border-[#242834] transition-colors"
+            className="p-1.5 rounded-lg bg-white dark:bg-[#141414] hover:bg-[#f5f5f5] dark:hover:bg-[#202020] text-[#666666] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-[#f5f5f5] border border-[#eaeaea] dark:border-[#262626] transition-colors"
             title="Refresh devices"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
             onClick={handleOpenPairing}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-black dark:bg-white hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-white dark:text-black text-xs font-medium transition-colors shadow-xs"
           >
             <QrCode className="w-4 h-4" />
             <span>Pair New Device</span>
@@ -86,8 +86,8 @@ export const DevicesView: React.FC = () => {
 
       {/* LAN Warning if not enabled */}
       {!serverConfig?.lanEnabled && (
-        <div className="p-4 rounded-lg bg-amber-950/30 border border-amber-800/40 flex items-center gap-3 text-xs text-amber-300">
-          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+        <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 flex items-center gap-3 text-xs text-amber-700 dark:text-amber-300">
+          <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
           <div>
             <span className="font-semibold">LAN Access is currently disabled.</span> Enable LAN Access in Server & API settings to allow phones and laptops on your Wi-Fi network to connect.
           </div>
@@ -95,9 +95,9 @@ export const DevicesView: React.FC = () => {
       )}
 
       {/* Devices List Table */}
-      <div className="border border-[#202227] rounded-lg overflow-hidden font-mono text-xs bg-[#111317]">
+      <div className="border border-[#eaeaea] dark:border-[#262626] rounded-lg overflow-hidden font-mono text-xs bg-white dark:bg-[#141414]">
         <table className="w-full text-left">
-          <thead className="bg-[#0e1013] text-zinc-500 text-[11px] border-b border-[#202227]">
+          <thead className="bg-[#fafafa] dark:bg-[#191919] text-[#666666] dark:text-[#a1a1aa] text-[11px] border-b border-[#eaeaea] dark:border-[#222222]">
             <tr>
               <th className="py-3 px-4">DEVICE NAME</th>
               <th className="py-3 px-4">IP ADDRESS</th>
@@ -107,10 +107,10 @@ export const DevicesView: React.FC = () => {
               <th className="py-3 px-4 text-right">ACTION</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1c1f26] text-zinc-300">
+          <tbody className="divide-y divide-[#eaeaea] dark:divide-[#222222] text-[#111111] dark:text-[#f5f5f5]">
             {devices.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-zinc-500 font-sans">
+                <td colSpan={6} className="py-12 text-center text-[#888888] dark:text-[#737373] font-sans">
                   No devices connected yet. Open the Web Chat or scan the QR code from another device on this Wi-Fi network.
                 </td>
               </tr>
@@ -118,34 +118,34 @@ export const DevicesView: React.FC = () => {
               devices.map((d) => {
                 const isOnline = !d.isRevoked && Date.now() - d.lastRequestAt < 45000;
                 return (
-                  <tr key={d.id} className="hover:bg-[#14161c]">
-                    <td className="py-3.5 px-4 font-sans font-medium text-zinc-200">
+                  <tr key={d.id} className="hover:bg-[#fafafa] dark:hover:bg-[#191919]">
+                    <td className="py-3.5 px-4 font-sans font-medium text-[#111111] dark:text-[#f5f5f5]">
                       <div className="flex items-center gap-2.5">
                         {getDeviceIcon(d.deviceName, d.userAgent)}
                         <div>
-                          <div className="text-zinc-100 font-semibold">{d.deviceName}</div>
+                          <div className="text-[#111111] dark:text-[#f5f5f5] font-semibold">{d.deviceName}</div>
                           {d.userAgent && (
-                            <div className="text-[10px] text-zinc-500 font-mono truncate max-w-xs">
+                            <div className="text-[10px] text-[#888888] dark:text-[#737373] font-mono truncate max-w-xs">
                               {d.userAgent}
                             </div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-zinc-400 font-mono">{d.ipAddress}</td>
-                    <td className="py-3.5 px-4 text-zinc-500">{new Date(d.lastRequestAt).toLocaleTimeString()}</td>
-                    <td className="py-3.5 px-4 text-zinc-400 font-mono">{d.requestCount}</td>
+                    <td className="py-3.5 px-4 text-[#666666] dark:text-[#a1a1aa] font-mono">{d.ipAddress}</td>
+                    <td className="py-3.5 px-4 text-[#888888] dark:text-[#737373]">{new Date(d.lastRequestAt).toLocaleTimeString()}</td>
+                    <td className="py-3.5 px-4 text-[#666666] dark:text-[#a1a1aa] font-mono">{d.requestCount}</td>
                     <td className="py-3.5 px-4">
                       {d.isRevoked ? (
-                        <span className="text-rose-400 text-[11px] font-medium">Revoked</span>
+                        <span className="text-rose-500 text-[11px] font-medium">Revoked</span>
                       ) : isOnline ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
                           Online
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] bg-zinc-800/80 text-zinc-400 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-600"></span>
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] bg-[#f5f5f5] dark:bg-zinc-800/80 text-[#888888] dark:text-zinc-400 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
                           Offline
                         </span>
                       )}
@@ -155,7 +155,7 @@ export const DevicesView: React.FC = () => {
                         {!d.isRevoked && (
                           <button
                             onClick={() => revokeDevice(d.id)}
-                            className="text-xs text-amber-500 hover:text-amber-400 px-2 py-1 rounded bg-amber-950/30 border border-amber-800/40"
+                            className="text-xs text-amber-600 dark:text-amber-500 hover:text-amber-700 px-2 py-1 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40"
                             title="Revoke device authentication"
                           >
                             Revoke
@@ -163,7 +163,7 @@ export const DevicesView: React.FC = () => {
                         )}
                         <button
                           onClick={() => deleteDevice(d.id)}
-                          className="text-zinc-500 hover:text-rose-400 transition-colors p-1"
+                          className="text-[#888888] dark:text-[#737373] hover:text-rose-500 transition-colors p-1"
                           title="Remove device record"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -180,42 +180,42 @@ export const DevicesView: React.FC = () => {
 
       {/* QR Pairing Modal */}
       {pairingModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-md bg-[#121419] border border-[#262a34] rounded-xl p-6 space-y-5 shadow-2xl relative">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-md bg-white dark:bg-[#141414] border border-[#eaeaea] dark:border-[#262626] rounded-xl p-6 space-y-5 shadow-2xl relative">
             <button
               onClick={() => setPairingModalOpen(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white"
+              className="absolute top-4 right-4 text-[#888888] dark:text-[#737373] hover:text-black dark:hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+              <h3 className="text-sm font-semibold text-[#111111] dark:text-[#f5f5f5] flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-[#666666] dark:text-[#a1a1aa]" />
                 Pair Mobile Device or Tablet
               </h3>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-1">
                 Scan this QR code with your mobile device on the same Wi-Fi network.
               </p>
             </div>
 
             {loadingQr ? (
-              <div className="h-64 flex items-center justify-center text-xs text-zinc-500">Generating secure token...</div>
+              <div className="h-64 flex items-center justify-center text-xs text-[#888888] dark:text-[#737373]">Generating secure token...</div>
             ) : pairingInfo ? (
               <div className="space-y-4 text-center">
-                <div className="bg-white p-3 rounded-lg inline-block mx-auto shadow">
+                <div className="bg-white p-3 rounded-lg inline-block mx-auto shadow border border-[#eaeaea] dark:border-transparent">
                   <img src={pairingInfo.qrDataUrl} alt="Pairing QR Code" className="w-56 h-56" />
                 </div>
 
                 <div className="space-y-1 font-mono text-[11px]">
-                  <div className="text-zinc-300 font-semibold">{pairingInfo.serverUrl}</div>
-                  <div className="text-zinc-500">
+                  <div className="text-[#111111] dark:text-[#f5f5f5] font-semibold">{pairingInfo.serverUrl}</div>
+                  <div className="text-[#888888] dark:text-[#737373]">
                     Pairing token expires in 5 minutes
                   </div>
                 </div>
 
-                <div className="p-3 rounded bg-[#0e1014] border border-[#1e222b] text-[11px] text-zinc-400 text-left">
-                  <span className="font-semibold text-zinc-200 block mb-0.5">How it works:</span>
+                <div className="p-3 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626] text-[11px] text-[#666666] dark:text-[#a1a1aa] text-left">
+                  <span className="font-semibold text-[#111111] dark:text-[#f5f5f5] block mb-0.5">How it works:</span>
                   The mobile device scans the configuration payload and receives a local API key automatically.
                 </div>
               </div>
@@ -224,7 +224,7 @@ export const DevicesView: React.FC = () => {
             <div className="flex justify-end">
               <button
                 onClick={() => setPairingModalOpen(false)}
-                className="px-4 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium"
+                className="px-4 py-1.5 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-[#222222] dark:hover:bg-[#f0f0f0] text-xs font-medium"
               >
                 Done
               </button>
