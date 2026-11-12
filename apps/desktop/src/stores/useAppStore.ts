@@ -206,7 +206,7 @@ interface AppStore {
   toggleSidebar: () => void;
   setConversations: (updater: PlaygroundConversation[] | ((prev: PlaygroundConversation[]) => PlaygroundConversation[])) => void;
   setActiveConvId: (id: string) => void;
-  createNewChat: () => string;
+  createNewChat: (options?: { personaId?: string }) => string;
   selectChat: (id: string) => void;
   deleteChat: (id: string) => void;
   renameChat: (id: string, newTitle: string) => void;
@@ -364,10 +364,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     });
   },
   setActiveConvId: (id) => set({ activeConvId: id }),
-  createNewChat: () => {
+  createNewChat: (options) => {
     const state = get();
-    const newId = `conv_${Date.now()}`;
-    const initialPersona = PersonaResolver.resolve(state.activePersonaId, state.personas, state.defaultPersonaId);
+    const newId = `conv_${crypto.randomUUID()}`;
+    const initialPersona = PersonaResolver.resolve(options?.personaId || state.defaultPersonaId, state.personas, state.defaultPersonaId);
     const initialMessages: ChatMessage[] = initialPersona?.greetingMessage
       ? [{ role: 'assistant', content: initialPersona.greetingMessage }]
       : [];
@@ -388,6 +388,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({
       conversations: nextConvs,
       activeConvId: newId,
+      activePersonaId: initialPersona?.id || state.defaultPersonaId,
       activeTab: 'playground',
     });
     if (state.loftyDbStatus?.connected) {
@@ -516,17 +517,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setActivePersonaId: (id) => {
     personaManager.setActivePersona(id);
     set({ activePersonaId: id });
-    try {
-      const saved = localStorage.getItem('zaylo_playground_conversations_v3');
-      if (saved) {
-        const convs = JSON.parse(saved);
-        if (Array.isArray(convs) && convs.length > 0) {
-          convs[0].personaId = id;
-          localStorage.setItem('zaylo_playground_conversations_v3', JSON.stringify(convs));
-        }
-      }
-    } catch {
-      // Ignored
+    const state = get();
+    const active = state.conversations.find(chat => chat.id === state.activeConvId);
+    if (active && active.personaId !== id) {
+      get().setConversations(previous => previous.map(chat => chat.id === active.id ? { ...chat, personaId: id, updatedAt: Date.now() } : chat));
     }
   },
 
