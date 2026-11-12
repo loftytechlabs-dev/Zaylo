@@ -1,6 +1,6 @@
 {
   "name": "zaylo",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "Zaylo High-Performance Local AI Inference Engine and Server",
   "author": "Lofty Tech Labs <contact@loftytechlabs.com>",
   "homepage": "https://github.com/loftytechlabs-dev/Zaylo",
@@ -10,7 +10,7 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
-    "test": "turbo run test",
+    "test": "vitest run",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "dev:desktop": "pnpm --filter @local-ai/desktop dev",
