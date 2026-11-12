@@ -330,6 +330,8 @@ export interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string | ChatMessageContentPart[];
   name?: string;
+  /** Actual local document passages supplied to the model for this response. */
+  sources?: RagSearchResult[];
 }
 
 export type PersonaCommunicationStyle =
@@ -380,6 +382,8 @@ export interface ChatCompletionRequest {
   rag?: boolean;
   ragDocumentIds?: string[];
   memory?: boolean;
+  /** Independently controls extraction; omitted preserves legacy memory behavior. */
+  memorySave?: boolean;
   memoryScope?: 'all' | 'global' | 'persona' | 'conversation';
   conversationId?: string;
   personaId?: string;
@@ -439,6 +443,8 @@ export interface ChatCompletionResponse {
   model: string;
   choices: ChatCompletionChoice[];
   usage?: ChatCompletionUsage;
+  /** Retrieval provenance, absent when no local document context was used. */
+  sources?: RagSearchResult[];
 }
 
 export interface EmbeddingRequest {

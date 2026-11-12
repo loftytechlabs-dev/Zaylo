@@ -5,6 +5,7 @@ import type {
   ChatMessage,
   EmbeddingRequest,
   EmbeddingResponse,
+  RagSearchResult,
 } from '@local-ai/shared';
 import { ModelNotLoadedError, ValidationError } from '@local-ai/shared';
 import { ChatCompletionRequestSchema } from '@local-ai/shared';
@@ -116,7 +117,7 @@ export class InferenceService {
       throw new ModelNotLoadedError('No inference model is currently loaded');
     }
 
-    const release = await this.queue.acquire();
+    const release = await this.queue.acquire(externalSignal);
     const requestId = `chatcmpl-${crypto.randomBytes(12).toString('hex')}`;
     const abortController = new AbortController();
     this.activeAbortControllers.set(requestId, abortController);
@@ -126,12 +127,12 @@ export class InferenceService {
     let completionTokens = 0;
     let accumulatedContent = '';
 
-    // If external signal aborts, abort our internal controller
-    if (externalSignal) {
-      externalSignal.addEventListener('abort', () => abortController.abort());
-    }
+    const onAbort = () => abortController.abort(externalSignal?.reason);
+    externalSignal?.addEventListener('abort', onAbort, { once: true });
+    if (externalSignal?.aborted) onAbort();
 
     try {
+      abortController.signal.throwIfAborted();
       this.totalRequests++;
 
       // Automatically augment messages with local document context if RAG is requested
@@ -188,7 +189,13 @@ export class InferenceService {
           // Graceful fallback if LoftyDB is offline or unreachable
         }
 
-        if (this.memoryEngine.isAutoExtractEnabled() && request.memory !== false) {
+      }
+
+      // Explicit save preference is independent of recall. Existing API callers retain
+      // the previous behavior when memorySave is omitted.
+      const shouldSaveMemory = request.memorySave ?? (shouldUseMemory && request.memory !== false);
+      if (this.memoryEngine && lastUserText && shouldSaveMemory) {
+        if (this.memoryEngine.isAutoExtractEnabled()) {
           this.memoryEngine
             .extractAndPersistFromUserMessage(lastUserText, {
               personaId: request.personaId,
@@ -203,16 +210,21 @@ export class InferenceService {
         }
       }
 
+      let sources: RagSearchResult[] | undefined;
       if (request.rag && this.ragEngine && lastUserText) {
         const searchResults = await this.ragEngine.search(lastUserText, 4, request.ragDocumentIds);
         if (searchResults.length > 0) {
           effectiveRequest.messages = this.ragEngine.augmentMessages(effectiveRequest.messages, searchResults);
+          sources = searchResults.map(source => ({ ...source }));
         }
       }
 
+      abortController.signal.throwIfAborted();
       const stream = this.currentRuntime.chatStream(effectiveRequest, abortController.signal);
+      let sentSources = false;
 
       for await (const chunk of stream) {
+        abortController.signal.throwIfAborted();
         if (!firstTokenTime) {
           firstTokenTime = Date.now();
         }
@@ -226,6 +238,7 @@ export class InferenceService {
         // Ensure chunk contains ID
         chunk.id = requestId;
         chunk.model = this.currentModelName || request.model;
+        if (!sentSources && sources?.length) { chunk.sources = sources; sentSources = true; }
         yield chunk;
       }
 
@@ -269,6 +282,7 @@ export class InferenceService {
       });
       throw err;
     } finally {
+      externalSignal?.removeEventListener('abort', onAbort);
       this.activeAbortControllers.delete(requestId);
       release();
     }
@@ -282,9 +296,11 @@ export class InferenceService {
     const requestId = `chatcmpl-${crypto.randomBytes(12).toString('hex')}`;
     let accumulatedContent = '';
     let finishReason: 'stop' | 'length' = 'stop';
+    let sources: RagSearchResult[] | undefined;
     const startTime = Date.now();
 
     for await (const chunk of this.chatStream(request, clientIp, signal)) {
+      if (chunk.sources) sources = chunk.sources;
       const delta = chunk.choices[0]?.delta?.content;
       if (delta) accumulatedContent += delta;
       if (chunk.choices[0]?.finish_reason) {
@@ -296,13 +312,14 @@ export class InferenceService {
     const promptTokens = Math.max(1, Math.ceil(promptText.length / 4));
     const completionTokens = Math.max(1, Math.ceil(accumulatedContent.length / 4));
 
-    return createChatCompletionResponse({
+    const response = createChatCompletionResponse({
       id: requestId,
       model: this.currentModelName || request.model,
       created: Math.floor(startTime / 1000),
       message: {
         role: 'assistant',
         content: accumulatedContent,
+        ...(sources ? { sources } : {}),
       },
       finishReason,
       usage: {
@@ -311,6 +328,8 @@ export class InferenceService {
         total_tokens: promptTokens + completionTokens,
       },
     });
+    if (sources) response.sources = sources;
+    return response;
   }
 
   public async embeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
