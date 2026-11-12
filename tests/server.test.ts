@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -211,6 +211,65 @@ describe('ApiServer', () => {
     expect(text).toContain('[DONE]');
     expect(text).toContain('Local');
     expect(text).toContain('Response.');
+  });
+
+  it('cancels local generation when the SSE response client disconnects', async () => {
+    let aborted = false;
+    const stream = vi.spyOn(MockRuntime.prototype, 'chatStream').mockImplementation(async function* (_request: ChatCompletionRequest, signal?: AbortSignal) {
+      yield createChatCompletionChunk('disconnect-test', 'Mock Model 7B', 'Started');
+      await new Promise<void>((_resolve, reject) => {
+        signal?.addEventListener('abort', () => { aborted = true; reject(signal.reason); }, { once: true });
+      });
+    });
+    const controller = new AbortController();
+    try {
+      const response = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
+        method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'default', messages: [{ role: 'user', content: 'Continue until stopped' }], stream: true }),
+      });
+      expect(response.status).toBe(200);
+      const reader = response.body!.getReader();
+      expect((await reader.read()).done).toBe(false);
+      controller.abort();
+      await reader.cancel().catch(() => {});
+      await vi.waitFor(() => expect(aborted).toBe(true));
+    } finally { controller.abort(); stream.mockRestore(); }
+  });
+
+  it.each([
+    'http://localhost:8080/chat',
+    'https://attacker.example/localhost:8080',
+    'https://attacker.example/:8080',
+  ])('rejects spoofed Referer from LAN clients: %s', async (referer) => {
+    const response = await (server as any).fastify.inject({
+      method: 'GET', url: '/metrics', remoteAddress: '192.168.1.20',
+      headers: { host: 'localhost:8080', referer },
+    });
+    expect(response.statusCode).toBe(401);
+  });
+
+  it.each(['127.0.0.1', '::1', '::ffff:127.0.0.1'])('allows local-only loopback access: %s', async (remoteAddress) => {
+    server.updateConfig({ lanEnabled: false });
+    const response = await (server as any).fastify.inject({
+      method: 'GET', url: '/metrics', remoteAddress,
+    });
+    expect(response.statusCode).toBe(200);
+    server.updateConfig({ lanEnabled: true });
+    const lanResponse = await (server as any).fastify.inject({
+      method: 'GET', url: '/metrics', remoteAddress,
+    });
+    expect(lanResponse.statusCode).toBe(401);
+  });
+
+  it('requires a valid key for LAN clients regardless of forwarded IP headers', async () => {
+    const inject = (headers: Record<string, string>) => (server as any).fastify.inject({
+      method: 'GET', url: '/metrics', remoteAddress: '192.168.1.20', headers,
+    });
+    expect((await inject({ 'x-forwarded-for': '127.0.0.1' })).statusCode).toBe(401);
+    expect((await inject({ authorization: 'Bearer invalid' })).statusCode).toBe(401);
+    const { rawKey } = keyManager.generateKey('LAN regression');
+    expect((await inject({ authorization: `Bearer ${rawKey}` })).statusCode).toBe(200);
+    expect((await inject({ 'x-api-key': rawKey })).statusCode).toBe(200);
   });
 
   it('should require authentication when LAN mode is enabled and request lacks key', async () => {
