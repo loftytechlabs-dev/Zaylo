@@ -945,7 +945,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
 
   // 12. App & System
   handle('app:get-version', async () => {
-    return '3.2.0';
+    return '3.3.0';
   });
 
   handle('app:select-directory', async ({ defaultPath }) => {

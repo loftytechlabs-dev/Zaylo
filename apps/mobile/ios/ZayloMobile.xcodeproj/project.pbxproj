@@ -363,7 +363,7 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.4;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 3.3.0;
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(inherited)",
 					"-std=gnu++20",
@@ -401,7 +401,7 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.4;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 3.3.0;
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(inherited)",
 					"-std=gnu++20",
