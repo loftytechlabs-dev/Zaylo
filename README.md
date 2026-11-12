@@ -2,13 +2,13 @@
 
 <img src="assets/logo.png" alt="Zaylo Logo" width="96" />
 
-# Zaylo 3.2
+# Zaylo 3.3
 
 **Local AI Infrastructure: Inference Engine, Diffusion Studio, LoRA Forge, and LoftyDB Knowledge Graph**
 
 Run open-weights language models, multimodal vision models, diffusion pipelines, fine-tuning workflows, and persistent graph memory locally across macOS, Windows, and Linux with zero cloud telemetry and full OpenAI API compatibility.
 
-[![Release](https://img.shields.io/badge/Release-v3.2.0-111827.svg?style=flat-square)](https://github.com/loftytechlabs-dev/Zaylo/releases)
+[![Release](https://img.shields.io/badge/Release-v3.3.0-111827.svg?style=flat-square)](https://github.com/loftytechlabs-dev/Zaylo/releases)
 [![Memory Engine](https://img.shields.io/badge/Memory-LoftyDB%20v1.3.4-0284c7.svg?style=flat-square)](#loftydb-knowledge-graph-memory)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-18181b.svg?style=flat-square)](#installers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-374151.svg?style=flat-square)](LICENSE)
@@ -18,13 +18,19 @@ Run open-weights language models, multimodal vision models, diffusion pipelines,
 
 <br />
 
-[Installers](#installers) | [Highlights](#whats-new-in-zaylo-32) | [Architecture](#system-architecture) | [LoftyDB Memory Graph](#loftydb-knowledge-graph-memory) | [Visual Interface](#visual-interface) | [Playground & Generative UI](#dynamic-playground-and-generative-ui) | [Forge Studio](#forge-fine-tuning-studio) | [API Reference](#openai-and-memory-api-server) | [Benchmarks](#hardware-benchmarks) | [Development](#cross-platform-build-and-packaging)
+[Installers](#installers) | [Highlights](#whats-new-in-zaylo-33) | [Architecture](#system-architecture) | [LoftyDB Memory Graph](#loftydb-knowledge-graph-memory) | [Visual Interface](#visual-interface) | [Playground & Generative UI](#dynamic-playground-and-generative-ui) | [Forge Studio](#forge-fine-tuning-studio) | [API Reference](#openai-and-memory-api-server) | [Benchmarks](#hardware-benchmarks) | [Development](#cross-platform-build-and-packaging)
 
 </div>
 
 ---
 
-## What's New in Zaylo 3.2
+## What's New in Zaylo 3.3
+
+- Restore each conversation's text or image model selection without restarting the active inference runtime.
+- Require API keys for protected endpoints in LAN mode, including loopback; Referer headers never authorize requests. Local-only loopback access remains keyless.
+- Run the complete root test suite with `pnpm test`, with deterministic Forge dependency and checkpoint tests.
+
+### Zaylo 3.2 features
 
 | Subsystem | What Shipped |
 | :--- | :--- |
@@ -48,8 +54,8 @@ Pre-built release installers and portable binaries are built automatically via G
 | **macOS** | Intel (`x86_64`) | `.dmg` | [Releases — macOS x64](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
 | **Windows** | Windows 10 / 11 (`x64` Setup) | `.exe` | [Zaylo Setup (Windows x64)](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
 | **Windows** | Windows 10 / 11 (`x64` Portable) | `.exe` | [Zaylo Portable (Windows x64)](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
-| **Linux** | Universal (`x86_64`) | `.AppImage` | [`Zaylo-3.2.0.AppImage`](https://github.com/loftytechlabs-dev/Zaylo/releases/latest/download/Zaylo-3.2.0.AppImage) |
-| **Linux** | Debian / Ubuntu (`x86_64`) | `.deb` | [`Zaylo-3.2.0.deb`](https://github.com/loftytechlabs-dev/Zaylo/releases/latest/download/Zaylo-3.2.0.deb) |
+| **Linux** | Universal (`x86_64`) | `.AppImage` | [`Zaylo-3.3.0.AppImage`](https://github.com/loftytechlabs-dev/Zaylo/releases/latest/download/Zaylo-3.3.0.AppImage) |
+| **Linux** | Debian / Ubuntu (`x86_64`) | `.deb` | [`Zaylo-3.3.0.deb`](https://github.com/loftytechlabs-dev/Zaylo/releases/latest/download/Zaylo-3.3.0.deb) |
 
 ---
 
