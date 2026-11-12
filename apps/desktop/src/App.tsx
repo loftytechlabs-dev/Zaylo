@@ -4,6 +4,8 @@ import { Header } from './components/layout/Header';
 import { useAppStore } from './stores/useAppStore';
 
 import { api } from './api/client';
+import { watchWorkspacePreferences } from './theme';
+import { useWorkspacePreferences } from './stores/useWorkspacePreferences';
 import { OverviewView } from './features/overview/OverviewView';
 import { ModelsView } from './features/models/ModelsView';
 import { ForgeView } from './features/forge/ForgeView';
@@ -41,6 +43,10 @@ export const App: React.FC = () => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.classList.toggle('light', theme === 'light');
   }, [theme]);
+
+  // Appearance preferences: theme family, translucency, motion and text size.
+  // Attribute/variable-driven; no component re-render beyond this effect.
+  useEffect(() => watchWorkspacePreferences(useWorkspacePreferences), []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -160,15 +166,15 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div data-theme={theme} className="app-root flex h-screen w-screen bg-white dark:bg-[#090909] text-[#111111] dark:text-[#f5f5f5] overflow-hidden select-none font-sans">
+    <div className="app-root flex h-screen w-screen bg-[var(--background)] text-[var(--foreground)] overflow-hidden select-none font-sans">
       {/* Sidebar Navigation */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#090909]">
+      <div className="flex-1 flex flex-col min-w-0 bg-[var(--background)]">
         {activeTab !== 'playground' && <Header />}
 
-        <main className="flex-1 overflow-hidden bg-white dark:bg-[#090909]">
+        <main className="flex-1 overflow-hidden bg-[var(--background)]">
           {activeTab === 'overview' && <OverviewView />}
           {activeTab === 'models' && <ModelsView />}
           {activeTab === 'forge' && <ForgeView />}
