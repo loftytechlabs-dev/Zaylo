@@ -56,7 +56,16 @@ import type {
   StoredConversation,
 } from '@local-ai/shared';
 
+export interface ChatPdfRequest {
+  title: string;
+  messages: Array<{ role: string; text: string }>;
+}
+
+export type ChatPdfResult = { canceled: true } | { canceled: false; filePath: string };
+
 export interface IPCChannels {
+  'chat:export-pdf': { request: ChatPdfRequest; response: ChatPdfResult };
+
   // Hardware & Capabilities
   'hardware:get-profile': { request: void; response: HardwareProfile };
   'hardware:get-capabilities': { request: void; response: CapabilityProfile };
@@ -110,6 +119,12 @@ export interface IPCChannels {
   // Inference Playground
   'inference:chat': { request: ChatCompletionRequest; response: ChatCompletionResponse };
   'inference:abort': { request: { requestId: string }; response: boolean };
+
+  // Local speech setup is explicit; recordings are never sent to a cloud API.
+  'voice:status': { request: undefined; response: { ready: boolean; installing: boolean; model: string } };
+  'voice:setup': { request: undefined; response: { ready: boolean; installing: boolean; model: string } };
+  'voice:transcribe': { request: { audioBase64: string }; response: { text: string; language: string } };
+  'voice:cancel': { request: undefined; response: boolean };
 
   // Knowledge & Local Document RAG
   'rag:list-documents': { request: void; response: DocumentInfo[] };
