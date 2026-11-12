@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../api/client';
+import { ModelCapabilityRegistry } from '@local-ai/capabilities';
 import type {
   HardwareProfile,
   CapabilityProfile,
@@ -396,7 +397,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
     return newId;
   },
   selectChat: (id) => {
-    set({ activeConvId: id, activeTab: 'playground' });
+    const state = get();
+    const conversation = state.conversations.find((c) => c.id === id);
+    if (!conversation) return;
+    const textModel = state.installedModels.find((model) =>
+      !ModelCapabilityRegistry.isImageGenerationModel(model)
+    );
+    // Restore presentation state without loading or stopping an inference runtime.
+    set({
+      activeConvId: id,
+      activeTab: 'playground',
+      selectedModel: conversation.modelId || conversation.modelName || state.serverInstance?.modelName || textModel?.name || '',
+    });
   },
   deleteChat: (id) => {
     const wasConnected = Boolean(get().loftyDbStatus?.connected);

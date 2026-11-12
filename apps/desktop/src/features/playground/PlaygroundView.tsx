@@ -86,7 +86,7 @@ export const PlaygroundView: React.FC = () => {
     conversations,
     activeConvId,
     setConversations,
-    setActiveConvId,
+    selectChat,
     createNewChat,
     deleteChat,
     renameChat,
@@ -284,17 +284,16 @@ export const PlaygroundView: React.FC = () => {
       }
     }
 
-    if (!selectedModelId) {
-      const loaded = unifiedModels.find((m) => m.isLoaded);
-      const initial = loaded || unifiedModels[0];
-      setSelectedModelId(initial.id);
-      setSelectedModel(initial.name);
-    }
+    // A legacy or removed conversation model must not leave an image view selected.
+    const initial = unifiedModels.find((m) => m.isLoaded && !m.isImageModel)
+      || unifiedModels.find((m) => !m.isImageModel);
+    setSelectedModelId(initial?.id || '');
+    if (initial) setSelectedModel(initial.name);
   }, [selectedModel, unifiedModels, selectedModelId, setSelectedModel]);
 
   // Current active conversation
   const activeConv = conversations.find((c) => c.id === activeConvId) || conversations[0];
-  const activeModel = unifiedModels.find((m) => m.id === selectedModelId) || unifiedModels[0];
+  const activeModel = unifiedModels.find((m) => m.id === selectedModelId);
 
   // Resolve persona for active conversation
   const activeConvPersona = useMemo(() => {
@@ -374,6 +373,7 @@ export const PlaygroundView: React.FC = () => {
 
   // Handle Image Generation
   const handleGenerateImage = async (params: ImageGenerationParams) => {
+    if (!activeModel) return;
     try {
       await generateImage({
         modelId: activeModel.rawInstallation?.modelId || activeModel.id,
@@ -422,10 +422,7 @@ export const PlaygroundView: React.FC = () => {
   const handleSelectConversation = (id: string) => {
     const conv = conversations.find((c) => c.id === id);
     if (conv) {
-      setActiveConvId(id);
-      if (conv.modelId && unifiedModels.some((m) => m.id === conv.modelId)) {
-        setSelectedModelId(conv.modelId);
-      }
+      selectChat(id);
       if (conv.personaId) {
         setActivePersonaId(conv.personaId);
       }
