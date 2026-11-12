@@ -108,7 +108,7 @@ export interface IPCChannels {
   'logs:clear': { request: void; response: boolean };
 
   // Inference Playground
-  'inference:chat': { request: ChatCompletionRequest; response: ChatCompletionResponse };
+  'inference:chat': { request: ChatCompletionRequest & { clientRequestId?: string }; response: ChatCompletionResponse };
   'inference:abort': { request: { requestId: string }; response: boolean };
 
   // Knowledge & Local Document RAG
