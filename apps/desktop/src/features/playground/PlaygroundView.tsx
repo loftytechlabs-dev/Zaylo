@@ -10,7 +10,7 @@ import type {
   ChartSpec,
   PresentationSpec,
 } from '@local-ai/shared';
-import { PersonaResolver, PersonaPromptAdapter } from '@local-ai/inference';
+import { PersonaResolver, PersonaPromptAdapter } from '@local-ai/inference/personas';
 import { ModelCapabilityRegistry } from '@local-ai/capabilities';
 import type {
   GenerationSettings,

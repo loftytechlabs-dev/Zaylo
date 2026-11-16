@@ -79,7 +79,7 @@ export const StudioEvaluationTab: React.FC<StudioEvaluationTabProps> = ({ job })
             </div>
             <p className="text-xs text-zinc-400">
               Selects held-out test records from <strong className="text-zinc-300">{job.config.datasetName || 'dataset'}</strong> and
-              executes identical deterministic generation across both the base model and fine-tuned adapter.
+              executes deterministic generation with identical parameters across both the base model and fine-tuned adapter.
             </p>
           </div>
 
@@ -131,12 +131,12 @@ export const StudioEvaluationTab: React.FC<StudioEvaluationTabProps> = ({ job })
           {/* Top Score Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-[#101216] border border-[#1e2128] space-y-1.5">
-              <span className="text-xs text-zinc-400">Overall Target Alignment</span>
+              <span className="text-xs text-zinc-400">Exact response match</span>
               <div className="text-2xl font-bold font-mono text-emerald-400">
-                {Math.round(((report.metrics?.accuracyScore ?? report.metrics?.tokenF1Score) ?? 0.85) * 100)}%
+                {typeof report.metrics.accuracyScore === 'number' ? `${Math.round(report.metrics.accuracyScore * 100)}%` : '—'}
               </div>
               <div className="text-[11px] text-zinc-500">
-                Token overlap & semantic match
+                Case-insensitive exact match on held-out records
               </div>
             </div>
 
@@ -147,8 +147,6 @@ export const StudioEvaluationTab: React.FC<StudioEvaluationTabProps> = ({ job })
                   ? report.metrics.valLoss.toFixed(4)
                   : typeof latestSample?.evalLoss === 'number' && !isNaN(latestSample.evalLoss)
                   ? latestSample.evalLoss.toFixed(4)
-                  : typeof job.currentLoss === 'number' && !isNaN(job.currentLoss)
-                  ? job.currentLoss.toFixed(4)
                   : '—'}
               </div>
               <div className="text-[11px] text-zinc-500">
@@ -202,9 +200,9 @@ export const StudioEvaluationTab: React.FC<StudioEvaluationTabProps> = ({ job })
                   </span>
                   <div className="flex items-center gap-3 text-xs">
                     <span className="font-mono text-[11px] text-zinc-400">
-                      Match Score:{' '}
+                      Word-token F1:{' '}
                       <strong className="text-emerald-400 font-semibold">
-                        {Math.round((sample.scoreMatch ?? 0.8) * 100)}%
+                        {typeof sample.scoreMatch === 'number' ? `${Math.round(sample.scoreMatch * 100)}%` : '—'}
                       </strong>
                     </span>
                   </div>

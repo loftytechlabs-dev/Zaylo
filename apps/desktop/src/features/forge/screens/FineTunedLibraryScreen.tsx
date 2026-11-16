@@ -16,7 +16,7 @@ interface FineTunedLibraryScreenProps {
   onOpenPlayground: (modelId: string, adapterPath?: string) => void;
   onCompareWithBase: (jobId: string) => void;
   onMergeAdapter: (artifactId: string) => Promise<void>;
-  onExport: (artifactId: string) => Promise<void>;
+  onExport: (artifactId: string, format?: 'adapter' | 'gguf') => Promise<void>;
   onDelete: (artifactId: string) => Promise<void>;
   onBack: () => void;
   onRefresh: () => void;
@@ -252,7 +252,15 @@ export const FineTunedLibraryScreen: React.FC<FineTunedLibraryScreenProps> = ({
                     className="py-1.5 px-3 rounded-lg bg-[#1b1e24] hover:bg-[#252830] border border-[#2e323b] text-zinc-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <FolderOpen className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Export</span>
+                    <span>Export files</span>
+                  </button>
+                  <button
+                    onClick={() => onExport(art.id, 'gguf')}
+                    disabled={isMerging}
+                    className="py-1.5 px-3 rounded-lg bg-[#1b1e24] hover:bg-[#252830] border border-[#2e323b] text-zinc-300 text-xs font-medium disabled:opacity-50"
+                    title="Requires an installed llama.cpp GGUF converter and its Python dependencies"
+                  >
+                    Export GGUF
                   </button>
                 </div>
               </div>

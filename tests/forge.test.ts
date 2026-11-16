@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 vi.mock('node:child_process', async (importOriginal) => ({
   ...await importOriginal<typeof import('node:child_process')>(),
-  execSync: vi.fn(),
+  execFileSync: vi.fn(),
 }));
 import fs from 'node:fs';
 import os from 'node:os';
@@ -44,8 +44,8 @@ describe('Forge In-App Fine-Tuning Studio Tests', () => {
   });
 
   beforeEach(() => {
-    vi.mocked(execSync).mockReset();
-    vi.mocked(execSync).mockReturnValue(JSON.stringify({
+    vi.mocked(execFileSync).mockReset();
+    vi.mocked(execFileSync).mockReturnValue(JSON.stringify({
       success: true, torch: '2.5.0', transformers: '4.46.0', peft: '0.13.0', mps: false, cuda: false,
     }));
     PythonDetector.detect(true);
@@ -64,14 +64,14 @@ describe('Forge In-App Fine-Tuning Studio Tests', () => {
   }, 15000);
 
   it('reports unavailable Python environments and retries later candidates', () => {
-    vi.mocked(execSync).mockImplementation(() => { throw new Error('Python unavailable'); });
+    vi.mocked(execFileSync).mockImplementation(() => { throw new Error('Python unavailable'); });
     expect(PythonDetector.detect(true)).toMatchObject({ available: false });
-    vi.mocked(execSync).mockReset();
-    vi.mocked(execSync)
+    vi.mocked(execFileSync).mockReset();
+    vi.mocked(execFileSync)
       .mockImplementationOnce(() => { throw new Error('First candidate unavailable'); })
       .mockReturnValue(JSON.stringify({ success: true, torch: '2.5', transformers: '4.46', peft: '0.13' }));
     expect(PythonDetector.detect(true).available).toBe(true);
-    expect(execSync).toHaveBeenCalledTimes(2);
+    expect(execFileSync).toHaveBeenCalledTimes(2);
   });
 
   // 2. Model Inspection & Compatibility Analysis
@@ -104,7 +104,7 @@ describe('Forge In-App Fine-Tuning Studio Tests', () => {
     expect(ready.status).toBe('READY');
     expect(ready.checkpointPath).toBe(tempDir);
 
-    vi.mocked(execSync).mockReturnValue(JSON.stringify({ success: false, error: 'No module named torch' }));
+    vi.mocked(execFileSync).mockReturnValue(JSON.stringify({ success: false, error: 'No module named torch' }));
     PythonDetector.detect(true);
     const missing = ModelInspector.inspectModel(dummyGguf);
     expect(missing.status).toBe('MISSING_DEPENDENCIES');

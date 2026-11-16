@@ -10,4 +10,4 @@ export {
   PersonaStore,
   PersonaResolver,
   PersonaPromptAdapter,
-} from '@local-ai/inference';
+} from '@local-ai/inference/personas';

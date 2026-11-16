@@ -64,7 +64,7 @@ export class AutoConfigurator {
     const totalSteps = stepsPerEpoch * epochs;
     const saveSteps = Math.max(5, Math.floor(totalSteps / 4));
 
-    const trainValSplit = dataset.validRecords >= 10 ? 0.1 : 0.0;
+    const trainValSplit = dataset.validRecords - dataset.duplicateRecords >= 2 ? 0.1 : 0.0;
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const outputDir = path.join(getDefaultForgeDir(), 'jobs', jobId);
 

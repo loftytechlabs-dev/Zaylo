@@ -138,6 +138,8 @@ export const benchmarkResults = sqliteTable('benchmark_results', {
   timeToFirstTokenMs: real('time_to_first_token_ms').notNull(),
   totalDurationMs: real('total_duration_ms').notNull(),
   peakMemoryBytes: integer('peak_memory_bytes').notNull(),
+  measurementVersion: integer('measurement_version').notNull().default(1),
+  memoryMeasurement: text('memory_measurement').notNull().default('unavailable'),
 });
 
 export const settings = sqliteTable('settings', {
@@ -162,6 +164,7 @@ export const documentChunks = sqliteTable('document_chunks', {
   chunkIndex: integer('chunk_index').notNull(),
   content: text('content').notNull(),
   embedding: text('embedding'), // JSON array of numbers
+  embeddingModel: text('embedding_model'),
   tokenCount: integer('token_count').notNull().default(0),
   createdAt: integer('created_at').notNull(),
 });

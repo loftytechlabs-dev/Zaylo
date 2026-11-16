@@ -8,10 +8,14 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./personas": {
+      "import": "./dist/personas/index.js",
+      "types": "./dist/personas/index.d.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-assets.mjs",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
@@ -19,7 +23,8 @@
     "@local-ai/shared": "workspace:*",
     "@local-ai/protocol": "workspace:*",
     "@local-ai/runtimes": "workspace:*",
-    "@local-ai/database": "workspace:*"
+    "@local-ai/database": "workspace:*",
+    "@local-ai/capabilities": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.13.9",

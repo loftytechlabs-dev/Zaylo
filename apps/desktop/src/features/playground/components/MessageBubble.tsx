@@ -10,7 +10,7 @@ import {
   Sparkles,
   BookmarkPlus,
 } from 'lucide-react';
-import type { ChatMessage, ChatMessageContentPart, ChartSpec, PresentationSpec } from '@local-ai/shared';
+import type { ChatMessage, ChartSpec, PresentationSpec } from '@local-ai/shared';
 import { MarkdownRenderer } from '../utils/markdown';
 import { parseMessageSpecs } from '../utils/specParser';
 import { InlineChartCard } from '../../visualizations/InlineChartCard';
@@ -46,7 +46,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [generatedDeck, setGeneratedDeck] = useState<PresentationSpec | null>(null);
   const isUser = message.role === 'user';
 
-  const extractRawText = (content: string | ChatMessageContentPart[]): string => {
+  const extractRawText = (content: ChatMessage['content']): string => {
     if (typeof content === 'string') return content;
     if (Array.isArray(content)) {
       return content

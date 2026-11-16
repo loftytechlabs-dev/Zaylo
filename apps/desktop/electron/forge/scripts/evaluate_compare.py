@@ -9,19 +9,42 @@ import os
 import json
 import time
 import argparse
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+def encode_prompt(tokenizer, prompt, already_formatted=False):
+    """Training-formatted held-out prompts must bypass all chat/template wrapping."""
+    formatted_prompt = prompt
+    if not already_formatted and "### Instruction" not in prompt and "<|im_start|>" not in prompt:
+        if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template:
+            try:
+                formatted_prompt = tokenizer.apply_chat_template(
+                    [{"role": "user", "content": prompt}],
+                    tokenize=False,
+                    add_generation_prompt=True
+                )
+            except Exception:
+                formatted_prompt = f"### Instruction:\n{prompt}\n\n### Response:\n"
+        else:
+            formatted_prompt = f"### Instruction:\n{prompt}\n\n### Response:\n"
+
+    return tokenizer(formatted_prompt, return_tensors="pt")
 
 def main():
     parser = argparse.ArgumentParser(description="Forge Model Comparator")
     parser.add_argument("--base-model", type=str, required=True, help="Path to base model directory")
     parser.add_argument("--adapter", type=str, default="", help="Path to fine-tuned LoRA adapter directory")
     parser.add_argument("--prompt", type=str, required=True, help="Input prompt to test")
+    parser.add_argument("--formatted-prompt", action="store_true", help="Tokenize an exact prompt saved by training without applying another template")
     parser.add_argument("--temperature", type=float, default=0.7, help="Generation temperature")
     parser.add_argument("--max-tokens", type=int, default=128, help="Max new tokens to generate")
     args = parser.parse_args()
+
+    if args.adapter and not os.path.isdir(args.adapter):
+        raise FileNotFoundError(f'Adapter path not found: {args.adapter}')
+
+    import torch
+    from transformers import AutoTokenizer, AutoModelForCausalLM
 
     device = torch.device("cpu")
     torch_dtype = torch.float32
@@ -39,21 +62,7 @@ def main():
     ).to(device)
     model.eval()
 
-    formatted_prompt = args.prompt
-    if "### Instruction" not in args.prompt and "<|im_start|>" not in args.prompt:
-        if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template:
-            try:
-                formatted_prompt = tokenizer.apply_chat_template(
-                    [{"role": "user", "content": args.prompt}],
-                    tokenize=False,
-                    add_generation_prompt=True
-                )
-            except Exception:
-                formatted_prompt = f"### Instruction:\n{args.prompt}\n\n### Response:\n"
-        else:
-            formatted_prompt = f"### Instruction:\n{args.prompt}\n\n### Response:\n"
-
-    inputs = tokenizer(formatted_prompt, return_tensors="pt").to(device)
+    inputs = encode_prompt(tokenizer, args.prompt, args.formatted_prompt).to(device)
     input_length = inputs["input_ids"].shape[1]
 
     # Generate base
@@ -74,7 +83,7 @@ def main():
     fine_tuned_response = ""
     ft_duration_ms = 0
 
-    if args.adapter and os.path.exists(args.adapter):
+    if args.adapter:
         from peft import PeftModel
         ft_model = PeftModel.from_pretrained(model, args.adapter)
         ft_model.eval()

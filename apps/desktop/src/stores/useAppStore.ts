@@ -34,7 +34,7 @@ import {
   PersonaManager,
   PersonaResolver,
   PersonaPromptAdapter,
-} from '@local-ai/inference';
+} from '@local-ai/inference/personas';
 
 export type NavTab =
   | 'overview'

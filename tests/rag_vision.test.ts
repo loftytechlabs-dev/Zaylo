@@ -15,7 +15,7 @@ import {
 import { ModelManager } from '@local-ai/models';
 import { KeyManager } from '@local-ai/security';
 import { DevicePairingManager } from '@local-ai/network';
-import { InferenceService, RagEngine, extractMessageText } from '@local-ai/inference';
+import { InferenceService, RagEngine, extractMessageText, getModelEmbeddingIdentity } from '@local-ai/inference';
 import { ApiServer } from '@local-ai/server';
 import { ChatCompletionRequestSchema } from '@local-ai/shared';
 import type {
@@ -162,7 +162,7 @@ Second paragraph describes the RAG capabilities. It indexes documents offline in
       expect(chunks[0].content).toContain('Zaylo uses llama.cpp');
     });
 
-    it('should perform hybrid lexical & semantic search to retrieve relevant chunks', async () => {
+    it('should perform lexical search when no embedding model is loaded', async () => {
       await ragEngine.ingestDocument(
         'networking.txt',
         'Local Wi-Fi network QR code pairing allows mobile devices to connect to Zaylo without any app installation.',
@@ -180,6 +180,104 @@ Second paragraph describes the RAG capabilities. It indexes documents offline in
       expect(results[0].documentName).toBe('networking.txt');
       expect(results[0].content).toContain('QR code pairing');
       expect(results[0].score).toBeGreaterThan(0);
+    });
+
+    it('indexes and retrieves semantic-only matches through the actual service path', async () => {
+      class SemanticRuntime extends MockVisionRagRuntime {
+        async embeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+          const text = typeof request.input === 'string' ? request.input : request.input[0];
+          const vehicle = /cars|automobiles/i.test(text);
+          return { object: 'list', model: request.model, data: [{ object: 'embedding', index: 0, embedding: vehicle ? [1, 0] : [0, 1] }], usage: { prompt_tokens: 1, total_tokens: 1 } };
+        }
+      }
+      const service = new InferenceService(undefined, undefined, 1, ragEngine);
+      service.setRuntime(new SemanticRuntime(), 'semantic-v1', 'semantic-v1:weights:mean');
+      const document = await service.ingestDocument('vehicles.txt', 'Automobiles travel on highways.');
+      await service.ingestDocument('fruit.txt', 'Bananas grow on plants.');
+      expect(document.retrievalMode).toBe('hybrid');
+      expect(docRepo.getChunks(document.id)[0].embeddingModel).toBe('semantic-v1:weights:mean');
+      const results = await service.searchDocuments('cars');
+      expect(results[0]).toMatchObject({ documentName: 'vehicles.txt', searchMode: 'hybrid' });
+    });
+
+    it('does not compare vectors from different models, and upgrades lexical documents when embeddings become available', async () => {
+      const document = await ragEngine.ingestDocument('facts.txt', 'Bananas grow on plants.');
+      const service = new InferenceService(undefined, undefined, 1, ragEngine);
+      service.setRuntime(new MockVisionRagRuntime(), 'new-embedding-model', 'new-weights:mean');
+      const upgraded = await service.searchDocuments('semantic query');
+      expect(upgraded[0]?.searchMode).toBe('hybrid');
+      expect(docRepo.getChunks(document.id)[0].embeddingModel).toBe('new-weights:mean');
+      expect(await ragEngine.search('unrelated', 4, undefined, [0.1, 0.2, 0.3], 'other-model')).toEqual([]);
+    });
+
+    it('keeps searchable documents and labels results lexical when embeddings fail', async () => {
+      class UnsupportedRuntime extends MockVisionRagRuntime {
+        async embeddings(_request: EmbeddingRequest): Promise<EmbeddingResponse> { throw new Error('Pooling unsupported'); }
+      }
+      const service = new InferenceService(undefined, undefined, 1, ragEngine);
+      service.setRuntime(new UnsupportedRuntime(), 'decoder', 'unsupported:weights:mean');
+      const document = await service.ingestDocument('facts.txt', 'Bananas grow on plants.');
+      expect(document.retrievalMode).toBe('lexical');
+      expect((await service.searchDocuments('Bananas'))[0]?.searchMode).toBe('lexical');
+    });
+
+    it('reuses the same weight identity but reindexes same-name variants and replaced files', async () => {
+      class CountingRuntime extends MockVisionRagRuntime {
+        calls = 0;
+        constructor(private readonly vector: number[]) { super(); }
+        async embeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+          this.calls++;
+          return { object: 'list', model: request.model, data: [{ object: 'embedding', index: 0, embedding: this.vector }], usage: { prompt_tokens: 1, total_tokens: 1 } };
+        }
+      }
+      const q4Path = path.join(tempDir, 'q4.gguf');
+      const q8Path = path.join(tempDir, 'q8.gguf');
+      fs.writeFileSync(q4Path, 'first test weights');
+      fs.writeFileSync(q8Path, 'other test weights');
+      const q4 = { id: 'install-q4', modelId: 'same-model', variantId: 'q4', localPath: q4Path };
+      const q8 = { id: 'install-q8', modelId: 'same-model', variantId: 'q8', localPath: q8Path };
+      const q4Identity = getModelEmbeddingIdentity(q4);
+      const q8Identity = getModelEmbeddingIdentity(q8);
+      expect(q4Identity).toContain('pooling-mean');
+      expect(q8Identity).not.toBe(q4Identity);
+      const service = new InferenceService(undefined, undefined, 1, ragEngine);
+      const runtimeQ4 = new CountingRuntime([1, 0]);
+      service.setRuntime(runtimeQ4, 'Same display name', q4Identity);
+      const document = await service.ingestDocument('facts.txt', 'Bananas grow on plants.');
+      expect(docRepo.getChunks(document.id)[0].embeddingModel).toBe(q4Identity);
+
+      runtimeQ4.calls = 0;
+      expect(getModelEmbeddingIdentity(q4)).toBe(q4Identity);
+      service.setRuntime(runtimeQ4, 'Same display name', getModelEmbeddingIdentity(q4));
+      await service.searchDocuments('semantic query');
+      expect(runtimeQ4.calls).toBe(1);
+
+      const runtimeQ8 = new CountingRuntime([0, 1]);
+      service.setRuntime(runtimeQ8, 'Same display name', q8Identity);
+      await service.searchDocuments('semantic query');
+      expect(runtimeQ8.calls).toBe(2);
+      expect(docRepo.getChunks(document.id)[0]).toMatchObject({ embeddingModel: q8Identity, embedding: [0, 1] });
+
+      const replacement = path.join(tempDir, 'replacement.gguf');
+      fs.writeFileSync(replacement, 'other test weights');
+      fs.renameSync(replacement, q8Path);
+      const replacedIdentity = getModelEmbeddingIdentity(q8);
+      expect(replacedIdentity).toBeDefined();
+      expect(replacedIdentity).not.toBe(q8Identity);
+      service.setRuntime(runtimeQ8, 'Same display name', replacedIdentity);
+      await service.searchDocuments('semantic query');
+      expect(runtimeQ8.calls).toBe(4);
+      expect(docRepo.getChunks(document.id)[0].embeddingModel).toBe(replacedIdentity);
+    });
+
+    it('uses lexical retrieval when the caller cannot identify its loaded weights', async () => {
+      const service = new InferenceService(undefined, undefined, 1, ragEngine);
+      service.setRuntime(new MockVisionRagRuntime(), 'Ambiguous display name');
+      const document = await service.ingestDocument('facts.txt', 'Bananas grow on plants.');
+      expect(document.retrievalMode).toBe('lexical');
+      expect(docRepo.getChunks(document.id)[0].embedding).toBeUndefined();
+      expect((await service.searchDocuments('Bananas'))[0]?.searchMode).toBe('lexical');
+      expect(getModelEmbeddingIdentity({ id: 'missing', modelId: 'same', variantId: 'q4', localPath: path.join(tempDir, 'missing.gguf') })).toBeUndefined();
     });
 
     it('should augment user prompt messages with retrieved document context', async () => {

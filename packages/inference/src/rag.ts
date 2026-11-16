@@ -81,7 +81,8 @@ export class RagEngine {
     name: string,
     content: string,
     type: DocumentType = 'txt',
-    computeEmbedding?: (text: string) => Promise<number[] | undefined>
+    computeEmbedding?: (text: string) => Promise<number[] | undefined>,
+    embeddingModel?: string
   ): Promise<DocumentInfo> {
     const docId = `doc_${crypto.randomBytes(8).toString('hex')}`;
     const rawChunks = this.chunkText(content);
@@ -97,14 +98,17 @@ export class RagEngine {
     };
 
     const chunks: DocumentChunk[] = [];
+    let embeddingUnavailable = false;
     for (let i = 0; i < rawChunks.length; i++) {
       const chunkText = rawChunks[i];
       let embedding: number[] | undefined;
-      if (computeEmbedding) {
+      if (computeEmbedding && !embeddingUnavailable) {
         try {
           embedding = await computeEmbedding(chunkText);
+          if (!embedding) embeddingUnavailable = true;
         } catch {
-          // Graceful fallback to lexical search
+          embeddingUnavailable = true;
+          // Keep documents searchable when the selected model cannot embed.
         }
       }
 
@@ -114,6 +118,7 @@ export class RagEngine {
         chunkIndex: i,
         content: chunkText,
         embedding,
+        embeddingModel: embedding ? embeddingModel : undefined,
         tokenCount: Math.max(1, Math.ceil(chunkText.length / 4)),
       });
     }
@@ -123,7 +128,27 @@ export class RagEngine {
       this.docRepo.insertChunks(chunks);
     }
 
-    return doc;
+    return { ...doc, retrievalMode: chunks.some((chunk) => chunk.embedding) ? 'hybrid' : 'lexical' };
+  }
+
+  public async indexMissingEmbeddings(
+    model: string,
+    computeEmbedding: (text: string) => Promise<number[] | undefined>,
+    documentIds?: string[]
+  ): Promise<void> {
+    const chunks = this.docRepo.getChunks().filter((chunk) =>
+      (!documentIds?.length || documentIds.includes(chunk.documentId)) &&
+      (!chunk.embedding || chunk.embeddingModel !== model)
+    );
+    for (const chunk of chunks) {
+      try {
+        const embedding = await computeEmbedding(chunk.content);
+        if (!embedding) break;
+        this.docRepo.updateChunkEmbedding(chunk.id, embedding, model);
+      } catch {
+        break;
+      }
+    }
   }
 
   /**
@@ -133,7 +158,8 @@ export class RagEngine {
     query: string,
     limit: number = 4,
     documentIds?: string[],
-    queryEmbedding?: number[]
+    queryEmbedding?: number[],
+    queryEmbeddingModel?: string
   ): Promise<RagSearchResult[]> {
     const allChunks = this.docRepo.getAllChunksWithDocName();
     if (allChunks.length === 0) return [];
@@ -163,6 +189,7 @@ export class RagEngine {
       lexicalScore: number;
       denseScore: number;
       totalScore: number;
+      searchMode: 'hybrid' | 'lexical';
     }> = [];
 
     const k1 = 1.2;
@@ -183,22 +210,27 @@ export class RagEngine {
         }
       }
 
-      // 2. Dense vector cosine similarity (if embeddings present)
+      // Only compare vectors produced by the same model and pooling configuration.
+      const hasDenseVector = Boolean(queryEmbedding && chunk.embedding &&
+        chunk.embedding.length === queryEmbedding.length &&
+        (!queryEmbeddingModel || chunk.embeddingModel === queryEmbeddingModel));
       let denseScore = 0;
-      if (queryEmbedding && chunk.embedding && chunk.embedding.length === queryEmbedding.length) {
+      if (hasDenseVector && queryEmbedding && chunk.embedding) {
         denseScore = this.cosineSimilarity(queryEmbedding, chunk.embedding);
       }
 
       // Hybrid combination
-      const totalScore = queryEmbedding && chunk.embedding
-        ? denseScore * 0.7 + Math.min(1, lexicalScore / 10) * 0.3
-        : lexicalScore;
+      const normalizedLexical = Math.min(1, lexicalScore / 10);
+      const totalScore = hasDenseVector
+        ? Math.max(0, denseScore) * 0.7 + normalizedLexical * 0.3
+        : normalizedLexical;
 
       scored.push({
         chunk,
         lexicalScore,
         denseScore,
         totalScore,
+        searchMode: hasDenseVector ? 'hybrid' : 'lexical',
       });
     }
 
@@ -213,6 +245,7 @@ export class RagEngine {
         content: s.chunk.content,
         score: parseFloat(s.totalScore.toFixed(4)),
         chunkIndex: s.chunk.chunkIndex,
+        searchMode: s.searchMode,
       }));
   }
 

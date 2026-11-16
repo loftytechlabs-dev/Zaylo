@@ -4,13 +4,14 @@ import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepositor
 import { registerLoftyDbHandlers } from '../loftydb/registerLoftyDbHandlers.js';
 import { ModelInspector, DatasetParser, AutoConfigurator, PreflightValidator, ForgeTrainingEngine } from '../forge/index.js';
 import { ImageEngine } from '../image/imageEngine.js';
+import { measureBenchmark } from '../benchmark.js';
 import { HardwareScanner } from '@local-ai/hardware';
 import { CapabilityEngine, ModelCapabilityRegistry } from '@local-ai/capabilities';
 import { ModelManager } from '@local-ai/models';
 import { KeyManager } from '@local-ai/security';
 import { NetworkScanner, DevicePairingManager, generateQrCode } from '@local-ai/network';
 import { LlamaRuntime } from '@local-ai/runtime-llama';
-import { InferenceService, RagEngine } from '@local-ai/inference';
+import { InferenceService, RagEngine, getModelEmbeddingIdentity } from '@local-ai/inference';
 import { ApiServer } from '@local-ai/server';
 import { SystemMonitor } from '@local-ai/monitoring';
 import { getDefaultDatabasePath, getDefaultModelsDir, getDefaultRuntimeDir, NotFoundError } from '@local-ai/shared';
@@ -355,7 +356,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
     });
 
     modelRepo.setLoadedInstallation(targetInst.id);
-    inferenceService.setRuntime(runtime, targetInst.name);
+    inferenceService.setRuntime(runtime, targetInst.name, getModelEmbeddingIdentity(targetInst));
 
     // Launch Fastify API server
     if (apiServer) {
@@ -416,7 +417,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
         flashAttention: config.flashAttention,
         mmprojPath: currentInst.mmprojPath,
       });
-      inferenceService.setRuntime(runtime, currentInst.name);
+      inferenceService.setRuntime(runtime, currentInst.name, getModelEmbeddingIdentity(currentInst));
 
       apiServer = new ApiServer({
         config,
@@ -457,7 +458,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
         flashAttention: config.flashAttention,
         mmprojPath: target.mmprojPath,
       });
-      inferenceService.setRuntime(runtime, target.name);
+      inferenceService.setRuntime(runtime, target.name, getModelEmbeddingIdentity(target));
       modelRepo.setLoadedInstallation(target.id);
       sendEvent('server:state-changed', { state: 'RUNNING', instance });
     }
@@ -586,7 +587,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
   });
 
   handle('rag:add-document', async ({ name, content, type = 'txt' }) => {
-    return ragEngine.ingestDocument(name, content, type);
+    return inferenceService.ingestDocument(name, content, type);
   });
 
   handle('rag:delete-document', async ({ id }) => {
@@ -595,11 +596,17 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
   });
 
   handle('rag:search', async ({ query, limit = 4, documentIds }) => {
-    return ragEngine.search(query, limit, documentIds);
+    return inferenceService.searchDocuments(query, limit, documentIds);
   });
 
   // 9. Benchmark
-  handle('benchmark:run', async ({ modelId, promptTokens = 50, genTokens = 100 }) => {
+  handle('benchmark:run', async ({ modelId, genTokens = 100 }) => {
+    if (!Number.isInteger(genTokens) || genTokens < 1 || genTokens > 4096) {
+      throw new Error('Benchmark generation length must be between 1 and 4096 tokens.');
+    }
+    if (inferenceService.getMetrics().activeRequests > 0) {
+      throw new Error('Wait for active requests to finish before benchmarking.');
+    }
     const installed = modelManager.getInstalledModels();
     const target = modelId
       ? installed.find((i) => i.modelId === modelId || i.id === modelId)
@@ -607,7 +614,8 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
     if (!target) throw new Error('No model installed to benchmark. Please install a model first.');
 
     // Auto-start runtime / load model if not currently loaded
-    const isLoaded = inferenceService.getRuntime() && inferenceService.getModelName() === target.name;
+    const targetEmbeddingIdentity = getModelEmbeddingIdentity(target);
+    const isLoaded = inferenceService.getRuntime() && targetEmbeddingIdentity && inferenceService.getEmbeddingIdentity() === targetEmbeddingIdentity;
     if (!isLoaded) {
       const isInstalled = await runtime.isInstalled();
       if (!isInstalled) {
@@ -633,7 +641,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
       });
 
       modelRepo.setLoadedInstallation(target.id);
-      inferenceService.setRuntime(runtime, target.name);
+      inferenceService.setRuntime(runtime, target.name, getModelEmbeddingIdentity(target));
 
       if (apiServer) {
         await apiServer.stop();
@@ -668,22 +676,13 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
       messages: [{ role: 'user' as const, content: promptText }],
       max_tokens: genTokens,
       temperature: 0.2,
+      cache_prompt: false,
+      stream_options: { include_usage: true },
     };
-
-    const startTime = Date.now();
-    let firstTokenTime: number | null = null;
-    let tokens = 0;
-
-    for await (const chunk of inferenceService.chatStream(benchReq, '127.0.0.1')) {
-      if (!firstTokenTime) firstTokenTime = Date.now();
-      if (chunk.choices[0]?.delta?.content) tokens++;
-    }
-
-    const endTime = Date.now();
-    const ttft = (firstTokenTime || endTime) - startTime;
-    const genDurationSec = (endTime - (firstTokenTime || startTime)) / 1000;
-    const genTokPerSec = genDurationSec > 0 ? tokens / genDurationSec : 0;
-    const promptTokPerSec = ttft > 0 ? (promptTokens / (ttft / 1000)) : 0;
+    const measurements = await measureBenchmark(
+      inferenceService.chatStream(benchReq, '127.0.0.1'),
+      runtime.getSupervisor().getInstance()?.pid,
+    );
 
     const result: BenchmarkResult = {
       id: `bench_${Date.now()}`,
@@ -691,13 +690,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
       variantId: target.variantId,
       modelName: target.name,
       timestamp: Date.now(),
-      promptTokens,
-      completionTokens: tokens,
-      promptProcessingTokensPerSec: parseFloat(promptTokPerSec.toFixed(1)),
-      generationTokensPerSec: parseFloat(genTokPerSec.toFixed(1)),
-      timeToFirstTokenMs: ttft,
-      totalDurationMs: endTime - startTime,
-      peakMemoryBytes: target.sizeBytes + 500 * 1024 * 1024,
+      ...measurements,
     };
 
     benchmarkRepo.save(result);
@@ -746,7 +739,7 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
       title: 'Select Training Dataset File',
       properties: ['openFile'],
       filters: [
-        { name: 'Dataset Files (*.jsonl, *.csv, *.json)', extensions: ['jsonl', 'csv', 'json'] },
+        { name: 'Datasets (JSONL, CSV, JSON, Parquet)', extensions: ['jsonl', 'csv', 'json', 'parquet', 'parq'] },
         { name: 'All Files', extensions: ['*'] },
       ],
     });
@@ -864,8 +857,8 @@ export async function registerIpcHandlers(mainWindow: BrowserWindow) {
     return res;
   });
 
-  handle('forge:export-artifact', async ({ artifactId, destinationDir }) => {
-    return forgeEngine.exportArtifact(artifactId, destinationDir);
+  handle('forge:export-artifact', async ({ artifactId, destinationDir, format }) => {
+    return forgeEngine.exportArtifact(artifactId, destinationDir, format);
   });
 
   handle('forge:delete-artifact', async ({ artifactId }) => {

@@ -1,11 +1,11 @@
-import type { ChatCompletionResponse, ChatMessage, ModelInstallation } from '@local-ai/shared';
+import type { ChatCompletionResponse, ChatCompletionChoice, ChatCompletionDelta, ChatMessage, ModelInstallation } from '@local-ai/shared';
 
 export function createChatCompletionResponse(params: {
   id: string;
   model: string;
   created?: number;
   message: ChatMessage;
-  finishReason?: 'stop' | 'length' | null;
+  finishReason?: ChatCompletionChoice['finish_reason'];
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
 }): ChatCompletionResponse {
   return {
@@ -28,8 +28,8 @@ export function createChatCompletionChunk(params: {
   id: string;
   model: string;
   created?: number;
-  delta: { role?: string; content?: string };
-  finishReason?: 'stop' | 'length' | null;
+  delta: ChatCompletionDelta;
+  finishReason?: ChatCompletionChoice['finish_reason'];
 }): ChatCompletionResponse {
   return {
     id: params.id,

@@ -6,9 +6,9 @@
 
 **Local AI Infrastructure: Inference Engine, Diffusion Studio, LoRA Forge, and LoftyDB Knowledge Graph**
 
-Run open-weights language models, multimodal vision models, diffusion pipelines, fine-tuning workflows, and persistent graph memory locally across macOS, Windows, and Linux with zero cloud telemetry and full OpenAI API compatibility.
+Run open-weights language models, multimodal vision models, diffusion pipelines, fine-tuning workflows, and persistent graph memory locally across macOS, Windows, and Linux. Zaylo provides OpenAI-compatible chat completions, embeddings, model listing, and image generation endpoints. Model capabilities and installed runtimes determine which operations are available.
 
-[![Release](https://img.shields.io/badge/Release-v3.3.0-111827.svg?style=flat-square)](https://github.com/loftytechlabs-dev/Zaylo/releases)
+[![Source](https://img.shields.io/badge/Source-v3.3.0-111827.svg?style=flat-square)](https://github.com/loftytechlabs-dev/Zaylo/releases)
 [![Memory Engine](https://img.shields.io/badge/Memory-LoftyDB%20v1.3.4-0284c7.svg?style=flat-square)](#loftydb-knowledge-graph-memory)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-18181b.svg?style=flat-square)](#installers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-374151.svg?style=flat-square)](LICENSE)
@@ -29,6 +29,12 @@ Run open-weights language models, multimodal vision models, diffusion pipelines,
 - Restore each conversation's text or image model selection without restarting the active inference runtime.
 - Require API keys for protected endpoints in LAN mode, including loopback; Referer headers never authorize requests. Local-only loopback access remains keyless.
 - Run the complete root test suite with `pnpm test`, with deterministic Forge dependency and checkpoint tests.
+- Load runtimes only after their health endpoint confirms model readiness, and stop only the processes Zaylo owns.
+- Use real diffusion output or report an error. Image requests never substitute procedural drawings for model inference.
+- Preserve chat tool calls, multiple choices, native usage, and runtime timings. Search documents with model embeddings when available, with an explicit keyword fallback otherwise.
+- Persist held-out training examples for evaluation, import Parquet datasets, and export merged models as GGUF with an installed llama.cpp converter.
+
+Regression tests cover these reliability changes without loading model weights. They do not establish GPU behavior or model quality. Published installers include changes only after a new release is built.
 
 ### Zaylo 3.2 features
 
@@ -45,7 +51,7 @@ Run open-weights language models, multimodal vision models, diffusion pipelines,
 
 ## Installers
 
-Pre-built release installers and portable binaries are built automatically via GitHub Actions across macOS, Windows, and Linux with the matching LoftyDB binary pre-bundled:
+The release workflow builds installers across macOS, Windows, and Linux with LoftyDB bundled. Check the release asset list for the versions and platforms actually published:
 
 | Operating System | Architecture | Package Format | Release Artifact |
 | :--- | :--- | :---: | :--- |
@@ -54,8 +60,8 @@ Pre-built release installers and portable binaries are built automatically via G
 | **macOS** | Intel (`x86_64`) | `.dmg` | [Releases — macOS x64](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
 | **Windows** | Windows 10 / 11 (`x64` Setup) | `.exe` | [Zaylo Setup (Windows x64)](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
 | **Windows** | Windows 10 / 11 (`x64` Portable) | `.exe` | [Zaylo Portable (Windows x64)](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
-| **Linux** | Universal (`x86_64`) | `.AppImage` | [`Zaylo-3.3.0.AppImage`](https://github.com/loftytechlabs-dev/Zaylo/releases/latest/download/Zaylo-3.3.0.AppImage) |
-| **Linux** | Debian / Ubuntu (`x86_64`) | `.deb` | [`Zaylo-3.3.0.deb`](https://github.com/loftytechlabs-dev/Zaylo/releases/latest/download/Zaylo-3.3.0.deb) |
+| **Linux** | `x86_64` | `.AppImage` | [Published Linux installers](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
+| **Linux** | Debian / Ubuntu (`x86_64`) | `.deb` | [Published Debian packages](https://github.com/loftytechlabs-dev/Zaylo/releases/latest) |
 
 ---
 
@@ -152,6 +158,10 @@ Zero-config local server, QR mobile pairing, scoped API keys, and interactive cl
 * **Native Compute Backends**: Apple Silicon Metal unified memory, NVIDIA CUDA, Vulkan compute, and multi-threaded CPU SIMD (`AVX2` / `AVX-512`).
 * **Exact Binary Memory Telemetry**: Reports physical RAM in GiB alongside active wired/compressed memory allocations and GPU VRAM offload metrics.
 
+Automatic llama.cpp installation uses the pinned upstream release's platform assets: Metal on macOS, detected CUDA on Windows, detected Vulkan on supported x64 hosts, and CPU otherwise. Linux CUDA requires a compatible `llama-server` installed on PATH. Unsupported architecture/backend combinations report an installation error. A backend's availability does not guarantee model support or a particular speed.
+
+The managed runtime is pinned to llama.cpp b5200, which fixes the b4800 shutdown abort. Existing b4800 installations must be reinstalled through the runtime installer to receive the corrected binary. The managed b5200 server runs in chat mode. Its exclusive embedding mode disables completions, so `/v1/embeddings` returns `503 EMBEDDINGS_UNAVAILABLE` and document retrieval uses the explicit keyword fallback. Semantic embeddings require a runtime that can provide them without disabling chat.
+
 ---
 
 ## Dynamic Playground and Generative UI
@@ -164,6 +174,10 @@ Zero-config local server, QR mobile pairing, scoped API keys, and interactive cl
 ---
 
 ## Forge Fine-Tuning Studio
+
+Training requires local Hugging Face checkpoint weights and Python with PyTorch, Transformers, and PEFT. Parquet import also requires PyArrow in that environment. Set `ZAYLO_PYTHON` to select its interpreter. Held-out validation requires a nonzero validation split and enough examples to keep training and validation separate. Evaluation reports held-out loss when available, normalized exact-match accuracy, and token F1.
+
+GGUF export first merges an adapter, then invokes llama.cpp's `convert_hf_to_gguf.py` with its Python requirements installed in the selected environment. Set `ZAYLO_GGUF_CONVERTER` to that script or `LLAMA_CPP_DIR` to the llama.cpp checkout. Export creates F16 GGUF weights; it does not silently install dependencies or quantize them.
 
 ```text
 +-----------------------+     Auto-Validation     +----------------------------+
@@ -184,6 +198,12 @@ Zero-config local server, QR mobile pairing, scoped API keys, and interactive cl
 ## OpenAI and Memory API Server
 
 Zaylo exposes an OpenAI-compatible HTTP server (`http://127.0.0.1:8080/v1`, or your local LAN IP when LAN sharing is enabled).
+
+The supported OpenAI routes are `/v1/models`, `/v1/chat/completions`, `/v1/embeddings`, and `/v1/images/generations`. Chat supports streamed and non-streamed choices, tool-call messages, and upstream usage. Tool execution belongs to the client. Responses API, Assistants, audio, and other OpenAI services are not implemented. Image generation requires an installed diffusion model and Python dependencies; unavailable engines or models return errors.
+
+Image dimensions must be multiples of 64 from 256 through 1024 pixels on each axis. Unsupported sizes are rejected rather than silently resized.
+
+Local mode binds to loopback. LAN mode requires an API key for protected routes, including requests made from loopback. Zaylo stores inference data locally; downloading model weights, runtimes, or checkpoints requires network access. Select trusted model files and Python model code.
 
 ### Chat Completions with Memory & RAG (`POST /v1/chat/completions`)
 
@@ -257,17 +277,11 @@ curl http://localhost:8080/v1/images/generations \
 
 ## Hardware Benchmarks
 
-Measured across representative desktop and workstation GPUs/CPUs:
+Run the desktop benchmark on the hardware and model you plan to use. A warmup pass precedes the measured request. Prompt and generation rates come from llama.cpp's native evaluated-token counts and durations, not stream chunk counts or an assumed prompt length. First-token latency is measured at the first content or tool-call chunk.
 
-| Hardware Specification | Model Architecture | Quantization | Prompt Processing | Generation Speed | TTFT Latency | Memory Allocation |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| Apple M4 Pro (Unified Memory) | Llama 3.2 1B Instruct | `Q4_K_M` | 248.5 tok/s | 72.1 tok/s | 38 ms | 1.1 GB |
-| Apple M4 Pro (Unified Memory) | Stable Diffusion (512x512) | `F16` / SafeTensors | - | 1.8 s / image | - | 2.4 GB |
-| Apple M2 (Unified Memory) | SmolLM2 135M Instruct | `Q8_0` | 380.0 tok/s | 94.2 tok/s | 24 ms | 350 MB |
-| Apple M2 (Unified Memory) | Qwen 2.5 0.5B Instruct | `Q4_K_M` | 185.0 tok/s | 46.5 tok/s | 45 ms | 620 MB |
-| NVIDIA RTX 4090 (24 GB VRAM) | Qwen 2.5 7B Instruct | `Q4_K_M` | 435.0 tok/s | 98.4 tok/s | 26 ms | 5.2 GB |
-| NVIDIA RTX 4090 (24 GB VRAM) | SDXL Turbo (512x512) | `F16` / SafeTensors | - | 0.45 s / image | - | 4.8 GB |
-| Intel Core i7-9750H (AVX2 CPU) | SmolLM2 135M Instruct | `Q8_0` | 142.0 tok/s | 38.6 tok/s | 78 ms | 380 MB |
+Memory is the peak resident inference-process RAM sampled during the request. GPU VRAM is separate, and unavailable process readings are marked unavailable. Historic results produced by the old estimator remain in storage but are labeled as legacy estimates in the interface.
+
+The previous hardware table had no accompanying raw records and has been removed. No cross-hardware performance guarantee is made. The corrected benchmark requires runtime verification before publishing new measurements.
 
 ---
 
@@ -279,7 +293,7 @@ apps/
     electron/
       loftydb/     Managed LoftyDB IPC handlers and lifecycle hooks
       forge/       Local Python environment & LoRA training runners
-      image/       Local diffusion worker orchestration
+      image/       Desktop import of the shared diffusion engine
     resources/
       loftydb/     Bundled native Go binaries (macOS, Windows, Linux)
     src/features/
@@ -296,6 +310,7 @@ packages/
   inference/
     src/loftydb/   Native HTTP client + cross-OS LoftyDB process supervisor
     src/memory/    Semantic MemoryEngine, entity extractor, and conflict/merge intelligence
+    src/image/     Shared desktop/CLI diffusion worker and process manager
   models/          Hugging Face Hub downloader, SHA-256 verifier, GGUF parser
   monitoring/      Telemetry sampler and structured logs
   network/         LAN interface detection, QR pairing, device trust store
@@ -330,8 +345,12 @@ pnpm install
 # 3. Build all 16 workspace packages
 pnpm build
 
-# 4. Run LoftyDB integration and core tests
-npx vitest run tests/loftydb_memory.test.ts
+# 4. Run the full regression suite and type checks
+pnpm test
+pnpm typecheck
+
+# Optional: exercise real CPU generation with an installed runtime and local GGUF
+node tests/smoke_runtime.mjs /path/to/runtime /path/to/model.gguf
 
 # 5. Launch Desktop in development mode
 pnpm dev:desktop
@@ -349,6 +368,8 @@ pnpm dist:linux                             # Package Linux .AppImage and .deb (
 Note on macOS, Windows, and Linux CI releases: pushing a tag matching `v*` triggers `.github/workflows/release.yml` across `macos-latest`, `windows-latest`, and `ubuntu-latest`, running `pnpm build`, automated cross-OS integration checks (`tests/loftydb_memory.test.ts`, `tests/capabilities.test.ts`, `tests/theme.test.ts`, `tests/creations_and_visualizations.test.ts`), and native installer packaging.
 
 ---
+
+Runtime verification results and remaining hardware limits are recorded in [PR 8 runtime verification](docs/pr8-runtime-verification.md).
 
 ## License
 

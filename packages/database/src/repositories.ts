@@ -585,8 +585,8 @@ export class BenchmarkRepository {
         INSERT INTO benchmark_results (
           id, model_id, variant_id, model_name, timestamp, prompt_tokens, completion_tokens,
           prompt_processing_tokens_per_sec, generation_tokens_per_sec, time_to_first_token_ms,
-          total_duration_ms, peak_memory_bytes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          total_duration_ms, peak_memory_bytes, measurement_version, memory_measurement
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .run(
         result.id,
@@ -600,7 +600,9 @@ export class BenchmarkRepository {
         result.generationTokensPerSec,
         result.timeToFirstTokenMs,
         result.totalDurationMs,
-        result.peakMemoryBytes
+        result.peakMemoryBytes,
+        result.measurementVersion ?? 1,
+        result.memoryMeasurement ?? 'unavailable'
       );
   }
 
@@ -619,6 +621,8 @@ export class BenchmarkRepository {
       timeToFirstTokenMs: Number(r.time_to_first_token_ms),
       totalDurationMs: Number(r.total_duration_ms),
       peakMemoryBytes: Number(r.peak_memory_bytes),
+      measurementVersion: r.measurement_version === 2 ? 2 : undefined,
+      memoryMeasurement: r.memory_measurement === 'process-rss' ? 'process-rss' : 'unavailable',
     }));
   }
 }
@@ -627,20 +631,21 @@ export class DocumentRepository {
   constructor(private db: IDatabase) {}
 
   getAllDocuments(): DocumentInfo[] {
-    const rows = this.db.prepare('SELECT * FROM documents ORDER BY created_at DESC').all() as any[];
+    const rows = this.db.prepare('SELECT d.*, EXISTS(SELECT 1 FROM document_chunks dc WHERE dc.document_id = d.id AND dc.embedding IS NOT NULL) AS has_embeddings FROM documents d ORDER BY created_at DESC').all() as any[];
     return rows.map((r) => ({
       id: r.id,
       name: r.name,
       type: r.type,
       sizeBytes: Number(r.size_bytes),
       chunkCount: Number(r.chunk_count),
+      retrievalMode: r.has_embeddings ? 'hybrid' : 'lexical',
       createdAt: Number(r.created_at),
       updatedAt: Number(r.updated_at),
     }));
   }
 
   getDocument(id: string): DocumentInfo | null {
-    const r = this.db.prepare('SELECT * FROM documents WHERE id = ?').get(id) as any;
+    const r = this.db.prepare('SELECT d.*, EXISTS(SELECT 1 FROM document_chunks dc WHERE dc.document_id = d.id AND dc.embedding IS NOT NULL) AS has_embeddings FROM documents d WHERE d.id = ?').get(id) as any;
     if (!r) return null;
     return {
       id: r.id,
@@ -648,6 +653,7 @@ export class DocumentRepository {
       type: r.type,
       sizeBytes: Number(r.size_bytes),
       chunkCount: Number(r.chunk_count),
+      retrievalMode: r.has_embeddings ? 'hybrid' : 'lexical',
       createdAt: Number(r.created_at),
       updatedAt: Number(r.updated_at),
     };
@@ -674,8 +680,8 @@ export class DocumentRepository {
 
   insertChunks(chunks: DocumentChunk[]): void {
     const stmt = this.db.prepare(`
-      INSERT INTO document_chunks (id, document_id, chunk_index, content, embedding, token_count, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO document_chunks (id, document_id, chunk_index, content, embedding, embedding_model, token_count, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     for (const c of chunks) {
       stmt.run(
@@ -684,10 +690,16 @@ export class DocumentRepository {
         c.chunkIndex,
         c.content,
         c.embedding ? JSON.stringify(c.embedding) : null,
+        c.embeddingModel || null,
         c.tokenCount,
         Date.now()
       );
     }
+  }
+
+  updateChunkEmbedding(id: string, embedding: number[], model: string): void {
+    this.db.prepare('UPDATE document_chunks SET embedding = ?, embedding_model = ? WHERE id = ?')
+      .run(JSON.stringify(embedding), model, id);
   }
 
   getChunks(documentId?: string): DocumentChunk[] {
@@ -703,6 +715,7 @@ export class DocumentRepository {
       chunkIndex: Number(r.chunk_index),
       content: r.content,
       embedding: r.embedding ? JSON.parse(r.embedding) : undefined,
+      embeddingModel: r.embedding_model || undefined,
       tokenCount: Number(r.token_count),
     }));
   }
@@ -721,6 +734,7 @@ export class DocumentRepository {
       chunkIndex: Number(r.chunk_index),
       content: r.content,
       embedding: r.embedding ? JSON.parse(r.embedding) : undefined,
+      embeddingModel: r.embedding_model || undefined,
       tokenCount: Number(r.token_count),
       documentName: r.document_name || 'Document',
     }));

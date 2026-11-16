@@ -9,7 +9,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import type { Persona, PersonaCommunicationStyle } from '@local-ai/shared';
-import { PersonaPromptAdapter } from '@local-ai/inference';
+import { PersonaPromptAdapter } from '@local-ai/inference/personas';
 
 interface PersonaEditorModalProps {
   isOpen: boolean;

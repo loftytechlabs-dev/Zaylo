@@ -71,7 +71,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
             Import & Validate Dataset
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Provide instruction or conversational training data in JSONL or CSV format.
+            Provide instruction or conversational training data in JSONL, CSV, or Parquet format.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
             {dataset ? 'Change Dataset File...' : 'Select Local Training Dataset'}
           </div>
           <p className="text-xs text-zinc-400 max-w-sm">
-            Supports JSONL (instruction, prompt/completion, conversational messages) and CSV files.
+            Supports JSONL (instruction, prompt/completion, conversational messages) CSV, and Parquet files.
           </p>
           <button className="mt-2 px-3.5 py-1.5 rounded-lg bg-[#1b1e24] border border-[#2e323b] text-zinc-200 text-xs font-medium group-hover:bg-[#252830]">
             Browse Files
@@ -197,7 +197,7 @@ export const ImportDatasetScreen: React.FC<ImportDatasetScreenProps> = ({
             <div className="p-4 rounded-xl bg-[#121418] border border-[#202227] space-y-3">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold text-zinc-200">
-                  CSV Column Mapping ({dataset.columns.length} columns detected)
+                  Dataset Column Mapping ({dataset.columns.length} columns detected)
                 </div>
                 <button
                   onClick={() => setShowMapping(!showMapping)}

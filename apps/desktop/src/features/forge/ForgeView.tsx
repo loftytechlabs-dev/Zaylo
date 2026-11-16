@@ -409,11 +409,11 @@ export const ForgeView: React.FC = () => {
     }
   };
 
-  const handleExportArtifact = async (artifactId: string) => {
+  const handleExportArtifact = async (artifactId: string, format: 'adapter' | 'gguf' = 'adapter') => {
     try {
       const dest = await api.invoke('app:select-directory', {});
       if (dest) {
-        const res = await api.invoke('forge:export-artifact', { artifactId, destinationDir: dest });
+        const res = await api.invoke('forge:export-artifact', { artifactId, destinationDir: dest, format });
         if (res.success) {
           alert(`Artifact successfully exported to ${res.exportPath}`);
         } else {

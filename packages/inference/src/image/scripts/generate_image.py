@@ -11,7 +11,7 @@ import json
 import time
 import argparse
 import signal
-import traceback
+import inspect
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -112,12 +112,14 @@ def main():
     # Check if diffusers is installed
     try:
         import diffusers
-        from diffusers import AutoPipelineForText2Image, StableDiffusionPipeline
-    except ImportError:
-        diffusers = None
+        from diffusers import AutoPipelineForText2Image, StableDiffusionPipeline, StableDiffusionXLPipeline
+    except ImportError as error:
+        log_event({"type": "error", "message": f"Diffusers dependencies are missing: {error}. Install torch, diffusers, transformers, and Pillow in the selected Python environment."})
+        sys.exit(1)
 
     pipe = None
     loaded_successfully = False
+    load_errors = []
 
     # Attempt to load model pipeline
     if diffusers is not None and model_path and os.path.exists(model_path):
@@ -128,16 +130,19 @@ def main():
         })
         try:
             if model_path.endswith(".safetensors") or model_path.endswith(".ckpt"):
-                pipe = StableDiffusionPipeline.from_single_file(
+                pipeline_type = StableDiffusionXLPipeline if "xl" in model_id.lower() else StableDiffusionPipeline
+                pipe = pipeline_type.from_single_file(
                     model_path,
                     torch_dtype=torch_dtype,
                     load_safety_checker=False,
+                    local_files_only=True,
                 )
             elif os.path.isdir(model_path):
                 pipe = AutoPipelineForText2Image.from_pretrained(
                     model_path,
                     torch_dtype=torch_dtype,
                     safety_checker=None,
+                    local_files_only=True,
                 )
             if pipe:
                 pipe.to(device)
@@ -146,6 +151,7 @@ def main():
                     pipe.enable_attention_slicing()
                 loaded_successfully = True
         except Exception as load_err:
+            load_errors.append(str(load_err))
             log_event({
                 "type": "log",
                 "level": "WARN",
@@ -172,6 +178,7 @@ def main():
                     repo_id,
                     torch_dtype=torch_dtype,
                     safety_checker=None,
+                    local_files_only=True,
                 )
                 if pipe:
                     pipe.to(device)
@@ -179,6 +186,7 @@ def main():
                         pipe.enable_attention_slicing()
                     loaded_successfully = True
             except Exception as repo_err:
+                load_errors.append(str(repo_err))
                 log_event({
                     "type": "log",
                     "level": "INFO",
@@ -227,9 +235,10 @@ def main():
             if negative_prompt and "turbo" not in model_id.lower():
                 call_kwargs["negative_prompt"] = negative_prompt
 
-            if hasattr(pipe, "callback_on_step_end"):
+            call_parameters = inspect.signature(pipe.__call__).parameters
+            if "callback_on_step_end" in call_parameters:
                 call_kwargs["callback_on_step_end"] = step_callback
-            elif hasattr(pipe, "callback"):
+            elif "callback" in call_parameters:
                 call_kwargs["callback"] = lambda s, t, lat: step_callback(pipe, s, t, {})
                 call_kwargs["callback_steps"] = 1
 
@@ -239,72 +248,9 @@ def main():
             log_event({"type": "error", "message": f"Diffusion generation failed: {str(gen_err)}"})
             sys.exit(1)
     else:
-        # Fallback procedural generation (ensures 100% offline testing works if user hasn't downloaded model weights yet)
-        log_event({
-            "type": "status",
-            "stage": "generating",
-            "message": f"Executing local generation ({steps} steps, {width}x{height}, seed={seed})..."
-        })
-        images_list = []
-        for b in range(batch_size):
-            cur_seed = seed + b
-            # Simulate step progression with real sleep and mathematical tensor canvas
-            for step_idx in range(1, steps + 1):
-                if interrupted:
-                    sys.exit(0)
-                time.sleep(max(0.02, min(0.12, 1.5 / steps)))
-                elapsed = time.time() - start_time
-                pct = min(99, int((step_idx) / steps * 100))
-                log_event({
-                    "type": "progress",
-                    "step": step_idx,
-                    "totalSteps": steps,
-                    "percentage": pct,
-                    "elapsedSeconds": round(elapsed, 2)
-                })
-
-            # Create an artistic generative canvas using PIL and torch math
-            import math
-            import hashlib
-            from PIL import Image, ImageDraw, ImageFont
-
-            img = Image.new("RGB", (width, height), (15, 17, 23))
-            draw = ImageDraw.Draw(img)
-
-            # Palette derived deterministically from prompt hash and seed
-            phash = hashlib.sha256(f"{prompt}_{cur_seed}".encode()).hexdigest()
-            r1, g1, b1 = int(phash[0:2], 16), int(phash[2:4], 16), int(phash[4:6], 16)
-            r2, g2, b2 = int(phash[6:8], 16), int(phash[8:10], 16), int(phash[10:12], 16)
-
-            # Draw smooth atmospheric gradients
-            for y in range(height):
-                factor = y / max(1, height)
-                r = int(r1 * (1 - factor) + r2 * factor * 0.4 + 10)
-                g = int(g1 * (1 - factor) + g2 * factor * 0.3 + 12)
-                b = int(b1 * (1 - factor) + b2 * factor * 0.6 + 20)
-                draw.line([(0, y), (width, y)], fill=(min(255, r), min(255, g), min(255, b)))
-
-            # Draw generative celestial or geometric motifs
-            cx, cy = width // 2, height // 2
-            max_r = min(width, height) // 3
-            num_rings = 8
-            for ring in range(num_rings, 0, -1):
-                rf = ring / num_rings
-                rad = int(max_r * rf)
-                color = (
-                    min(255, int(r2 * rf + 80)),
-                    min(255, int(g1 * rf + 90)),
-                    min(255, int(b2 * (1 - rf) + 160)),
-                )
-                draw.ellipse([cx - rad, cy - rad, cx + rad, cy + rad], outline=color, width=max(1, int(3 * rf)))
-
-            # Watermark / prompt stamp at bottom
-            stamp_text = f"Zaylo Local Diffusion • {width}x{height} • Seed {cur_seed}"
-            draw.text((20, height - 30), stamp_text, fill=(180, 190, 210))
-            prompt_preview = f"\"{prompt[:50]}...\"" if len(prompt) > 50 else f"\"{prompt}\""
-            draw.text((20, 20), prompt_preview, fill=(240, 245, 255))
-
-            images_list.append(img)
+        detail = "; ".join(load_errors) or f"No usable local model found for {model_id} at {model_path or '(no model path)'}"
+        log_event({"type": "error", "message": f"No diffusion pipeline could be loaded: {detail}. Download a supported model and its pipeline dependencies before generating images. Generation does not download missing files."})
+        sys.exit(1)
 
     # Save outputs to disk
     timestamp = int(time.time() * 1000)

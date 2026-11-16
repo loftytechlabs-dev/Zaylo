@@ -308,6 +308,9 @@ importers:
 
   packages/inference:
     dependencies:
+      '@local-ai/capabilities':
+        specifier: workspace:*
+        version: link:../capabilities
       '@local-ai/database':
         specifier: workspace:*
         version: link:../database

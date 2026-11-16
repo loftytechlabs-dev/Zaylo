@@ -321,15 +321,26 @@ export interface ChatMessageImageContentPart {
   type: 'image_url';
   image_url: {
     url: string; // Base64 data URL (e.g. data:image/jpeg;base64,...) or image URL
+    detail?: 'auto' | 'low' | 'high';
   };
 }
 
 export type ChatMessageContentPart = ChatMessageTextContentPart | ChatMessageImageContentPart;
 
+export interface ChatToolCall {
+  id: string;
+  type: 'function';
+  function: { name: string; arguments: string };
+}
+
 export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string | ChatMessageContentPart[];
+  role: 'system' | 'developer' | 'user' | 'assistant' | 'tool' | 'function';
+  content: string | ChatMessageContentPart[] | null;
   name?: string;
+  tool_call_id?: string;
+  tool_calls?: ChatToolCall[];
+  function_call?: { name: string; arguments: string };
+  refusal?: string | null;
 }
 
 export type PersonaCommunicationStyle =
@@ -372,6 +383,19 @@ export interface ChatCompletionRequest {
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
+  max_completion_tokens?: number;
+  n?: number;
+  tools?: Array<{ type: 'function'; function: { name: string; description?: string; parameters?: Record<string, unknown>; strict?: boolean } }>;
+  tool_choice?: 'none' | 'auto' | 'required' | { type: 'function'; function: { name: string } };
+  parallel_tool_calls?: boolean;
+  functions?: Array<{ name: string; description?: string; parameters?: Record<string, unknown> }>;
+  function_call?: 'none' | 'auto' | { name: string };
+  response_format?: { type: 'text' | 'json_object' | 'json_schema'; json_schema?: Record<string, unknown> };
+  seed?: number;
+  logprobs?: boolean;
+  top_logprobs?: number;
+  cache_prompt?: boolean;
+  stream_options?: { include_usage?: boolean };
   stream?: boolean;
   stop?: string | string[];
   presence_penalty?: number;
@@ -394,6 +418,7 @@ export interface DocumentInfo {
   type: DocumentType;
   sizeBytes: number;
   chunkCount: number;
+  retrievalMode?: 'hybrid' | 'lexical';
   createdAt: number;
   updatedAt: number;
 }
@@ -404,6 +429,7 @@ export interface DocumentChunk {
   chunkIndex: number;
   content: string;
   embedding?: number[];
+  embeddingModel?: string;
   tokenCount: number;
 }
 
@@ -414,22 +440,32 @@ export interface RagSearchResult {
   content: string;
   score: number;
   chunkIndex: number;
+  searchMode?: 'hybrid' | 'lexical';
+}
+
+export interface ChatCompletionDelta {
+  role?: ChatMessage['role'];
+  content?: string | null;
+  tool_calls?: Array<{ index: number; id?: string; type?: 'function'; function?: { name?: string; arguments?: string } }>;
+  function_call?: { name?: string; arguments?: string };
+  refusal?: string | null;
 }
 
 export interface ChatCompletionChoice {
   index: number;
   message?: ChatMessage;
-  delta?: {
-    role?: string;
-    content?: string;
-  };
-  finish_reason: 'stop' | 'length' | 'tool_calls' | 'content_filter' | null;
+  delta?: ChatCompletionDelta;
+  logprobs?: { content?: unknown[]; refusal?: unknown[] } | null;
+  finish_reason: 'stop' | 'length' | 'tool_calls' | 'function_call' | 'content_filter' | null;
 }
 
 export interface ChatCompletionUsage {
   prompt_tokens: number;
   completion_tokens: number;
   total_tokens: number;
+  prompt_tokens_details?: Record<string, number>;
+  completion_tokens_details?: Record<string, number>;
+  estimated?: boolean;
 }
 
 export interface ChatCompletionResponse {
@@ -439,18 +475,30 @@ export interface ChatCompletionResponse {
   model: string;
   choices: ChatCompletionChoice[];
   usage?: ChatCompletionUsage;
+  system_fingerprint?: string;
+  service_tier?: string;
+  timings?: {
+    prompt_n: number;
+    prompt_ms: number;
+    prompt_per_second: number;
+    predicted_n: number;
+    predicted_ms: number;
+    predicted_per_second: number;
+  };
 }
 
 export interface EmbeddingRequest {
   model: string;
   input: string | string[];
+  encoding_format?: 'float' | 'base64';
+  dimensions?: number;
   user?: string;
 }
 
 export interface EmbeddingData {
   object: 'embedding';
   index: number;
-  embedding: number[];
+  embedding: number[] | string;
 }
 
 export interface EmbeddingResponse {
@@ -542,6 +590,8 @@ export interface BenchmarkResult {
   timeToFirstTokenMs: number;
   totalDurationMs: number;
   peakMemoryBytes: number;
+  measurementVersion?: 2;
+  memoryMeasurement?: 'process-rss' | 'unavailable';
 }
 
 // ==================== FORGE FINE-TUNING STUDIO TYPES ====================

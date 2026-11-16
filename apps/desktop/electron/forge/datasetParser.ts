@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { PythonDetector, resolvePythonScript } from '@local-ai/inference';
 import type {
   DatasetAnalysis,
   DatasetColumnMapping,
@@ -25,7 +28,22 @@ export class DatasetParser {
     let rawRecords: any[] = [];
     const invalidSampleErrors: string[] = [];
 
-    if (ext === '.csv') {
+    if (ext === '.parquet' || ext === '.parq') {
+      const python = PythonDetector.detect();
+      if (!python.available || !python.pythonPath) throw new Error(python.error || 'Python is required to read Parquet datasets.');
+      const script = resolvePythonScript('dataset_io.py', [
+        path.join(path.dirname(fileURLToPath(import.meta.url)), 'scripts/dataset_io.py'),
+        path.resolve(process.cwd(), 'apps/desktop/electron/forge/scripts/dataset_io.py'),
+        path.resolve(process.cwd(), 'electron/forge/scripts/dataset_io.py'),
+      ]);
+      const records: unknown = JSON.parse(execFileSync(python.pythonPath, [script, '--input', filePath], {
+        encoding: 'utf-8', maxBuffer: 128 * 1024 * 1024, timeout: 60000,
+      }));
+      if (!Array.isArray(records) || records.some(record => !record || typeof record !== 'object' || Array.isArray(record))) {
+        throw new Error('Parquet reader returned invalid records.');
+      }
+      rawRecords = records;
+    } else if (ext === '.csv') {
       const content = fs.readFileSync(filePath, 'utf-8');
       const lines = content.split(/\r?\n/).filter((l) => l.trim().length > 0);
       if (lines.length < 2) {
@@ -73,19 +91,32 @@ export class DatasetParser {
         }
       }
     } else {
-      // JSONL or JSON
       const content = fs.readFileSync(filePath, 'utf-8');
-      const lines = content.split(/\r?\n/);
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
+      let parsedDocument = false;
+      if (ext === '.json') {
         try {
-          const parsed = JSON.parse(line);
-          rawRecords.push(parsed);
-        } catch (err: any) {
-          if (invalidSampleErrors.length < 5) {
-            invalidSampleErrors.push(`Line ${i + 1}: Malformed JSON (${err.message})`);
+          const parsed: unknown = JSON.parse(content);
+          const records = Array.isArray(parsed) ? parsed : [parsed];
+          if (records.some(record => !record || typeof record !== 'object' || Array.isArray(record))) {
+            throw new Error('JSON datasets must contain objects with named fields.');
+          }
+          rawRecords = records;
+          parsedDocument = true;
+        } catch (error) {
+          if (!(error instanceof SyntaxError)) throw error;
+        }
+      }
+      if (!parsedDocument) {
+        const lines = content.split(/\r?\n/);
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          try {
+            const parsed: unknown = JSON.parse(line);
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Record must be an object.');
+            rawRecords.push(parsed);
+          } catch (error) {
+            if (invalidSampleErrors.length < 5) invalidSampleErrors.push(`Line ${i + 1}: ${error instanceof Error ? error.message : String(error)}`);
           }
         }
       }

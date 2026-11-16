@@ -1,4 +1,4 @@
-import { spawn, ChildProcess, execSync } from 'node:child_process';
+import { spawn, ChildProcess, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +15,7 @@ import type {
 } from '@local-ai/shared';
 import type { TrainingJobRepository, FineTunedModelRepository } from '@local-ai/database';
 import { PythonDetector } from './pythonDetector.js';
-import { DatasetParser } from './datasetParser.js';
+import { scoreResponse } from './evaluation.js';
 import { resolvePythonScript } from '../utils/scriptResolver.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -113,6 +113,7 @@ export class ForgeTrainingEngine {
     this.onStatusCallback?.(job.id, 'INITIALIZING');
 
     // Spawn isolated Python trainer
+    this.getScriptPath('dataset_io.py');
     const trainScript = this.getScriptPath('train_lora.py');
     const child = spawn(pyInfo.pythonPath, [trainScript, '--config', configFilePath], {
       cwd: outputDir,
@@ -384,6 +385,7 @@ export class ForgeTrainingEngine {
     const configFilePath = path.join(job.outputDir, 'training_config.json');
     fs.writeFileSync(configFilePath, JSON.stringify(updatedConfig, null, 2), 'utf-8');
 
+    this.getScriptPath('dataset_io.py');
     const trainScript = this.getScriptPath('train_lora.py');
     const child = spawn(
       pyInfo.pythonPath,
@@ -415,14 +417,21 @@ export class ForgeTrainingEngine {
     const job = this.jobRepo.getJob(jobId);
     if (!job) throw new Error(`Job ${jobId} not found`);
 
-    const dataset = DatasetParser.parseFile(job.datasetPath, undefined, Math.max(20, numExamples * 2));
-    if (!dataset.exampleRecords || dataset.exampleRecords.length === 0) {
-      throw new Error('Dataset contains no valid examples to evaluate');
+    if (!job.artifactPath || !fs.existsSync(job.artifactPath)) throw new Error('A saved trained adapter is required for held-out evaluation.');
+    const heldOutPath = path.join(job.outputDir, 'validation_records.jsonl');
+    if (!fs.existsSync(heldOutPath) || fs.statSync(heldOutPath).size === 0) {
+      throw new Error('No held-out validation records exist for this run. Train with a nonzero validation split and at least two distinct examples before evaluating.');
     }
-
-    // Select held-out test examples from end of dataset
-    const count = Math.min(dataset.exampleRecords.length, Math.max(1, numExamples));
-    const testExamples = dataset.exampleRecords.slice(-count);
+    const testExamples = fs.readFileSync(heldOutPath, 'utf-8').split(/\r?\n/).filter(line => line.trim()).slice(0, Math.max(1, numExamples)).map(line => {
+      const record: unknown = JSON.parse(line);
+      if (!record || typeof record !== 'object' || !('formattedPrompt' in record) || !('expectedResponse' in record)
+        || typeof record.formattedPrompt !== 'string' || !record.formattedPrompt.trim() || typeof record.expectedResponse !== 'string') {
+        throw new Error('This run has no saved training-formatted validation prompts. Retrain before evaluating; preview text cannot reproduce the training input.');
+      }
+      return { prompt: record.formattedPrompt, response: record.expectedResponse };
+    });
+    if (testExamples.length === 0) throw new Error('The held-out validation file contains no valid examples.');
+    let exactMatches = 0;
     const samples: DatasetEvaluationSample[] = [];
 
     const startTime = Date.now();
@@ -432,26 +441,12 @@ export class ForgeTrainingEngine {
           baseModelPath: job.checkpointPath,
           adapterPath: job.artifactPath,
           prompt: ex.prompt,
-          temperature: 0.1, // Near deterministic evaluation
+          temperature: 0,
           maxTokens: 128,
-        });
+        }, true);
 
-        const normExp = ex.response.trim().toLowerCase();
-        const normFt = res.fineTunedResponse.trim().toLowerCase();
-        let matchScore = 0.5;
-        if (normExp === normFt) {
-          matchScore = 1.0;
-        } else if (normFt.includes(normExp) || normExp.includes(normFt)) {
-          matchScore = 0.8;
-        } else {
-          // Token overlap Jaccard
-          const expWords = new Set<string>(normExp.split(/\s+/));
-          const ftWords = new Set<string>(normFt.split(/\s+/));
-          const intersection = Array.from(expWords).filter((w: string) => ftWords.has(w)).length;
-          const union = new Set<string>([...Array.from(expWords), ...Array.from(ftWords)]).size;
-          matchScore = union > 0 ? parseFloat((intersection / union).toFixed(2)) : 0.0;
-        }
-
+        const score = scoreResponse(ex.response, res.fineTunedResponse);
+        exactMatches += score.exactMatch;
         samples.push({
           prompt: ex.prompt,
           expected: ex.response,
@@ -459,18 +454,10 @@ export class ForgeTrainingEngine {
           ftOutput: res.fineTunedResponse,
           latencyBaseMs: res.baseDurationMs,
           latencyFtMs: res.fineTunedDurationMs,
-          scoreMatch: matchScore,
+          scoreMatch: score.tokenF1,
         });
-      } catch (err: any) {
-        samples.push({
-          prompt: ex.prompt,
-          expected: ex.response,
-          baseOutput: `Evaluation error: ${err.message}`,
-          ftOutput: `Evaluation error: ${err.message}`,
-          latencyBaseMs: 0,
-          latencyFtMs: 0,
-          scoreMatch: 0,
-        });
+      } catch (error) {
+        throw new Error(`Held-out evaluation failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 
@@ -481,15 +468,16 @@ export class ForgeTrainingEngine {
       jobId,
       samples,
       metrics: {
-        valLoss: job.currentLoss,
+        valLoss: [...job.metricsHistory].reverse().find(sample => typeof sample.evalLoss === 'number' && Number.isFinite(sample.evalLoss))?.evalLoss,
         tokenF1Score: parseFloat(avgScore.toFixed(2)),
-        accuracyScore: parseFloat(avgScore.toFixed(2)),
+        accuracyScore: exactMatches / samples.length,
       },
       durationSeconds,
     };
   }
 
-  public async compareModels(req: ModelComparisonRequest): Promise<ModelComparisonResult> {
+  public async compareModels(req: ModelComparisonRequest, formattedPrompt = false): Promise<ModelComparisonResult> {
+    if (req.adapterPath && !fs.existsSync(req.adapterPath)) throw new Error(`Adapter path not found: ${req.adapterPath}`);
     const pyInfo = PythonDetector.detect();
     if (!pyInfo.available || !pyInfo.pythonPath) {
       throw new Error(`Python training environment not available: ${pyInfo.error}`);
@@ -504,7 +492,9 @@ export class ForgeTrainingEngine {
       '--max-tokens', String(req.maxTokens ?? 128),
     ];
 
-    if (req.adapterPath && fs.existsSync(req.adapterPath)) {
+    if (formattedPrompt) args.push('--formatted-prompt');
+
+    if (req.adapterPath) {
       args.push('--adapter', req.adapterPath);
     }
 
@@ -516,6 +506,7 @@ export class ForgeTrainingEngine {
       let stdout = '';
       let stderr = '';
 
+      child.once('error', reject);
       child.stdout.on('data', (d) => (stdout += d.toString()));
       child.stderr.on('data', (d) => (stderr += d.toString()));
 
@@ -527,7 +518,7 @@ export class ForgeTrainingEngine {
 
         try {
           const lines = stdout.trim().split('\n');
-          const jsonLine = lines.find((l) => l.startsWith('{') && l.endsWith('}'));
+          const jsonLine = lines.reverse().find((l) => l.startsWith('{') && l.endsWith('}'));
           if (jsonLine) {
             resolve(JSON.parse(jsonLine));
           } else {
@@ -552,25 +543,23 @@ export class ForgeTrainingEngine {
     }
 
     const baseModelPath = job.checkpointPath;
-    const outputDir = path.join(job.outputDir, 'merged_model');
-
     const pyInfo = PythonDetector.detect();
     if (!pyInfo.available || !pyInfo.pythonPath) {
       return { success: false, error: pyInfo.error || 'Python environment not found' };
     }
 
     const scriptPath = this.getScriptPath('merge_lora.py');
+    const outputDir = fs.mkdtempSync(path.join(job.outputDir, 'merged_model_'));
     try {
-      const out = execSync(
-        `"${pyInfo.pythonPath}" "${scriptPath}" --base-model "${baseModelPath}" --adapter "${artifact.artifactPath}" --output-dir "${outputDir}"`,
-        { encoding: 'utf-8', timeout: 300000 }
-      );
+      const out = execFileSync(pyInfo.pythonPath, [
+        scriptPath, '--base-model', baseModelPath, '--adapter', artifact.artifactPath, '--output-dir', outputDir,
+      ], { encoding: 'utf-8', timeout: 300000, maxBuffer: 10 * 1024 * 1024 });
 
       const lines = out.trim().split('\n');
-      const jsonLine = lines.find((l) => l.startsWith('{') && l.endsWith('}'));
+      const jsonLine = lines.reverse().find((l) => l.startsWith('{') && l.endsWith('}'));
       if (jsonLine) {
         const parsed = JSON.parse(jsonLine);
-        if (parsed.success) {
+        if (parsed.success === true && typeof parsed.outputPath === 'string' && fs.existsSync(path.join(parsed.outputPath, 'config.json'))) {
           // Register merged model artifact
           const mergedArtifact: FineTunedModelArtifact = {
             id: `ft_merged_${Date.now()}`,
@@ -599,7 +588,8 @@ export class ForgeTrainingEngine {
 
   public async exportArtifact(
     artifactId: string,
-    destinationDir: string
+    destinationDir: string,
+    format: 'adapter' | 'gguf' = 'adapter'
   ): Promise<{ success: boolean; exportPath?: string; error?: string }> {
     const artifact = this.artifactRepo.getModel(artifactId);
     if (!artifact) throw new Error(`Artifact ${artifactId} not found`);
@@ -608,13 +598,27 @@ export class ForgeTrainingEngine {
       fs.mkdirSync(destinationDir, { recursive: true });
     }
 
-    const exportPath = path.join(destinationDir, path.basename(artifact.artifactPath));
     try {
-      // Recursive copy
-      fs.cpSync(artifact.artifactPath, exportPath, { recursive: true });
+      if (format === 'gguf') {
+        const python = PythonDetector.detect();
+        if (!python.available || !python.pythonPath) throw new Error(python.error || 'Python is required for GGUF export.');
+        let modelPath = artifact.artifactPath;
+        if (artifact.type === 'lora') {
+          const merged = await this.mergeAdapter(artifactId);
+          if (!merged.success || !merged.outputPath) throw new Error(merged.error || 'Adapter merge failed.');
+          modelPath = merged.outputPath;
+        }
+        const exportPath = path.join(destinationDir, `${artifact.id.replace(/[^a-zA-Z0-9_-]/g, '_')}.gguf`);
+        execFileSync(python.pythonPath, [this.getScriptPath('export_gguf.py'), '--model', modelPath, '--output', exportPath], {
+          encoding: 'utf-8', timeout: 600000, maxBuffer: 10 * 1024 * 1024,
+        });
+        return { success: true, exportPath };
+      }
+      const exportPath = path.join(destinationDir, path.basename(artifact.artifactPath));
+      fs.cpSync(artifact.artifactPath, exportPath, { recursive: true, force: false, errorOnExist: true });
       return { success: true, exportPath };
-    } catch (err: any) {
-      return { success: false, error: err.message };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
 
@@ -646,7 +650,7 @@ import json, sys
 from huggingface_hub import snapshot_download
 try:
     path = snapshot_download(
-        "${hfRepoId}",
+        sys.argv[1],
         allow_patterns=["*.safetensors", "*.json", "*.txt"],
         ignore_patterns=["onnx/*", "*.onnx", "*.pt", "*.bin"]
     )
@@ -656,13 +660,13 @@ except Exception as e:
 `;
 
     try {
-      const out = execSync(`"${pyInfo.pythonPath}" -c "${downloadScript.replace(/"/g, '\\"')}"`, {
+      const out = execFileSync(pyInfo.pythonPath, ['-c', downloadScript, hfRepoId], {
         encoding: 'utf-8',
         timeout: 600000, // 10 minutes
       });
 
       const lines = out.trim().split('\n');
-      const jsonLine = lines.find((l) => l.startsWith('{') && l.endsWith('}'));
+      const jsonLine = lines.reverse().find((l) => l.startsWith('{') && l.endsWith('}'));
       if (jsonLine) {
         const parsed = JSON.parse(jsonLine);
         if (parsed.success) {

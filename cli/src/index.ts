@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepository, DeviceRepository, MetricsRepository, LogsRepository, SettingsRepository } from '@local-ai/database';
+import { createDatabaseAsync, ServerRepository, ModelRepository, APIKeyRepository, DeviceRepository, MetricsRepository, LogsRepository, SettingsRepository, DocumentRepository } from '@local-ai/database';
 import { HardwareScanner } from '@local-ai/hardware';
 import { CapabilityEngine } from '@local-ai/capabilities';
 import { ModelManager } from '@local-ai/models';
 import { KeyManager } from '@local-ai/security';
 import { NetworkScanner, DevicePairingManager } from '@local-ai/network';
 import { LlamaRuntime } from '@local-ai/runtime-llama';
-import { InferenceService, LoftyDbClient, LoftyDbProcessManager, MemoryEngine, getDefaultLoftyDbConfig } from '@local-ai/inference';
+import { InferenceService, LoftyDbClient, LoftyDbProcessManager, MemoryEngine, getDefaultLoftyDbConfig, ImageEngine, RagEngine, getModelEmbeddingIdentity } from '@local-ai/inference';
 import { ApiServer } from '@local-ai/server';
 import { SystemMonitor } from '@local-ai/monitoring';
-import { getDefaultDatabasePath, getDefaultModelsDir, getDefaultRuntimeDir, type LoftyDbConfig } from '@local-ai/shared';
+import { getDefaultDatabasePath, getDefaultModelsDir, getDefaultRuntimeDir, getDefaultAppDataDir, type LoftyDbConfig } from '@local-ai/shared';
 
 const program = new Command();
 program
@@ -33,7 +33,8 @@ async function initCore() {
   const keyManager = new KeyManager(keyRepo);
   const pairingManager = new DevicePairingManager(keyManager, deviceRepo);
   const runtime = new LlamaRuntime(config.runtimeDirectory || getDefaultRuntimeDir());
-  const inferenceService = new InferenceService(metricsRepo, logsRepo, config.maxConcurrentRequests);
+  const documentRepo = new DocumentRepository(dbConn.raw);
+  const inferenceService = new InferenceService(metricsRepo, logsRepo, config.maxConcurrentRequests, new RagEngine(documentRepo));
   const monitor = new SystemMonitor(metricsRepo, inferenceService, 1000);
 
   return {
@@ -45,6 +46,7 @@ async function initCore() {
     metricsRepo,
     logsRepo,
     settingsRepo,
+    documentRepo,
     config,
     modelManager,
     keyManager,
@@ -149,7 +151,7 @@ program
   .option('-m, --model <id>', 'Model ID to load')
   .option('--lan', 'Enable LAN access')
   .action(async (opts) => {
-    const { config, modelManager, keyManager, deviceRepo, pairingManager, runtime, inferenceService, logsRepo, settingsRepo } = await initCore();
+    const { config, modelManager, keyManager, deviceRepo, pairingManager, runtime, inferenceService, logsRepo, settingsRepo, documentRepo } = await initCore();
 
     const loftyConfig: LoftyDbConfig = {
       ...getDefaultLoftyDbConfig(),
@@ -218,7 +220,7 @@ program
       runtimeDir: config.runtimeDirectory || getDefaultRuntimeDir(),
     });
 
-    inferenceService.setRuntime(runtime, targetInstallation.name);
+    inferenceService.setRuntime(runtime, targetInstallation.name, getModelEmbeddingIdentity(targetInstallation));
 
     const server = new ApiServer({
       config,
@@ -228,6 +230,8 @@ program
       deviceRepo,
       pairingManager,
       logsRepo,
+      documentRepo,
+      imageEngine: new ImageEngine(getDefaultAppDataDir()),
     });
 
     await server.start();

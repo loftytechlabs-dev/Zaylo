@@ -5,3 +5,6 @@ export * from './personas/index.js';
 export * from './loftydb/LoftyDbClient.js';
 export * from './loftydb/LoftyDbProcessManager.js';
 export * from './memory/MemoryEngine.js';
+export * from './image/imageEngine.js';
+export { PythonDetector, resolvePythonScript } from './python.js';
+export type { PythonEnvironmentInfo } from './python.js';

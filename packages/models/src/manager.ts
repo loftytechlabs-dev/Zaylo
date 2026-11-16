@@ -211,7 +211,7 @@ export class ModelManager {
                 expectedSizeBytes: variant.mmprojSizeBytes || 500_000_000,
               });
             } catch (err: any) {
-              console.warn(`Failed to download mmproj for ${variantId}:`, err.message);
+              throw new AppError(`Vision projector download failed for ${variantId}: ${err.message}`, 'MMPROJ_DOWNLOAD_FAILED');
             }
           }
         }

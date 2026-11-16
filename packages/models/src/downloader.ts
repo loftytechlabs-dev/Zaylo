@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import type { DownloadProgress } from '@local-ai/shared';
 import { InsufficientResourcesError, AppError } from '@local-ai/shared';
 
@@ -19,7 +21,8 @@ export class ModelDownloader {
   private activeTasks = new Map<string, { abortController: AbortController; isCancelled: boolean }>();
 
   public async download(options: DownloadOptions): Promise<string> {
-    const { id, modelId, variantId, url, destPath, expectedSizeBytes, expectedSha256, onProgress } = options;
+    const { id, modelId, variantId, url, destPath, expectedSizeBytes, onProgress } = options;
+    let expectedSha256 = options.expectedSha256;
 
     const dir = path.dirname(destPath);
     if (!fs.existsSync(dir)) {
@@ -87,55 +90,96 @@ export class ModelDownloader {
     notifyProgress('downloading', undefined, true);
 
     try {
+      if (expectedSha256 && !/^[a-f0-9]{64}$/i.test(expectedSha256)) {
+        throw new AppError('Expected SHA-256 must contain 64 hexadecimal characters', 'INVALID_CHECKSUM');
+      }
+      const source = new URL(url);
+      if (!expectedSha256 && source.hostname === 'huggingface.co' && source.pathname.includes('/resolve/')) {
+        const metadata = await fetch(url, { method: 'HEAD', redirect: 'manual', signal: abortController.signal });
+        const linkedHash = metadata.headers.get('x-linked-etag')?.replace(/^"|"$/g, '');
+        if (!linkedHash || !/^[a-f0-9]{64}$/i.test(linkedHash)) {
+          throw new AppError('Hugging Face did not provide a SHA-256 checksum. Supply a verified checksum before downloading.', 'CHECKSUM_UNAVAILABLE');
+        }
+        expectedSha256 = linkedHash;
+      }
+      // Without a trusted checksum, restart partial files rather than combine unverified versions.
+      if (!expectedSha256) startByte = 0;
+      downloadedBytes = startByte;
+      lastSampleBytes = startByte;
       const headers: Record<string, string> = {
         'User-Agent': 'LocalAI-Downloader/1.0',
+        'Accept-Encoding': 'identity',
       };
 
       if (startByte > 0) {
         headers['Range'] = `bytes=${startByte}-`;
       }
 
-      const response = await fetch(url, {
+      let response = await fetch(url, {
         headers,
         signal: abortController.signal,
       });
 
-      if (!response.ok && response.status !== 206) {
+      if (response.status === 416 && startByte > 0 && expectedSha256) {
+        await response.body?.cancel();
+        const actualHash = await this.computeSha256(tempPath);
+        abortController.signal.throwIfAborted();
+        if (actualHash.toLowerCase() === expectedSha256.toLowerCase()) {
+          fs.renameSync(tempPath, destPath);
+          totalBytes = downloadedBytes;
+          notifyProgress('completed', undefined, true);
+          this.activeTasks.delete(id);
+          return destPath;
+        }
+        // A full partial file may survive a crash before promotion; corrupt files restart once.
+        startByte = 0;
+        downloadedBytes = 0;
+        lastSampleBytes = 0;
+        delete headers.Range;
+        response = await fetch(url, { headers, signal: abortController.signal });
+      }
+
+      if (response.status !== 200 && response.status !== 206) {
         throw new AppError(`HTTP download failed with status ${response.status}: ${response.statusText}`, 'DOWNLOAD_FAILED');
       }
 
-      const contentLengthHeader = response.headers.get('content-length');
-      if (contentLengthHeader) {
-        const contentLen = parseInt(contentLengthHeader, 10);
-        if (!isNaN(contentLen)) {
-          totalBytes = startByte > 0 ? startByte + contentLen : contentLen;
+      if (response.status === 200 && startByte > 0) {
+        startByte = 0;
+        downloadedBytes = 0;
+        lastSampleBytes = 0;
+      }
+      let expectedFinalBytes: number | undefined;
+      if (response.status === 206) {
+        const range = response.headers.get('content-range')?.match(/^bytes (\d+)-(\d+)\/(\d+)$/);
+        if (!range || Number(range[1]) !== startByte || Number(range[2]) + 1 !== Number(range[3])) {
+          throw new AppError('Server returned an invalid download range', 'DOWNLOAD_RANGE_INVALID');
         }
+        expectedFinalBytes = Number(range[3]);
+      } else {
+        const length = response.headers.get('content-length');
+        if (length && /^\d+$/.test(length)) expectedFinalBytes = Number(length);
       }
-
-      if (!response.body) {
-        throw new AppError('Download response body is empty', 'DOWNLOAD_EMPTY');
-      }
-
-      const writeStream = fs.createWriteStream(tempPath, { flags: startByte > 0 ? 'a' : 'w' });
+      totalBytes = expectedFinalBytes ?? expectedSizeBytes;
+      if (!response.body) throw new AppError('Download response body is empty', 'DOWNLOAD_EMPTY');
       const reader = response.body.getReader();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        if (value) {
-          writeStream.write(Buffer.from(value));
-          downloadedBytes += value.length;
-          notifyProgress('downloading');
+      async function* chunks() {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            downloadedBytes += value.length;
+            notifyProgress('downloading');
+            yield value;
+          }
+        } finally {
+          await reader.cancel().catch(() => {});
+          reader.releaseLock();
         }
       }
-
-      await new Promise<void>((resolve, reject) => {
-        writeStream.end((err?: Error | null) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
+      await pipeline(Readable.from(chunks()), fs.createWriteStream(tempPath, { flags: startByte > 0 ? 'a' : 'w' }), { signal: abortController.signal });
+      if (expectedFinalBytes !== undefined && downloadedBytes !== expectedFinalBytes) {
+        throw new AppError(`Incomplete download: expected ${expectedFinalBytes} bytes, received ${downloadedBytes}`, 'DOWNLOAD_INCOMPLETE');
+      }
 
       // Verification: Checksum if provided
       if (expectedSha256) {
@@ -147,9 +191,6 @@ export class ModelDownloader {
       }
 
       // Rename temp file to final destination
-      if (fs.existsSync(destPath)) {
-        fs.unlinkSync(destPath);
-      }
       fs.renameSync(tempPath, destPath);
 
       notifyProgress('completed', undefined, true);

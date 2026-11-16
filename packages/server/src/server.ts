@@ -12,12 +12,16 @@ import {
   AppError,
   LAN_SERVER_HOST,
   DEFAULT_SERVER_HOST,
+  ChatCompletionRequestSchema,
+  ImageGenerationRequestSchema,
+  DocumentIngestRequestSchema,
+  RagSearchRequestSchema,
 } from '@local-ai/shared';
 import { ModelManager } from '@local-ai/models';
 import { KeyManager, SecretRedactor } from '@local-ai/security';
 import { DeviceRepository, LogsRepository, DocumentRepository } from '@local-ai/database';
 import { DevicePairingManager } from '@local-ai/network';
-import { InferenceService } from '@local-ai/inference';
+import { InferenceService, type ImageEngine } from '@local-ai/inference';
 import { HardwareScanner } from '@local-ai/hardware';
 import { formatSSE, formatOpenAIModelList } from '@local-ai/protocol';
 import { getWebChatHtml } from './ui.js';
@@ -31,11 +35,7 @@ export interface ApiServerOptions {
   pairingManager: DevicePairingManager;
   logsRepo?: LogsRepository;
   documentRepo?: DocumentRepository;
-  imageEngine?: {
-    startGeneration: (params: any) => Promise<{ jobId: string }>;
-    getJob: (jobId: string) => any;
-    getHistory: () => any[];
-  };
+  imageEngine?: Pick<ImageEngine, 'startGeneration' | 'getJob' | 'getHistory'> & Partial<Pick<ImageEngine, 'cancelGeneration'>>;
 }
 
 export class ApiServer {
@@ -47,11 +47,7 @@ export class ApiServer {
   private deviceRepo: DeviceRepository;
   private pairingManager: DevicePairingManager;
   private documentRepo?: DocumentRepository;
-  private imageEngine?: {
-    startGeneration: (params: any) => Promise<{ jobId: string }>;
-    getJob: (jobId: string) => any;
-    getHistory: () => any[];
-  };
+  private imageEngine?: ApiServerOptions['imageEngine'];
   private isRunning = false;
 
   constructor(options: ApiServerOptions) {
@@ -107,8 +103,6 @@ export class ApiServer {
         url === '/chat' ||
         url === '/health' ||
         url === '/v1/health' ||
-        url === '/models' ||
-        url === '/v1/models' ||
         url === '/heartbeat' ||
         url === '/v1/heartbeat' ||
         url === '/pair'
@@ -291,7 +285,9 @@ export class ApiServer {
 
     // OpenAI Chat Completions (Stream & Non-stream)
     this.fastify.post('/v1/chat/completions', async (req: FastifyRequest, reply: FastifyReply) => {
-      const body = req.body as ChatCompletionRequest;
+      const parsed = ChatCompletionRequestSchema.safeParse(req.body);
+      if (!parsed.success) throw new ValidationError(parsed.error.errors.map((error) => error.message).join(', '));
+      const body: ChatCompletionRequest = parsed.data;
       const clientIp = req.ip || req.socket.remoteAddress || '127.0.0.1';
 
       if (!this.inferenceService.getRuntime()) {
@@ -305,7 +301,8 @@ export class ApiServer {
         reply.raw.flushHeaders();
 
         const ac = new AbortController();
-        req.raw.on('close', () => ac.abort());
+        const abort = () => { if (!reply.raw.writableEnded) ac.abort(); };
+        reply.raw.on('close', abort);
 
         try {
           for await (const chunk of this.inferenceService.chatStream(body, clientIp, ac.signal)) {
@@ -318,6 +315,8 @@ export class ApiServer {
             reply.raw.write(`data: ${JSON.stringify({ error: { message: err.message } })}\n\n`);
             reply.raw.end();
           }
+        } finally {
+          reply.raw.removeListener('close', abort);
         }
         return reply;
       }
@@ -332,114 +331,70 @@ export class ApiServer {
       return this.inferenceService.embeddings(body);
     });
 
-    // Static serve for generated images: /v1/images/file/:filename
+    // Serve only images registered by the engine, including its fallback output directory.
     this.fastify.get('/v1/images/file/:filename', async (req: FastifyRequest, reply: FastifyReply) => {
       const { filename } = req.params as { filename: string };
-      const safeFilename = path.basename(filename);
-      const filePath = path.join(os.homedir(), 'Pictures', 'Zaylo', 'Generated', safeFilename);
-      if (!fs.existsSync(filePath)) {
-        reply.code(404).send({ error: { message: 'Image not found', type: 'not_found' } });
-        return;
+      const image = path.basename(filename) === filename
+        ? this.imageEngine?.getHistory().find((item) => path.basename(item.localPath) === filename)
+        : undefined;
+      if (!image || !fs.existsSync(image.localPath)) {
+        return reply.code(404).send({ error: { message: 'Image not found', type: 'not_found' } });
       }
-      const stream = fs.createReadStream(filePath);
-      reply.type('image/png').send(stream);
+      return reply.type('image/png').send(fs.createReadStream(image.localPath));
     });
 
-    // OpenAI Image Generations
-    this.fastify.post('/v1/images/generations', async (req: FastifyRequest) => {
-      const body = req.body as {
-        prompt: string;
-        model?: string;
-        n?: number;
-        size?: string;
-        response_format?: 'url' | 'b64_json';
-        seed?: number;
-        steps?: number;
-        guidance_scale?: number;
-        negative_prompt?: string;
-      };
-
-      if (!body?.prompt || typeof body.prompt !== 'string') {
-        throw new ValidationError('prompt string is required');
-      }
-
-      if (this.imageEngine) {
-        let width = 512;
-        let height = 512;
-        if (body.size) {
-          const parts = body.size.toLowerCase().split('x');
-          if (parts.length === 2) {
-            width = parseInt(parts[0], 10) || 512;
-            height = parseInt(parts[1], 10) || 512;
-          }
+    this.fastify.post('/v1/images/generations', async (req: FastifyRequest, reply: FastifyReply) => {
+      const parsed = ImageGenerationRequestSchema.safeParse(req.body);
+      if (!parsed.success) throw new ValidationError(parsed.error.errors.map((error) => error.message).join(', '));
+      const body = parsed.data;
+      const engine = this.imageEngine;
+      if (!engine) throw new AppError('Image generation is not configured. Start the server with an image engine and install Python diffusion dependencies.', 'IMAGE_ENGINE_UNAVAILABLE', 503);
+      const [width, height] = body.size.split('x').map(Number);
+      const model = this.modelManager.getInstalledModels().find((item) =>
+        item.modelId === body.model || item.id === body.model || item.name.toLowerCase() === body.model.toLowerCase()
+      );
+      const { jobId } = await engine.startGeneration({
+        modelId: body.model,
+        modelName: model?.name || body.model,
+        modelPath: model?.localPath,
+        generationParams: {
+          prompt: body.prompt, negativePrompt: body.negative_prompt,
+          width, height, steps: body.steps, guidanceScale: body.guidance_scale,
+          seed: body.seed, batchSize: body.n,
+        },
+      });
+      let disconnected = false;
+      const cancel = () => {
+        if (!reply.raw.writableEnded) {
+          disconnected = true;
+          engine.cancelGeneration?.(jobId);
         }
-
-        const modelId = body.model || 'tiny-sd';
-        const installed = this.modelManager.getInstalledModels();
-        const matchedModel = installed.find(
-          (m) =>
-            m.modelId === modelId ||
-            m.id === modelId ||
-            m.name.toLowerCase() === modelId.toLowerCase()
-        );
-
-        const { jobId } = await this.imageEngine.startGeneration({
-          modelId,
-          modelName: matchedModel?.name || modelId,
-          modelPath: matchedModel?.localPath,
-          generationParams: {
-            prompt: body.prompt,
-            negativePrompt: body.negative_prompt,
-            width,
-            height,
-            steps: body.steps || 20,
-            guidanceScale: body.guidance_scale || 7.5,
-            seed: body.seed,
-            batchSize: Math.min(4, Math.max(1, body.n || 1)),
-          },
-        });
-
-        // Await generation completion (up to 120s timeout)
-        const pollStart = Date.now();
-        while (Date.now() - pollStart < 120000) {
-          await new Promise((r) => setTimeout(r, 400));
-          const job = this.imageEngine.getJob(jobId);
-          if (job?.status === 'COMPLETED' && job.images && job.images.length > 0) {
-            const host = this.config.lanEnabled && req.headers.host ? req.headers.host.split(':')[0] : '127.0.0.1';
-            const port = this.config.port || 8080;
-            const data = job.images.map((img: any) => {
-              if (body.response_format === 'b64_json' && img.base64Data) {
-                const b64 = img.base64Data.replace(/^data:image\/\w+;base64,/, '');
-                return { b64_json: b64, revised_prompt: body.prompt };
+      };
+      reply.raw.once('close', cancel);
+      try {
+        const deadline = Date.now() + 120000;
+        while (Date.now() < deadline && !disconnected) {
+          const job = engine.getJob(jobId);
+          if (job?.status === 'COMPLETED') {
+            if (job.images.length === 0) throw new AppError('The image engine completed without producing an image', 'IMAGE_GENERATION_FAILED');
+            const origin = `${req.protocol}://${req.headers.host || `${this.config.host}:${this.config.port}`}`;
+            const data = await Promise.all(job.images.map(async (image) => {
+              if (body.response_format === 'b64_json') {
+                return { b64_json: (await fs.promises.readFile(image.localPath)).toString('base64'), revised_prompt: body.prompt };
               }
-              const filename = path.basename(img.localPath);
-              return {
-                url: `http://${host}:${port}/v1/images/file/${filename}`,
-                revised_prompt: body.prompt,
-              };
-            });
-            return {
-              created: Math.floor(job.completedAt ? job.completedAt / 1000 : Date.now() / 1000),
-              data,
-            };
+              return { url: new URL(`/v1/images/file/${encodeURIComponent(path.basename(image.localPath))}`, origin).href, revised_prompt: body.prompt };
+            }));
+            return { created: Math.floor((job.completedAt || Date.now()) / 1000), data };
           }
-          if (job?.status === 'FAILED') {
-            throw new AppError(job.error || 'Image generation failed', 'IMAGE_GENERATION_FAILED');
-          }
+          if (job?.status === 'FAILED') throw new AppError(job.error || 'Image generation failed', 'IMAGE_GENERATION_FAILED');
+          if (job?.status === 'CANCELLED') throw new AppError('Image generation was cancelled', 'IMAGE_GENERATION_CANCELLED', 409);
+          await new Promise((resolve) => setTimeout(resolve, 400));
         }
-        throw new AppError('Image generation timed out after 120 seconds', 'TIMEOUT');
+        engine.cancelGeneration?.(jobId);
+        throw new AppError(disconnected ? 'Client disconnected' : 'Image generation timed out after 120 seconds', 'TIMEOUT', 504);
+      } finally {
+        reply.raw.removeListener('close', cancel);
       }
-
-      const now = Math.floor(Date.now() / 1000);
-      return {
-        created: now,
-        data: [
-          {
-            revised_prompt: body.prompt,
-            url: `http://${this.config.host || '127.0.0.1'}:${this.config.port}/v1/images/output.png`,
-          },
-        ],
-      };
     });
 
     // QR Device Pairing Endpoint
@@ -459,10 +414,9 @@ export class ApiServer {
     });
 
     this.fastify.post('/v1/documents', async (req: FastifyRequest) => {
-      const body = req.body as { name: string; content: string; type?: any };
-      if (!body?.name || !body?.content) {
-        throw new ValidationError('name and content are required');
-      }
+      const parsed = DocumentIngestRequestSchema.safeParse(req.body);
+      if (!parsed.success) throw new ValidationError(parsed.error.errors.map((error) => error.message).join(', '));
+      const body = parsed.data;
       if (!this.documentRepo) {
         throw new AppError('Document repository is not configured', 'NOT_CONFIGURED');
       }
@@ -470,7 +424,7 @@ export class ApiServer {
       if (!ragEngine) {
         throw new AppError('RAG engine is not configured', 'NOT_CONFIGURED');
       }
-      return ragEngine.ingestDocument(body.name, body.content, body.type || 'txt');
+      return this.inferenceService.ingestDocument(body.name, body.content, body.type || 'txt');
     });
 
     this.fastify.delete('/v1/documents/:id', async (req: FastifyRequest) => {
@@ -481,13 +435,12 @@ export class ApiServer {
     });
 
     this.fastify.post('/v1/rag/search', async (req: FastifyRequest) => {
-      const body = req.body as { query: string; limit?: number; documentIds?: string[] };
-      if (!body?.query) {
-        throw new ValidationError('query is required');
-      }
+      const parsed = RagSearchRequestSchema.safeParse(req.body);
+      if (!parsed.success) throw new ValidationError(parsed.error.errors.map((error) => error.message).join(', '));
+      const body = parsed.data;
       const ragEngine = this.inferenceService.getRagEngine();
       if (!ragEngine) return [];
-      return ragEngine.search(body.query, body.limit || 4, body.documentIds);
+      return this.inferenceService.searchDocuments(body.query, body.limit || 4, body.documentIds);
     });
 
     // 8. Long-Term Memory Endpoints (LoftyDB)
@@ -603,7 +556,7 @@ export class ApiServer {
 
     await this.fastify.listen({
       port: this.config.port,
-      host: '0.0.0.0',
+      host: this.config.lanEnabled ? LAN_SERVER_HOST : DEFAULT_SERVER_HOST,
     });
     this.isRunning = true;
 

@@ -40,7 +40,6 @@ export const BenchmarkView: React.FC = () => {
     try {
       const result = await api.invoke('benchmark:run', {
         modelId: selectedModelId,
-        promptTokens: 50,
         genTokens: 100,
       });
       setCurrentResult(result);
@@ -61,7 +60,7 @@ export const BenchmarkView: React.FC = () => {
           Hardware & Model Inference Benchmark
         </h2>
         <p className="text-xs text-[#666666] dark:text-[#a1a1aa] mt-0.5">
-          Execute real automated benchmark passes measuring true prompt ingestion speed, token generation throughput, and first-token latency on your host machine.
+          Measure native runtime token counts and timings, first-token latency, and sampled inference-process memory on this machine.
         </p>
       </div>
 
@@ -131,11 +130,11 @@ export const BenchmarkView: React.FC = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="p-4 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626]">
               <div className="text-[#888888] dark:text-[#737373] text-[11px] font-mono">GENERATION SPEED</div>
               <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono mt-1">
-                {currentResult.generationTokensPerSec}{' '}
+                {currentResult.generationTokensPerSec.toFixed(1)}{' '}
                 <span className="text-xs text-[#666666] dark:text-[#a1a1aa] font-normal">tok/s</span>
               </div>
             </div>
@@ -143,14 +142,14 @@ export const BenchmarkView: React.FC = () => {
             <div className="p-4 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626]">
               <div className="text-[#888888] dark:text-[#737373] text-[11px] font-mono">FIRST-TOKEN LATENCY</div>
               <div className="text-2xl font-bold text-[#111111] dark:text-[#f5f5f5] font-mono mt-1">
-                {currentResult.timeToFirstTokenMs} <span className="text-xs text-[#666666] dark:text-[#a1a1aa] font-normal">ms</span>
+                {currentResult.timeToFirstTokenMs.toFixed(0)} <span className="text-xs text-[#666666] dark:text-[#a1a1aa] font-normal">ms</span>
               </div>
             </div>
 
             <div className="p-4 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626]">
               <div className="text-[#888888] dark:text-[#737373] text-[11px] font-mono">PROMPT INGESTION</div>
               <div className="text-2xl font-bold text-[#111111] dark:text-[#f5f5f5] font-mono mt-1">
-                {currentResult.promptProcessingTokensPerSec}{' '}
+                {currentResult.promptProcessingTokensPerSec.toFixed(1)}{' '}
                 <span className="text-xs text-[#666666] dark:text-[#a1a1aa] font-normal">tok/s</span>
               </div>
             </div>
@@ -161,6 +160,13 @@ export const BenchmarkView: React.FC = () => {
                 {(currentResult.totalDurationMs / 1000).toFixed(2)}{' '}
                 <span className="text-xs text-[#666666] dark:text-[#a1a1aa] font-normal">sec</span>
               </div>
+            </div>
+            <div className="p-4 rounded bg-[#fafafa] dark:bg-[#191919] border border-[#eaeaea] dark:border-[#262626]">
+              <div className="text-[#888888] dark:text-[#737373] text-[11px] font-mono">SAMPLED PEAK PROCESS RAM</div>
+              <div className="text-2xl font-bold font-mono mt-1">
+                {currentResult.memoryMeasurement === 'process-rss' ? `${(currentResult.peakMemoryBytes / 1024 / 1024).toFixed(0)} MiB` : 'Unavailable'}
+              </div>
+              <div className="text-[11px] text-[#888888] mt-1">Resident process memory; GPU VRAM is separate.</div>
             </div>
           </div>
         </div>
@@ -191,10 +197,10 @@ export const BenchmarkView: React.FC = () => {
               ) : (
                 history.map((h) => (
                   <tr key={h.id} className="hover:bg-[#fafafa] dark:hover:bg-[#191919]">
-                    <td className="py-3 px-4 font-sans font-medium text-[#111111] dark:text-[#f5f5f5]">{h.modelName}</td>
-                    <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">{h.generationTokensPerSec} tok/s</td>
-                    <td className="py-3 px-4 text-[#666666] dark:text-[#a1a1aa]">{h.promptProcessingTokensPerSec} tok/s</td>
-                    <td className="py-3 px-4 text-[#666666] dark:text-[#a1a1aa]">{h.timeToFirstTokenMs} ms</td>
+                    <td className="py-3 px-4 font-sans font-medium text-[#111111] dark:text-[#f5f5f5]">{h.modelName}{h.measurementVersion !== 2 && <span className="block text-[11px] text-[#888888]">Legacy estimate; rerun for measurements</span>}</td>
+                    <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">{h.measurementVersion === 2 ? `${h.generationTokensPerSec.toFixed(1)} tok/s` : '—'}</td>
+                    <td className="py-3 px-4 text-[#666666] dark:text-[#a1a1aa]">{h.measurementVersion === 2 ? `${h.promptProcessingTokensPerSec.toFixed(1)} tok/s` : '—'}</td>
+                    <td className="py-3 px-4 text-[#666666] dark:text-[#a1a1aa]">{h.measurementVersion === 2 ? `${h.timeToFirstTokenMs.toFixed(0)} ms` : '—'}</td>
                     <td className="py-3 px-4 text-[#888888] dark:text-[#737373]">{new Date(h.timestamp).toLocaleString()}</td>
                   </tr>
                 ))

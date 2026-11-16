@@ -3,6 +3,7 @@
   "version": "3.3.0",
   "type": "module",
   "bin": {
+    "zaylo": "./dist/index.js",
     "local-ai": "./dist/index.js"
   },
   "main": "./dist/index.js",

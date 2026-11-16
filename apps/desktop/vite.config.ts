@@ -35,7 +35,7 @@ export default defineConfig({
           }
 
           // Ensure image diffusion python scripts are copied into dist-electron
-          const imgScriptsSrc = path.resolve(__dirname, 'electron/image/scripts');
+          const imgScriptsSrc = path.resolve(__dirname, '../../packages/inference/src/image/scripts');
           const imgScriptsDest2 = path.resolve(__dirname, 'dist-electron/image/scripts');
           if (fs.existsSync(imgScriptsSrc)) {
             fs.mkdirSync(scriptsDest1, { recursive: true });
@@ -79,7 +79,7 @@ export default defineConfig({
           fs.cpSync(scriptsSrc, scriptsDest2, { recursive: true });
         }
 
-        const imgScriptsSrc = path.resolve(__dirname, 'electron/image/scripts');
+        const imgScriptsSrc = path.resolve(__dirname, '../../packages/inference/src/image/scripts');
         const imgScriptsDest2 = path.resolve(__dirname, 'dist-electron/image/scripts');
         if (fs.existsSync(imgScriptsSrc)) {
           fs.mkdirSync(scriptsDest1, { recursive: true });

@@ -9,7 +9,7 @@ import { DevicePairingManager } from '@local-ai/network';
 import { InferenceService } from '@local-ai/inference';
 import { ApiServer } from '@local-ai/server';
 import type { InferenceRuntime, RuntimeCapabilities, RuntimeHealth, RuntimeConfig } from '@local-ai/runtimes';
-import type { ChatCompletionRequest, ChatCompletionResponse, EmbeddingRequest, EmbeddingResponse, RuntimeInstance } from '@local-ai/shared';
+import type { ChatCompletionRequest, ChatCompletionResponse, EmbeddingRequest, EmbeddingResponse, RuntimeInstance, GeneratedImage, ImageGenerationJob } from '@local-ai/shared';
 import { createChatCompletionChunk } from '@local-ai/protocol';
 
 class MockRuntime implements InferenceRuntime {
@@ -95,6 +95,7 @@ describe('ApiServer', () => {
   let server: ApiServer;
   let keyManager: KeyManager;
   let port: number;
+  let serverOptions: ConstructorParameters<typeof ApiServer>[0];
 
   beforeEach(async () => {
     port = 18000 + Math.floor(Math.random() * 1000);
@@ -124,7 +125,7 @@ describe('ApiServer', () => {
     const mockRuntime = new MockRuntime();
     inferenceService.setRuntime(mockRuntime, 'Mock Model 7B');
 
-    server = new ApiServer({
+    serverOptions = {
       config,
       inferenceService,
       modelManager,
@@ -132,7 +133,8 @@ describe('ApiServer', () => {
       deviceRepo,
       pairingManager,
       logsRepo,
-    });
+    };
+    server = new ApiServer(serverOptions);
 
     await server.start();
   });
@@ -158,6 +160,60 @@ describe('ApiServer', () => {
     const resChat = await fetch(`http://127.0.0.1:${port}/chat`);
     expect(resChat.status).toBe(200);
     expect(resChat.headers.get('content-type')).toContain('text/html');
+  });
+
+  it('binds local-only mode to the loopback address', () => {
+    expect((server as any).fastify.server.address().address).toBe('127.0.0.1');
+  });
+
+  it('protects model installation paths from unauthenticated LAN requests', async () => {
+    const response = await (server as any).fastify.inject({ method: 'GET', url: '/models', remoteAddress: '192.168.1.20' });
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('rejects malformed streaming requests before sending SSE headers', async () => {
+    const response = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stream: true, messages: [] }),
+    });
+    expect(response.status).toBe(400);
+    expect(response.headers.get('content-type')).toContain('application/json');
+  });
+
+  it('returns an actionable error instead of a phantom image when no engine is configured', async () => {
+    const response = await fetch(`http://127.0.0.1:${port}/v1/images/generations`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: 'An apple' }),
+    });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: { code: 'IMAGE_ENGINE_UNAVAILABLE' } });
+  });
+
+  it('reads real output bytes for base64 responses and serves registered images outside the default directory', async () => {
+    fs.mkdirSync(tempModelsDir, { recursive: true });
+    const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jrXkAAAAASUVORK5CYII=', 'base64');
+    const output = path.join(tempModelsDir, 'actual.png');
+    fs.writeFileSync(output, bytes);
+    const image: GeneratedImage = { id: 'image', jobId: 'job', localPath: output, width: 512, height: 512, seed: 1, prompt: 'An apple', steps: 1, guidanceScale: 0, modelId: 'tiny-sd', modelName: 'Tiny SD', createdAt: 1, durationMs: 1, fileSizeBytes: bytes.length };
+    const job: ImageGenerationJob = {
+      id: 'job', modelId: 'tiny-sd', modelName: 'Tiny SD', status: 'COMPLETED', images: [image], startedAt: 1,
+      params: { prompt: 'An apple', width: 512, height: 512, steps: 1, guidanceScale: 0 },
+      progress: { step: 1, totalSteps: 1, percentage: 100, elapsedSeconds: 0.1 },
+    };
+    await server.stop();
+    server = new ApiServer({ ...serverOptions, imageEngine: {
+      startGeneration: async ({ generationParams }) => { expect(generationParams.guidanceScale).toBe(0); return { jobId: 'job' }; },
+      getJob: () => job, getHistory: () => [image],
+    } });
+    await server.start();
+    const response = await fetch(`http://127.0.0.1:${port}/v1/images/generations`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: 'An apple', response_format: 'b64_json', guidance_scale: 0 }),
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ data: [{ b64_json: bytes.toString('base64') }] });
+    const file = await fetch(`http://127.0.0.1:${port}/v1/images/file/actual.png`);
+    expect(file.status).toBe(200);
+    expect(Buffer.from(await file.arrayBuffer())).toEqual(bytes);
+    expect((await fetch(`http://127.0.0.1:${port}/v1/images/file/not-registered.png`)).status).toBe(404);
   });
 
   it('should respond 200 on /health', async () => {

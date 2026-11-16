@@ -201,7 +201,7 @@ export async function createDatabaseAsync(dbPath: string = getDefaultDatabasePat
   };
 }
 
-function initializeSchema(raw: { exec: (sql: string) => void }): void {
+function initializeSchema(raw: Pick<IDatabase, 'exec' | 'prepare'>): void {
   raw.exec(`
     CREATE TABLE IF NOT EXISTS servers (
       id TEXT PRIMARY KEY,
@@ -343,7 +343,9 @@ function initializeSchema(raw: { exec: (sql: string) => void }): void {
       generation_tokens_per_sec REAL NOT NULL,
       time_to_first_token_ms REAL NOT NULL,
       total_duration_ms REAL NOT NULL,
-      peak_memory_bytes INTEGER NOT NULL
+      peak_memory_bytes INTEGER NOT NULL,
+      measurement_version INTEGER NOT NULL DEFAULT 1,
+      memory_measurement TEXT NOT NULL DEFAULT 'unavailable'
     );
 
     CREATE TABLE IF NOT EXISTS settings (
@@ -368,6 +370,7 @@ function initializeSchema(raw: { exec: (sql: string) => void }): void {
       chunk_index INTEGER NOT NULL,
       content TEXT NOT NULL,
       embedding TEXT,
+      embedding_model TEXT,
       token_count INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL
     );
@@ -429,6 +432,17 @@ function initializeSchema(raw: { exec: (sql: string) => void }): void {
   `);
 
   // Automatic schema migrations for existing databases
+  const benchmarkColumns = raw.prepare('PRAGMA table_info(benchmark_results)').all();
+  if (!benchmarkColumns.some((column) => column.name === 'measurement_version')) {
+    raw.exec('ALTER TABLE benchmark_results ADD COLUMN measurement_version INTEGER NOT NULL DEFAULT 1;');
+  }
+  if (!benchmarkColumns.some((column) => column.name === 'memory_measurement')) {
+    raw.exec("ALTER TABLE benchmark_results ADD COLUMN memory_measurement TEXT NOT NULL DEFAULT 'unavailable';");
+  }
+  const chunkColumns = raw.prepare('PRAGMA table_info(document_chunks)').all() as Array<{ name: string }>;
+  if (!chunkColumns.some((column) => column.name === 'embedding_model')) {
+    raw.exec('ALTER TABLE document_chunks ADD COLUMN embedding_model TEXT;');
+  }
   try {
     raw.exec('ALTER TABLE servers ADD COLUMN low_memory_mode INTEGER NOT NULL DEFAULT 0;');
   } catch {}

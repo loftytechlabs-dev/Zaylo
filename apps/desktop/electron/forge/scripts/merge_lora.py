@@ -22,6 +22,8 @@ def main():
     parser.add_argument("--output-dir", type=str, required=True, help="Destination directory for merged model")
     args = parser.parse_args()
 
+    if os.path.exists(args.output_dir) and os.listdir(args.output_dir):
+        raise ValueError("Merge destination must be empty; existing models are never overwritten.")
     os.makedirs(args.output_dir, exist_ok=True)
     device = torch.device("cpu")
 

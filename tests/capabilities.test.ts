@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { CapabilityEngine, ModelCapabilityRegistry } from '@local-ai/capabilities';
 import type { HardwareProfile, ModelVariant, Model, ModelInstallation } from '@local-ai/shared';
+import { ImageGenerationRequestSchema } from '@local-ai/shared';
 
 describe('CapabilityEngine', () => {
   const mockHardware: HardwareProfile = {
@@ -203,22 +204,31 @@ describe('ModelCapabilityRegistry & Image Generation Support', () => {
     expect(profile?.imageParameters?.defaultGuidanceScale).toBe(1.0);
   });
 
-  it('validates and clamps image generation parameters properly', () => {
+  it('rejects unsupported dimensions without silently resizing them', () => {
     const res = ModelCapabilityRegistry.validateImageParameters('sd-turbo', {
       prompt: 'a majestic mountain landscape',
-      width: 500, // Should snap to multiple of 64 (e.g. 512)
+      width: 500,
       height: 700,
       steps: 100, // Exceeds max for sd-turbo (maxSteps: 10)
       guidanceScale: 15,
       seed: -5,
     });
 
-    expect(res.valid).toBe(true);
+    expect(res.valid).toBe(false);
     expect(res.sanitized.prompt).toBe('a majestic mountain landscape');
-    expect(res.sanitized.width % 64).toBe(0);
-    expect(res.sanitized.height % 64).toBe(0);
+    expect(res.sanitized.width).toBe(500);
+    expect(res.sanitized.height).toBe(700);
     expect(res.sanitized.steps).toBeLessThanOrEqual(10);
     expect(res.sanitized.seed).toBeGreaterThanOrEqual(0);
+  });
+
+  it('uses the same dimension limits at the API and engine boundaries', () => {
+    for (const [width, height, accepted] of [[512, 768, true], [256, 1024, true], [2048, 2048, false], [64, 64, false], [264, 512, false], [0, 512, false]] as const) {
+      expect(ImageGenerationRequestSchema.safeParse({ prompt: 'An apple', size: `${width}x${height}` }).success).toBe(accepted);
+      const result = ModelCapabilityRegistry.validateImageParameters('tiny-sd', { prompt: 'An apple', width, height });
+      expect(result.valid).toBe(accepted);
+      expect(result.sanitized).toMatchObject({ width, height });
+    }
   });
 
   it('estimates resource requirements accurately for diffusion architectures', () => {

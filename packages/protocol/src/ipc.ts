@@ -140,7 +140,7 @@ export interface IPCChannels {
   'forge:list-fine-tuned-models': { request: void; response: FineTunedModelArtifact[] };
   'forge:compare-models': { request: ModelComparisonRequest; response: ModelComparisonResult };
   'forge:merge-adapter': { request: { artifactId: string }; response: { success: boolean; outputPath?: string; error?: string } };
-  'forge:export-artifact': { request: { artifactId: string; destinationDir: string }; response: { success: boolean; exportPath?: string; error?: string } };
+  'forge:export-artifact': { request: { artifactId: string; destinationDir: string; format?: 'adapter' | 'gguf' }; response: { success: boolean; exportPath?: string; error?: string } };
   'forge:delete-artifact': { request: { artifactId: string }; response: boolean };
   'forge:resume-from-checkpoint': { request: { jobId: string; checkpointStep: number }; response: { success: boolean; error?: string } };
   'forge:evaluate-dataset': { request: { jobId: string; numExamples?: number }; response: DatasetEvaluationReport };

@@ -426,16 +426,11 @@ export class ModelCapabilityRegistry {
     }
 
     // Dimensions validation
-    let width = params.width || imageMeta.defaultWidth;
-    let height = params.height || imageMeta.defaultHeight;
-
-    // Check if resolution is in supported list, or snap to nearest multiple of 64
-    if (width % 64 !== 0 || height % 64 !== 0) {
-      width = Math.max(256, Math.round(width / 64) * 64);
-      height = Math.max(256, Math.round(height / 64) * 64);
+    const width = params.width ?? imageMeta.defaultWidth;
+    const height = params.height ?? imageMeta.defaultHeight;
+    if (![width, height].every((size) => Number.isInteger(size) && size >= 256 && size <= 1024 && size % 64 === 0)) {
+      errors.push('Image dimensions must be multiples of 64 between 256 and 1024.');
     }
-    width = Math.min(1024, Math.max(256, width));
-    height = Math.min(1024, Math.max(256, height));
 
     // Steps validation
     let steps = params.steps ?? imageMeta.defaultSteps;

@@ -19,6 +19,7 @@ except ImportError:
     HAS_PSUTIL = False
 import torch
 from torch.utils.data import Dataset, DataLoader
+from dataset_io import read_records
 
 # Disable parallelism warnings from tokenizers
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -36,12 +37,14 @@ signal.signal(signal.SIGTERM, handle_signal)
 class InstructionDataset(Dataset):
     def __init__(self, records, tokenizer, max_seq_length=512, objective="instruction", column_mapping=None):
         self.examples = []
+        self.records = []
+        seen = set()
         eos_token = tokenizer.eos_token or "<|im_end|>"
         pad_token_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id
         column_mapping = column_mapping or {}
 
-        prompt_col = column_mapping.get("promptColumn") or column_mapping.get("prompt_column")
-        resp_col = column_mapping.get("responseColumn") or column_mapping.get("response_column")
+        prompt_col = column_mapping.get("instructionColumn") or column_mapping.get("promptColumn") or column_mapping.get("prompt_column")
+        resp_col = column_mapping.get("outputColumn") or column_mapping.get("completionColumn") or column_mapping.get("responseColumn") or column_mapping.get("response_column")
         inp_col = column_mapping.get("inputColumn") or column_mapping.get("input_column")
         sys_col = column_mapping.get("systemColumn") or column_mapping.get("system_column")
 
@@ -130,6 +133,11 @@ class InstructionDataset(Dataset):
             if not prompt_text.strip() or not response_text.strip():
                 continue
 
+            key = (prompt_text.strip(), response_text.strip())
+            if key in seen:
+                continue
+            seen.add(key)
+
             # Tokenize prompt and full text
             full_text = prompt_text + response_text
             encoded_full = tokenizer(
@@ -153,6 +161,12 @@ class InstructionDataset(Dataset):
             prompt_len = min(len(encoded_prompt["input_ids"][0]), len(labels))
             labels[:prompt_len] = -100
 
+            if not (labels[1:] != -100).any():
+                continue
+            self.records.append({
+                "formattedPrompt": prompt_text,
+                "expectedResponse": response_text[:-len(eos_token)],
+            })
             self.examples.append({
                 "input_ids": input_ids,
                 "attention_mask": attention_mask,
@@ -221,16 +235,13 @@ def main():
     print(json.dumps({"type": "log", "level": "INFO", "message": f"Output directory: {output_dir}"}), flush=True)
 
     # 1. Device selection
-    if torch.backends.mps.is_available() and precision_str != "float32":
-        # Note: on macOS x86_64, MPS may have fallback limitations; test MPS availability
-        device = torch.device("cpu")
-        print(json.dumps({"type": "log", "level": "INFO", "message": "Using CPU backend for optimal numerical stability."}), flush=True)
-    elif torch.cuda.is_available():
+    if torch.cuda.is_available():
         device = torch.device("cuda")
-        print(json.dumps({"type": "log", "level": "INFO", "message": f"Using CUDA backend: {torch.cuda.get_device_name(0)}"}), flush=True)
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
     else:
         device = torch.device("cpu")
-        print(json.dumps({"type": "log", "level": "INFO", "message": "Using CPU device backend for training."}), flush=True)
+    print(json.dumps({"type": "log", "level": "INFO", "message": f"Using {device.type.upper()} backend for training."}), flush=True)
 
     # Precision
     if precision_str == "float16" and device.type == "cuda":
@@ -283,22 +294,7 @@ def main():
 
     # 4. Load Dataset
     print(json.dumps({"type": "log", "level": "INFO", "message": f"Reading dataset from {dataset_path}..."}), flush=True)
-    records = []
-    if dataset_path.endswith(".csv"):
-        import csv
-        with open(dataset_path, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                records.append(row)
-    else:
-        with open(dataset_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        records.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        pass
+    records = read_records(dataset_path)
 
     if not records:
         print(json.dumps({"type": "error", "message": "Dataset contains 0 valid parseable records."}), flush=True)
@@ -312,13 +308,22 @@ def main():
         print(json.dumps({"type": "error", "message": "No valid formatted instruction pairs found in dataset."}), flush=True)
         sys.exit(1)
 
-    val_size = int(len(dataset) * train_val_split)
+    if not 0 <= train_val_split < 1:
+        raise ValueError("Validation fraction must be >= 0 and < 1.")
+    val_size = min(len(dataset) - 1, max(1, int(len(dataset) * train_val_split))) if train_val_split > 0 and len(dataset) > 1 else 0
     train_size = len(dataset) - val_size
     if val_size > 0:
-        train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+        train_dataset, val_dataset = torch.utils.data.random_split(
+            dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42)
+        )
     else:
         train_dataset = dataset
         val_dataset = None
+    # Persist exactly the examples excluded from optimization for later evaluation.
+    with open(os.path.join(output_dir, "validation_records.jsonl"), "w", encoding="utf-8") as held_out:
+        if val_dataset:
+            for index in val_dataset.indices:
+                held_out.write(json.dumps(dataset.records[index], default=str) + "\n")
 
     pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else 0
     train_loader = DataLoader(
@@ -372,6 +377,8 @@ def main():
 
         running_loss = 0.0
         accum_steps = 0
+        processed_tokens = 0
+        step_started = time.time()
         optimizer.zero_grad()
 
         for batch_idx, batch in enumerate(train_loader):
@@ -388,8 +395,14 @@ def main():
 
             running_loss += outputs.loss.item()
             accum_steps += 1
+            processed_tokens += int(attention_mask.sum())
 
             if accum_steps == grad_accum or (batch_idx + 1) == len(train_loader):
+                accumulated_batches = accum_steps
+                if accumulated_batches < grad_accum:
+                    for parameter in model.parameters():
+                        if parameter.grad is not None:
+                            parameter.grad.mul_(grad_accum / accumulated_batches)
                 # Calculate real gradient norm before clipping
                 total_norm = 0.0
                 for p in model.parameters():
@@ -400,10 +413,11 @@ def main():
 
                 # Calculate token prediction accuracy on non-masked response tokens
                 with torch.no_grad():
-                    preds = torch.argmax(outputs.logits, dim=-1)
-                    mask = (labels != -100)
+                    preds = torch.argmax(outputs.logits[:, :-1], dim=-1)
+                    shifted_labels = labels[:, 1:]
+                    mask = (shifted_labels != -100)
                     if mask.sum() > 0:
-                        token_acc = (preds[mask] == labels[mask]).float().mean().item()
+                        token_acc = (preds[mask] == shifted_labels[mask]).float().mean().item()
                     else:
                         token_acc = 0.0
 
@@ -414,7 +428,7 @@ def main():
                 accum_steps = 0
 
                 global_step += 1
-                avg_loss = running_loss / grad_accum
+                avg_loss = running_loss / accumulated_batches
                 running_loss = 0.0
 
                 elapsed = time.time() - start_time
@@ -439,16 +453,17 @@ def main():
                 if val_loader and (global_step % max(1, save_steps) == 0 or global_step == total_steps):
                     model.eval()
                     val_running_loss = 0.0
-                    val_batches = 0
+                    val_tokens = 0
                     with torch.no_grad():
                         for vbatch in val_loader:
                             v_input = vbatch["input_ids"].to(device)
                             v_mask = vbatch["attention_mask"].to(device)
                             v_labels = vbatch["labels"].to(device)
                             v_out = model(input_ids=v_input, attention_mask=v_mask, labels=v_labels)
-                            val_running_loss += v_out.loss.item()
-                            val_batches += 1
-                    eval_loss = round(val_running_loss / max(1, val_batches), 4)
+                            tokens = int((v_labels[:, 1:] != -100).sum())
+                            val_running_loss += v_out.loss.item() * tokens
+                            val_tokens += tokens
+                    eval_loss = round(val_running_loss / max(1, val_tokens), 4)
                     model.train()
 
                 metric_payload = {
@@ -462,13 +477,16 @@ def main():
                     "learningRate": round(current_lr, 8),
                     "gradNorm": round(grad_norm, 4),
                     "tokenAccuracy": round(token_acc, 4),
-                    "tokensPerSec": round((batch_size * max_seq_len) / max(0.01, secs_per_step), 1),
+                    "tokensPerSec": round(processed_tokens / max(0.001, time.time() - step_started), 1),
                     "elapsedSeconds": round(elapsed, 1),
                     "estimatedRemainingSeconds": round(est_remaining, 1),
                     "cpuPercent": round(cpu_pct, 1),
                     "memoryBytes": mem_bytes
                 }
                 print(json.dumps(metric_payload), flush=True)
+
+                processed_tokens = 0
+                step_started = time.time()
 
                 # Checkpoint saving
                 if global_step % save_steps == 0 or global_step == total_steps:

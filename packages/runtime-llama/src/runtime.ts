@@ -1,4 +1,4 @@
-import { spawn, ChildProcess, execSync } from 'node:child_process';
+import { spawn, ChildProcess, execFileSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import net from 'node:net';
@@ -17,7 +17,7 @@ import {
   RuntimeHealth,
   ProcessSupervisor,
 } from '@local-ai/runtimes';
-import { LlamaBinaryManager } from './binary.js';
+import { LLAMA_VERSION, LlamaBinaryManager } from './binary.js';
 
 export class LlamaRuntime implements InferenceRuntime {
   public readonly id = 'llama.cpp';
@@ -38,18 +38,19 @@ export class LlamaRuntime implements InferenceRuntime {
   }
 
   public async detectCapabilities(): Promise<RuntimeCapabilities> {
-    const isWin = process.platform === 'win32';
-    const isMac = process.platform === 'darwin';
-    const backends: string[] = ['cpu'];
-    if (isMac) backends.push('metal');
-    if (!isMac && !isWin) backends.push('cuda');
+    const binary = await new LlamaBinaryManager(this.runtimeDir).findBinary();
+    const files = binary ? fs.readdirSync(path.dirname(binary)) : [];
+    const backends = ['cpu'];
+    for (const backend of ['metal', 'cuda', 'vulkan']) {
+      if (files.some((file) => file.toLowerCase().includes(`ggml-${backend}`))) backends.push(backend);
+    }
 
     return {
       supportedFormats: ['gguf'],
       supportedBackends: backends,
-      supportsEmbeddings: true,
+      supportsEmbeddings: false,
       supportsStreaming: true,
-      version: 'b4800',
+      version: LLAMA_VERSION,
     };
   }
 
@@ -61,7 +62,9 @@ export class LlamaRuntime implements InferenceRuntime {
 
   public async install(): Promise<{ success: boolean; path?: string; error?: string }> {
     const binManager = new LlamaBinaryManager(this.runtimeDir);
-    return binManager.install();
+    const result = await binManager.install();
+    if (result.success) this.binaryPath = undefined;
+    return result;
   }
 
   private static helpTextCache: Map<string, string> = new Map();
@@ -71,10 +74,11 @@ export class LlamaRuntime implements InferenceRuntime {
       return LlamaRuntime.helpTextCache.get(binaryPath)!;
     }
     try {
-      const output = execSync(`"${binaryPath}" -h`, {
+      const output = execFileSync(binaryPath, ['-h'], {
         timeout: 2000,
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'pipe'],
+        env: this.binaryEnvironment(binaryPath),
       });
       LlamaRuntime.helpTextCache.set(binaryPath, output);
       return output;
@@ -102,46 +106,22 @@ export class LlamaRuntime implements InferenceRuntime {
     });
   }
 
-  private async cleanupPortOrphan(port: number): Promise<void> {
-    try {
-      if (process.platform === 'win32') {
-        try {
-          execSync(`taskkill /F /IM llama-server.exe`, { stdio: 'ignore', timeout: 3000 });
-        } catch {}
-      } else {
-        try {
-          execSync(`pkill -9 -f "llama-server.*--port ${port}"`, { stdio: 'ignore', timeout: 3000 });
-        } catch {}
-        try {
-          execSync(`pkill -9 -f "llama-server"`, { stdio: 'ignore', timeout: 3000 });
-        } catch {}
-      }
-    } catch {}
-    await new Promise((r) => setTimeout(r, 250));
+  private binaryEnvironment(binaryPath: string): NodeJS.ProcessEnv {
+    const directory = path.dirname(binaryPath);
+    return {
+      ...process.env,
+      PATH: `${directory}${path.delimiter}${process.env.PATH || ''}`,
+      LD_LIBRARY_PATH: [directory, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
+      DYLD_LIBRARY_PATH: [directory, process.env.DYLD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
+      GGML_METAL_PATH_RESOURCES: directory,
+    };
   }
 
   private async prepareCleanPort(preferredPort: number): Promise<number> {
-    const isFree = await this.isPortAvailable(preferredPort);
-    if (isFree) {
-      return preferredPort;
+    for (let port = preferredPort; port <= Math.min(65535, preferredPort + 50); port++) {
+      if (await this.isPortAvailable(port)) return port;
     }
-
-    // Try killing any stale orphan
-    await this.cleanupPortOrphan(preferredPort);
-    const isNowFree = await this.isPortAvailable(preferredPort);
-    if (isNowFree) {
-      return preferredPort;
-    }
-
-    // If still busy, find next available port in range [preferredPort + 1, preferredPort + 50]
-    for (let p = preferredPort + 1; p <= preferredPort + 50; p++) {
-      const avail = await this.isPortAvailable(p);
-      if (avail) {
-        return p;
-      }
-    }
-
-    return preferredPort;
+    throw new AppError('No available port for llama-server', 'RUNTIME_PORT_UNAVAILABLE');
   }
 
   public async start(config: RuntimeConfig): Promise<RuntimeInstance> {
@@ -176,6 +156,7 @@ export class LlamaRuntime implements InferenceRuntime {
     ];
 
     const helpText = this.binaryPath ? this.getHelpText(this.binaryPath) : '';
+    // The pinned server's --embeddings mode disables completions; keep the managed server in chat mode.
     const supportsFa = helpText ? (helpText.includes('-fa') || helpText.includes('--flash-attn')) : true;
     const faTakesValue = helpText ? (/-fa[^\n]*\[on\|off\|auto\]/i.test(helpText) || /--flash-attn[^\n]*\[on\|off\|auto\]/i.test(helpText)) : true;
 
@@ -213,7 +194,8 @@ export class LlamaRuntime implements InferenceRuntime {
 
       const timeoutTimer = setTimeout(() => {
         if (!started) {
-          this.stop();
+          started = true;
+          void this.stop();
           const detail = recentStderr.slice(-5).join(' ');
           const err = new AppError(`llama-server startup timed out after 30 seconds. ${detail}`, 'RUNTIME_TIMEOUT');
           this.supervisor.setState('ERROR');
@@ -227,9 +209,7 @@ export class LlamaRuntime implements InferenceRuntime {
           cwd: binDir,
           stdio: ['ignore', 'pipe', 'pipe'],
           env: {
-            ...process.env,
-            PATH: `${binDir}${path.delimiter}${process.env.PATH || ''}`,
-            GGML_METAL_PATH_RESOURCES: this.binaryPath ? this.binaryPath.replace(/llama-server$/, '') : undefined,
+            ...this.binaryEnvironment(this.binaryPath!),
             LLAMA_ARG_FLASH_ATTN: config.flashAttention === false ? 'off' : 'on',
           },
         });
@@ -249,27 +229,9 @@ export class LlamaRuntime implements InferenceRuntime {
           loadedAt: Date.now(),
         };
 
-        const checkReadyOutput = (text: string) => {
-          if (
-            text.includes('HTTP server is listening') ||
-            text.includes('main: server is listening') ||
-            text.includes('listening on http://') ||
-            text.includes('model loaded')
-          ) {
-            if (!started) {
-              started = true;
-              clearTimeout(timeoutTimer);
-              instance.state = 'RUNNING';
-              this.supervisor.setState('RUNNING', instance);
-              resolve(instance);
-            }
-          }
-        };
-
         child.stdout?.on('data', (data: Buffer) => {
           const text = data.toString('utf-8');
           this.supervisor.emit('log', 'DEBUG', `[llama-server stdout] ${text.trim()}`);
-          checkReadyOutput(text);
         });
 
         child.stderr?.on('data', (data: Buffer) => {
@@ -278,7 +240,6 @@ export class LlamaRuntime implements InferenceRuntime {
           if (recentStderr.length > 20) recentStderr.shift();
 
           this.supervisor.emit('log', 'INFO', `[llama-server] ${text.trim()}`);
-          checkReadyOutput(text);
         });
 
         child.on('error', (err) => {
@@ -302,8 +263,8 @@ export class LlamaRuntime implements InferenceRuntime {
           }
         });
 
-        // Background health check polling as a secondary readiness confirmation
-        this.pollHealthUntilReady(config.port, 60)
+        // Listening logs precede model loading; only successful health confirms readiness.
+        this.pollHealthUntilReady(child, config.port, 60)
           .then((isReady) => {
             if (isReady && !started) {
               started = true;
@@ -323,62 +284,25 @@ export class LlamaRuntime implements InferenceRuntime {
   }
 
   public async stop(): Promise<void> {
-    const port = this.currentConfig?.port;
-    if (!this.childProcess) {
-      if (port) {
-        await this.cleanupPortOrphan(port);
-      }
+    const child = this.childProcess;
+    if (!child || child.exitCode !== null || child.signalCode !== null) {
       this.supervisor.setState('STOPPED');
       return;
     }
-
-    const pid = this.childProcess.pid;
     this.supervisor.setState('STOPPING');
-
     await new Promise<void>((resolve) => {
-      let isResolved = false;
       const done = () => {
-        if (!isResolved) {
-          isResolved = true;
-          this.childProcess = undefined;
-          this.supervisor.setState('STOPPED');
-          resolve();
-        }
+        clearTimeout(timer);
+        if (this.childProcess === child) this.childProcess = undefined;
+        this.supervisor.setState('STOPPED');
+        resolve();
       };
-
-      this.childProcess?.once('exit', done);
-
-      try {
-        if (pid) {
-          if (process.platform === 'win32') {
-            try {
-              execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore', timeout: 3000 });
-            } catch {}
-          } else {
-            process.kill(pid, 'SIGTERM');
-          }
-        }
-      } catch {}
-
-      setTimeout(() => {
-        try {
-          if (this.childProcess && pid) {
-            if (process.platform === 'win32') {
-              try {
-                execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore', timeout: 3000 });
-              } catch {}
-            } else {
-              process.kill(pid, 'SIGKILL');
-            }
-          }
-        } catch {}
-        done();
+      const timer = setTimeout(() => {
+        if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
       }, 2000);
+      child.once('exit', done);
+      child.kill('SIGTERM');
     });
-
-    if (port) {
-      await this.cleanupPortOrphan(port);
-    }
   }
 
   public async health(): Promise<RuntimeHealth> {
@@ -398,9 +322,9 @@ export class LlamaRuntime implements InferenceRuntime {
       const metricsData = metricsRes ? await metricsRes.json().catch(() => null) : null;
 
       return {
-        isHealthy: healthData.status === 'ok' || healthData.status === 'loading model',
+        isHealthy: res.ok && healthData.status === 'ok',
         state: this.supervisor.getState(),
-        modelLoaded: Boolean(this.currentConfig?.modelName),
+        modelLoaded: res.ok && healthData.status === 'ok',
         vramUsedBytes: metricsData?.vram_used_bytes,
         ramUsedBytes: metricsData?.ram_used_bytes,
         uptimeSeconds: this.startTime ? Math.floor((Date.now() - this.startTime) / 1000) : 0,
@@ -419,7 +343,7 @@ export class LlamaRuntime implements InferenceRuntime {
     request: ChatCompletionRequest,
     signal?: AbortSignal
   ): AsyncIterable<ChatCompletionResponse> {
-    if (!this.currentConfig) {
+    if (!this.currentConfig || this.supervisor.getState() !== 'RUNNING') {
       throw new AppError('llama-server is not running or ready', 'RUNTIME_NOT_READY');
     }
 
@@ -462,37 +386,26 @@ export class LlamaRuntime implements InferenceRuntime {
   }
 
   public async embeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
-    if (!this.currentConfig) {
+    if (!this.currentConfig || this.supervisor.getState() !== 'RUNNING') {
       throw new AppError('llama-server is not running or ready', 'RUNTIME_NOT_READY');
     }
 
-    const res = await fetch(`http://127.0.0.1:${this.currentConfig.port}/v1/embeddings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => 'Unknown error');
-      throw new AppError(`Upstream embeddings error: ${errText}`, 'UPSTREAM_ERROR');
-    }
-
-    return res.json() as Promise<EmbeddingResponse>;
+    throw new AppError('Embeddings are unavailable in the managed llama.cpp chat runtime. The pinned embedding mode disables chat completions.', 'EMBEDDINGS_UNAVAILABLE', 503);
   }
 
-  private async pollHealthUntilReady(port: number, maxAttempts = 60): Promise<boolean> {
+  private async pollHealthUntilReady(child: ChildProcess, port: number, maxAttempts = 60): Promise<boolean> {
     // Initial settling delay so we don't query a closing or premature socket
     await new Promise((r) => setTimeout(r, 400));
     for (let i = 0; i < maxAttempts; i++) {
-      if (!this.childProcess || this.childProcess.exitCode !== null) {
+      if (this.childProcess !== child || child.exitCode !== null || child.signalCode !== null) {
         return false;
       }
       try {
-        const res = await fetch(`http://127.0.0.1:${port}/health`);
+        const res = await fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(1000) });
         if (res.ok) {
           const data = (await res.json()) as any;
           if (data.status === 'ok') {
-            if (!this.childProcess || this.childProcess.exitCode !== null) {
+            if (this.childProcess !== child || child.exitCode !== null || child.signalCode !== null) {
               return false;
             }
             return true;
